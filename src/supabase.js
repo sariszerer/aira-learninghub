@@ -5,191 +5,131 @@ const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_KEY || 'sb_publishable_Onhfm9
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 
-// ── helpers: map DB rows → app format ────────────────────────────────────────
+export const auth = {
+  async signIn(email, password) {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) throw error
+    return data
+  },
+  async signOut() {
+    const { error } = await supabase.auth.signOut()
+    if (error) throw error
+  },
+  async getSession() {
+    const { data } = await supabase.auth.getSession()
+    return data.session
+  },
+  onAuthStateChange(callback) {
+    return supabase.auth.onAuthStateChange(callback)
+  },
+}
+
+export async function getAppUser(authUserId) {
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('auth_id', authUserId)
+    .single()
+  if (error) return null
+  return dbUserToApp(data)
+}
 
 export function dbUserToApp(u) {
   return {
-    id: u.id,
-    name: u.name,
-    email: u.email,
-    role: u.role,
-    specialty: u.specialty,
-    title: u.title,
-    avatarBg: u.avatar_bg,
-    school: u.school,
-    assignedChildId: u.assigned_child_id,
+    id: u.id, name: u.name, email: u.email, role: u.role,
+    specialty: u.specialty, title: u.title, avatarBg: u.avatar_bg,
+    school: u.school, assignedChildId: u.assigned_child_id, authId: u.auth_id,
   }
 }
-
 export function dbChildToApp(c) {
   return {
-    id: c.id,
-    name: c.name,
-    lastName: c.last_name,
-    birthDate: c.birth_date,
-    admissionDate: c.admission_date,
-    specialties: c.specialties || [],
-    assignedSpecialists: c.assigned_specialists || [],
-    avatarBg: c.avatar_bg,
-    nextSession: c.next_session,
-    nextSessionTime: c.next_session_time,
-    parentContact: c.parent_contact || {},
-    packageStart: c.package_start,
+    id: c.id, name: c.name, lastName: c.last_name, birthDate: c.birth_date,
+    admissionDate: c.admission_date, specialties: c.specialties || [],
+    assignedSpecialists: c.assigned_specialists || [], avatarBg: c.avatar_bg,
+    nextSession: c.next_session, nextSessionTime: c.next_session_time,
+    parentContact: c.parent_contact || {}, packageStart: c.package_start,
     packageNum: c.package_num || 1,
-    age: c.birth_date
-      ? Math.floor((new Date() - new Date(c.birth_date)) / (365.25 * 86400000))
-      : null,
+    age: c.birth_date ? Math.floor((new Date() - new Date(c.birth_date)) / (365.25*86400000)) : null,
   }
 }
-
 export function dbObjectiveToApp(o) {
-  return {
-    id: o.id,
-    childId: o.child_id,
-    name: o.name,
-    area: o.area,
-    status: o.status,
-    specialistId: o.specialist_id,
-    createdDate: o.created_date,
-  }
+  return { id: o.id, childId: o.child_id, name: o.name, area: o.area,
+    status: o.status, specialistId: o.specialist_id, createdDate: o.created_date }
 }
-
 export function dbSessionToApp(s) {
-  return {
-    id: s.id,
-    childId: s.child_id,
-    specialistId: s.specialist_id,
-    specialty: s.specialty,
-    date: s.date,
-    duration: s.duration,
-    objectivesWorked: s.objectives_worked || [],
-    activities: s.activities || [],
-    observation: s.observation,
-    nextSteps: s.next_steps,
-    createdAt: s.created_at,
-  }
+  return { id: s.id, childId: s.child_id, specialistId: s.specialist_id,
+    specialty: s.specialty, date: s.date, duration: s.duration,
+    objectivesWorked: s.objectives_worked || [], activities: s.activities || [],
+    observation: s.observation, nextSteps: s.next_steps, createdAt: s.created_at }
 }
-
 export function dbDocumentToApp(d) {
-  return {
-    id: d.id,
-    childId: d.child_id,
-    type: d.type,
-    title: d.title,
-    date: d.date,
-    authorId: d.author_id,
-    notes: d.notes,
-    fields: d.fields || {},
-  }
+  return { id: d.id, childId: d.child_id, type: d.type, title: d.title,
+    date: d.date, authorId: d.author_id, notes: d.notes, fields: d.fields || {} }
 }
-
 export function dbMeetingToApp(m) {
-  return {
-    id: m.id,
-    childId: m.child_id,
-    date: m.date,
-    type: m.type,
-    participants: m.participants,
-    summary: m.summary,
-    agreements: m.agreements,
-    createdBy: m.created_by,
-  }
+  return { id: m.id, childId: m.child_id, date: m.date, type: m.type,
+    participants: m.participants, summary: m.summary, agreements: m.agreements, createdBy: m.created_by }
 }
-
 export function dbSchoolToApp(s) {
-  return {
-    id: s.id,
-    name: s.name,
-    contact: s.contact,
-    phone: s.phone,
-    email: s.email,
-    contractStart: s.contract_start,
-    contractEnd: s.contract_end,
-    assignedSpecialists: s.assigned_specialists || [],
-    specialty: s.specialty,
-    students: s.students || [],
-    notes: s.notes,
-  }
+  return { id: s.id, name: s.name, contact: s.contact, phone: s.phone, email: s.email,
+    contractStart: s.contract_start, contractEnd: s.contract_end,
+    assignedSpecialists: s.assigned_specialists || [], specialty: s.specialty,
+    students: s.students || [], notes: s.notes }
 }
-
 export function dbGabineteSessionToApp(s) {
-  return {
-    id: s.id,
-    schoolId: s.school_id,
-    specialistId: s.specialist_id,
-    specialty: s.specialty,
-    date: s.date,
-    participants: s.participants,
-    duration: s.duration,
-    area: s.area,
-    notes: s.notes,
-  }
+  return { id: s.id, schoolId: s.school_id, specialistId: s.specialist_id,
+    specialty: s.specialty, date: s.date, participants: s.participants,
+    duration: s.duration, area: s.area, notes: s.notes }
 }
-
 export function dbTutorReportToApp(r) {
-  return {
-    id: r.id,
-    tutorId: r.tutor_id,
-    childId: r.child_id,
-    date: r.date,
-    school: r.school,
-    logros: r.logros,
-    dificultades: r.dificultades,
-    solicitudes: r.solicitudes,
-    objetivoStatus: r.objetivo_status || {},
-  }
+  return { id: r.id, tutorId: r.tutor_id, childId: r.child_id, date: r.date,
+    school: r.school, logros: r.logros, dificultades: r.dificultades,
+    solicitudes: r.solicitudes, objetivoStatus: r.objetivo_status || {} }
 }
-
-// ── API functions ─────────────────────────────────────────────────────────────
 
 export const db = {
-  // Users
   async getUsers() {
     const { data, error } = await supabase.from('users').select('*').order('name')
     if (error) throw error
     return data.map(dbUserToApp)
   },
-
-  // Children
-  async getChildren() {
-    const { data, error } = await supabase.from('children').select('*').order('name')
+  async getChildren(userRole, userId) {
+    let query = supabase.from('children').select('*').order('name')
+    if (userRole === 'specialist') query = query.contains('assigned_specialists', [userId])
+    const { data, error } = await query
     if (error) throw error
     return data.map(dbChildToApp)
   },
   async updateChild(id, updates) {
-    const dbUpdates = {}
-    if ('packageStart' in updates) dbUpdates.package_start = updates.packageStart
-    if ('packageNum' in updates) dbUpdates.package_num = updates.packageNum
-    if ('nextSession' in updates) dbUpdates.next_session = updates.nextSession
-    if ('nextSessionTime' in updates) dbUpdates.next_session_time = updates.nextSessionTime
-    if ('birthDate' in updates) dbUpdates.birth_date = updates.birthDate
-    if ('admissionDate' in updates) dbUpdates.admission_date = updates.admissionDate
-    if ('parentContact' in updates) dbUpdates.parent_contact = updates.parentContact
-    const { error } = await supabase.from('children').update(dbUpdates).eq('id', id)
+    const m = {}
+    if ('packageStart' in updates) m.package_start = updates.packageStart
+    if ('packageNum' in updates) m.package_num = updates.packageNum
+    if ('nextSession' in updates) m.next_session = updates.nextSession
+    if ('birthDate' in updates) m.birth_date = updates.birthDate
+    if ('admissionDate' in updates) m.admission_date = updates.admissionDate
+    if ('parentContact' in updates) m.parent_contact = updates.parentContact
+    const { error } = await supabase.from('children').update(m).eq('id', id)
     if (error) throw error
   },
-  async insertChild(child) {
+  async insertChild(c) {
     const { error } = await supabase.from('children').insert({
-      id: child.id, name: child.name, last_name: child.lastName,
-      birth_date: child.birthDate, admission_date: child.admissionDate,
-      specialties: child.specialties, assigned_specialists: child.assignedSpecialists,
-      avatar_bg: child.avatarBg, next_session: child.nextSession,
-      next_session_time: child.nextSessionTime, parent_contact: child.parentContact,
-      package_start: child.packageStart, package_num: child.packageNum || 1,
+      id: c.id, name: c.name, last_name: c.lastName, birth_date: c.birthDate,
+      admission_date: c.admissionDate, specialties: c.specialties,
+      assigned_specialists: c.assignedSpecialists, avatar_bg: c.avatarBg,
+      next_session: c.nextSession, next_session_time: c.nextSessionTime,
+      parent_contact: c.parentContact, package_start: c.packageStart, package_num: c.packageNum || 1,
     })
     if (error) throw error
   },
-
-  // Objectives
   async getObjectives() {
     const { data, error } = await supabase.from('objectives').select('*').order('created_at')
     if (error) throw error
     return data.map(dbObjectiveToApp)
   },
-  async upsertObjective(obj) {
+  async upsertObjective(o) {
     const { error } = await supabase.from('objectives').upsert({
-      id: obj.id, child_id: obj.childId, name: obj.name, area: obj.area,
-      status: obj.status, specialist_id: obj.specialistId, created_date: obj.createdDate,
+      id: o.id, child_id: o.childId, name: o.name, area: o.area,
+      status: o.status, specialist_id: o.specialistId, created_date: o.createdDate,
     })
     if (error) throw error
   },
@@ -197,8 +137,6 @@ export const db = {
     const { error } = await supabase.from('objectives').delete().eq('id', id)
     if (error) throw error
   },
-
-  // Sessions
   async getSessions() {
     const { data, error } = await supabase.from('sessions').select('*').order('date', { ascending: false })
     if (error) throw error
@@ -213,8 +151,6 @@ export const db = {
     })
     if (error) throw error
   },
-
-  // Documents
   async getDocuments() {
     const { data, error } = await supabase.from('documents').select('*').order('date', { ascending: false })
     if (error) throw error
@@ -227,8 +163,6 @@ export const db = {
     })
     if (error) throw error
   },
-
-  // Meetings
   async getMeetings() {
     const { data, error } = await supabase.from('meetings').select('*').order('date', { ascending: false })
     if (error) throw error
@@ -242,8 +176,6 @@ export const db = {
     })
     if (error) throw error
   },
-
-  // Schools
   async getSchools() {
     const { data, error } = await supabase.from('schools').select('*').order('name')
     if (error) throw error
@@ -251,15 +183,13 @@ export const db = {
   },
   async insertSchool(s) {
     const { error } = await supabase.from('schools').insert({
-      id: s.id, name: s.name, contact: s.contact, phone: s.phone,
-      email: s.email, contract_start: s.contractStart, contract_end: s.contractEnd,
+      id: s.id, name: s.name, contact: s.contact, phone: s.phone, email: s.email,
+      contract_start: s.contractStart, contract_end: s.contractEnd,
       assigned_specialists: s.assignedSpecialists, specialty: s.specialty,
       students: s.students || [], notes: s.notes,
     })
     if (error) throw error
   },
-
-  // Gabinete sessions
   async getGabineteSessions() {
     const { data, error } = await supabase.from('gabinete_sessions').select('*').order('date', { ascending: false })
     if (error) throw error
@@ -273,8 +203,6 @@ export const db = {
     })
     if (error) throw error
   },
-
-  // Tutor reports
   async getTutorReports() {
     const { data, error } = await supabase.from('tutor_reports').select('*').order('date', { ascending: false })
     if (error) throw error
