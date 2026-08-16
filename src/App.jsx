@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from "react";
-import { db } from "./supabase.js";
+import { db, auth, getAppUser } from "./supabase.js";
+import Login from "./Login.jsx";
 
 /* ============================================================
    BRAND ASSETS — official AIRA logo, embedded as data URIs
@@ -3723,6 +3724,29 @@ function ParentReportModal({ child, sessions, objectives, parentReports, onClose
 ============================================================ */
 export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  // Listen to Supabase auth state
+  useEffect(() => {
+    auth.getSession().then(async (session) => {
+      if (session) {
+        const appUser = await getAppUser(session.user.id)
+        if (appUser) setCurrentUser(appUser)
+      }
+      setAuthLoading(false)
+    })
+    const { data: { subscription } } = auth.onAuthStateChange(async (event, session) => {
+      if (event === "SIGNED_IN" && session) {
+        const appUser = await getAppUser(session.user.id)
+        if (appUser) setCurrentUser(appUser)
+      } else if (event === "SIGNED_OUT") {
+        setCurrentUser(null)
+        setView("home")
+        setSelectedChildId(null)
+      }
+    })
+    return () => subscription.unsubscribe()
+  }, []);
   const [view, setView] = useState("home"); // home | child | gabinete
   const [selectedChildId, setSelectedChildId] = useState(null);
 
@@ -3939,7 +3963,7 @@ Si no hay eventos, responde: []`,
         onHome={() => { setView("home"); setSelectedChildId(null); }}
         onBack={view === "child" ? () => { setView("home"); setSelectedChildId(null); } : null}
         backLabel={currentUser.role === "admin" ? "Panel administrativo" : currentUser.role === "clinical_director" ? "Panel clínico" : "Mis pacientes"}
-        onLogout={() => { setCurrentUser(null); setView("home"); setSelectedChildId(null); }}
+        onLogout={async () => { await auth.signOut(); setCurrentUser(null); setView("home"); setSelectedChildId(null); }}
         showGabinete={(currentUser.role === "admin" || currentUser.role === "clinical_director")}
         onGabinete={() => { setView("gabinete"); setSelectedChildId(null); }}
         gabineteActive={view === "gabinete"}
