@@ -3132,8 +3132,28 @@ function InterdisciplinaryTab({ child, meetings, users, onAddMeeting }) {
   );
 }
 
-function ChildProfile({ child, users, sessions, objectives, documents, meetings, parentReports, currentUser, onOpenSessionForm, onViewReport, onGenerateFull, onGenerateEvolution, onGenerateParentReport, onAddDocument, onAddMeeting, onUpdateObjective, onAddObjective, onDeleteObjective, onRenewPackage }) {
+function ChildProfile({ child, users, sessions, objectives, documents, meetings, parentReports, currentUser, onOpenSessionForm, onViewReport, onGenerateFull, onGenerateEvolution, onGenerateParentReport, onAddDocument, onAddMeeting, onUpdateObjective, onAddObjective, onDeleteObjective, onRenewPackage, onUpdateChild }) {
   const [tab, setTab] = useState("resumen");
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [editForm, setEditForm] = useState({
+    name: child.name, lastName: child.lastName,
+    birthDate: child.birthDate || "", admissionDate: child.admissionDate || "",
+    parentName: child.parentContact?.name || "",
+    parentPhone: child.parentContact?.phone || "",
+    parentEmail: child.parentContact?.email || "",
+  });
+
+  const handleSaveProfile = () => {
+    onUpdateChild(child.id, {
+      name: editForm.name.trim(),
+      lastName: editForm.lastName.trim(),
+      birthDate: editForm.birthDate || null,
+      admissionDate: editForm.admissionDate || null,
+      parentContact: { name: editForm.parentName, phone: editForm.parentPhone, email: editForm.parentEmail },
+    });
+    setEditingProfile(false);
+  };
+
   const specialists = child.assignedSpecialists.map((id) => users.find((u) => u.id === id)).filter(Boolean);
   const tabs = [
     { id: "resumen", label: "Resumen" },
@@ -3169,10 +3189,93 @@ function ChildProfile({ child, users, sessions, objectives, documents, meetings,
             ))}
           </div>
         </div>
-        {(currentUser.role === "specialist" || currentUser.role === "clinical_director") && child.assignedSpecialists.includes(currentUser.id) && (
-          <Btn variant="amber" size="lg" icon={Plus} onClick={onOpenSessionForm}>Registrar sesión</Btn>
-        )}
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, flexShrink: 0 }}>
+          {(currentUser.role === "specialist" || currentUser.role === "clinical_director") && child.assignedSpecialists.includes(currentUser.id) && (
+            <Btn variant="amber" size="lg" icon={Plus} onClick={onOpenSessionForm}>Registrar sesión</Btn>
+          )}
+          {(currentUser.role === "admin" || currentUser.role === "clinical_director") && (
+            <button onClick={() => setEditingProfile(true)} style={{
+              display: "flex", alignItems: "center", gap: 6, background: "none",
+              border: `1px solid ${T.border}`, borderRadius: 10, padding: "7px 14px",
+              fontSize: 13, color: T.inkSoft, cursor: "pointer", fontFamily: "Inter, sans-serif",
+            }}>
+              ✎ Editar perfil
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* Edit profile modal */}
+      {editingProfile && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div style={{ background: "#fff", borderRadius: 20, padding: "32px", maxWidth: 520, width: "100%", maxHeight: "90vh", overflowY: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.25)" }}>
+            <div style={{ fontFamily: "Fraunces, serif", fontSize: 22, fontWeight: 500, color: T.ink, marginBottom: 24 }}>
+              Editar perfil
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 16px" }}>
+              {[
+                { label: "Nombre", key: "name" },
+                { label: "Apellido", key: "lastName" },
+              ].map(({ label, key }) => (
+                <div key={key} style={{ marginBottom: 16 }}>
+                  <div style={{ fontSize: 11.5, fontWeight: 600, color: T.inkSoft, marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</div>
+                  <input value={editForm[key]} onChange={(e) => setEditForm({ ...editForm, [key]: e.target.value })}
+                    style={{ width: "100%", padding: "9px 12px", borderRadius: 10, border: `1.5px solid ${T.border}`, fontSize: 14, fontFamily: "Inter, sans-serif", outline: "none", boxSizing: "border-box" }}
+                    onFocus={(e) => e.target.style.borderColor = T.brand}
+                    onBlur={(e) => e.target.style.borderColor = T.border}
+                  />
+                </div>
+              ))}
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 16px" }}>
+              {[
+                { label: "Fecha de nacimiento", key: "birthDate", type: "date" },
+                { label: "Fecha de ingreso", key: "admissionDate", type: "date" },
+              ].map(({ label, key, type }) => (
+                <div key={key} style={{ marginBottom: 16 }}>
+                  <div style={{ fontSize: 11.5, fontWeight: 600, color: T.inkSoft, marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</div>
+                  <input type={type} value={editForm[key]} onChange={(e) => setEditForm({ ...editForm, [key]: e.target.value })}
+                    style={{ width: "100%", padding: "9px 12px", borderRadius: 10, border: `1.5px solid ${T.border}`, fontSize: 14, fontFamily: "Inter, sans-serif", outline: "none", boxSizing: "border-box" }}
+                    onFocus={(e) => e.target.style.borderColor = T.brand}
+                    onBlur={(e) => e.target.style.borderColor = T.border}
+                  />
+                </div>
+              ))}
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 11.5, fontWeight: 600, color: T.inkSoft, marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.05em" }}>Nombre del padre/madre</div>
+              <input value={editForm.parentName} onChange={(e) => setEditForm({ ...editForm, parentName: e.target.value })}
+                style={{ width: "100%", padding: "9px 12px", borderRadius: 10, border: `1.5px solid ${T.border}`, fontSize: 14, fontFamily: "Inter, sans-serif", outline: "none", boxSizing: "border-box" }}
+                onFocus={(e) => e.target.style.borderColor = T.brand}
+                onBlur={(e) => e.target.style.borderColor = T.border}
+              />
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 16px", marginBottom: 24 }}>
+              {[
+                { label: "Teléfono", key: "parentPhone" },
+                { label: "Email", key: "parentEmail" },
+              ].map(({ label, key }) => (
+                <div key={key}>
+                  <div style={{ fontSize: 11.5, fontWeight: 600, color: T.inkSoft, marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</div>
+                  <input value={editForm[key]} onChange={(e) => setEditForm({ ...editForm, [key]: e.target.value })}
+                    style={{ width: "100%", padding: "9px 12px", borderRadius: 10, border: `1.5px solid ${T.border}`, fontSize: 14, fontFamily: "Inter, sans-serif", outline: "none", boxSizing: "border-box" }}
+                    onFocus={(e) => e.target.style.borderColor = T.brand}
+                    onBlur={(e) => e.target.style.borderColor = T.border}
+                  />
+                </div>
+              ))}
+            </div>
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+              <button onClick={() => setEditingProfile(false)} style={{ padding: "10px 18px", borderRadius: 10, border: `1px solid ${T.border}`, background: "#fff", color: T.inkSoft, fontSize: 14, fontFamily: "Inter, sans-serif", cursor: "pointer" }}>
+                Cancelar
+              </button>
+              <button onClick={handleSaveProfile} disabled={!editForm.name.trim() || !editForm.lastName.trim()} style={{ padding: "10px 22px", borderRadius: 10, border: "none", background: T.brand, color: "#fff", fontSize: 14, fontWeight: 600, fontFamily: "Inter, sans-serif", cursor: "pointer", opacity: (!editForm.name.trim() || !editForm.lastName.trim()) ? 0.5 : 1 }}>
+                Guardar cambios
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div style={{ display: "flex", gap: 4, borderBottom: `1px solid ${T.borderSoft}`, marginBottom: 26 }}>
         {tabs.map((t) => (
@@ -3910,6 +4013,16 @@ Si no hay eventos, responde: []`,
     setTimeout(() => setToast(false), 3200);
   }
 
+  async function handleUpdateChild(childId, updates) {
+    setChildren((prev) => prev.map((c) => {
+      if (c.id !== childId) return c;
+      const updated = { ...c, ...updates };
+      if (updates.parentContact) updated.parentContact = updates.parentContact;
+      return updated;
+    }));
+    try { await db.updateChild(childId, updates); } catch(e) { console.error("Update child:", e); }
+  }
+
   async function handleRenewPackage(childId) {
     const today = TODAY;
     setChildren((prev) => prev.map((c) => {
@@ -4033,6 +4146,7 @@ Si no hay eventos, responde: []`,
           onAddObjective={handleAddObjective}
           onDeleteObjective={handleDeleteObjective}
           onRenewPackage={handleRenewPackage}
+          onUpdateChild={handleUpdateChild}
           onOpenSessionForm={() => setWizardOpen(true)}
           onViewReport={(s) => setViewingReport(s)}
           onGenerateFull={() => setFullHistoryOpen(true)}
