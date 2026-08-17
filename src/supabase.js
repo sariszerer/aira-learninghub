@@ -102,6 +102,8 @@ export const db = {
   },
   async updateChild(id, updates) {
     const m = {}
+    if ('name' in updates) m.name = updates.name
+    if ('lastName' in updates) m.last_name = updates.lastName
     if ('packageStart' in updates) m.package_start = updates.packageStart
     if ('packageNum' in updates) m.package_num = updates.packageNum
     if ('nextSession' in updates) m.next_session = updates.nextSession
