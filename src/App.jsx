@@ -83,473 +83,52 @@ const seedUsers = [
 ];
 
 const seedChildren = [
-  {
-    id: "c-edy", name: "Edy", lastName: "Antebi Missrie", age: 5,
-    birthDate: "2020-06-26", admissionDate: "2026-01-12",
-    specialties: ["Desarrollo (DVLP)", "Kids Club"],
-    assignedSpecialists: ["u-daniella", "u-mariavirginia"],
-    avatarBg: T.amber,
-    nextSession: "2026-08-13", nextSessionTime: "5:15 PM",
-    parentContact: { name: "Natalie (madre)", email: "natalie@missrie.com", phone: "+507 6781-1255" },
-  },
-  {
-    id: "c-atai", name: "Atai", lastName: "Levin Pion", age: 8,
-    birthDate: "2017-08-04", admissionDate: "2026-01-06",
-    specialties: ["Psicología"],
-    assignedSpecialists: ["u-neyma"],
-    avatarBg: T.pink,
-    nextSession: "2026-08-14", nextSessionTime: "6:00 PM",
-    parentContact: { name: "Pninit Pion y Omri Levin (padres)", email: "", phone: "6070-9159" },
-  },
-  {
-    id: "c-elias", name: "Elias", lastName: "Amar Soued", age: 6,
-    birthDate: "2019-02-22", admissionDate: "2025-11-06",
-    specialties: ["Desarrollo (DVLP)"],
-    assignedSpecialists: ["u-daniella"],
-    avatarBg: T.brandBright,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "Violeta Soued de Amar (madre)", email: "vsoued@gmail.com", phone: "+507 6617-5471" },
-  },
-  {
-    id: "c-gabriel", name: "Gabriel", lastName: "Velásquez Páez", age: 15,
-    birthDate: "2011-07-05", admissionDate: "2026-07-06",
-    specialties: ["Psicología"],
-    assignedSpecialists: ["u-neyma"],
-    avatarBg: T.amber,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "Orlymer Páez (madre)", email: "olymerpaez@gmail.com", phone: "6570-4425" },
-  },
-  {
-    id: "c-rafael", name: "Rafael", lastName: "Ben-Avi Rosental", age: 6,
-    birthDate: "2018-12-23", admissionDate: "2025-10-29",
-    specialties: ["Psicología"],
-    assignedSpecialists: ["u-neyma"],
-    avatarBg: T.pink,
-    nextSession: "2026-08-13", nextSessionTime: "5:15 PM",
-    parentContact: { name: "Jonathan y Yael Ben-Avi (padres)", email: "", phone: "6679-7805" },
-  },
-  {
-    id: "c-abrahamg", name: "Abraham", lastName: "Guindi Shreim", age: 10,
-    birthDate: "2016-03-26", admissionDate: "2026-03-26",
-    specialties: ["Psicología"],
-    assignedSpecialists: ["u-neyma"],
-    avatarBg: T.brandBright,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "Dalia Shreim (madre)", email: "", phone: "6614-9980" },
-  },
-  {
-    id: "c-alessandra", name: "Alessandra", lastName: "Benaim Landman", age: 15,
-    birthDate: "2010-10-12", admissionDate: "2026-08-05",
-    specialties: ["Psicología"],
-    assignedSpecialists: ["u-neyma"],
-    avatarBg: T.amber,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "Joey y Alice Benaim (padres)", email: "", phone: "6679-7798" },
-  },
-  {
-    id: "c-ellis", name: "Ellis", lastName: "Yohros", age: 7,
-    birthDate: "2019-02-28", admissionDate: "2026-03-20",
-    specialties: ["Terapia Ocupacional"],
-    assignedSpecialists: ["u-celilia"],
-    avatarBg: T.pink,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "Padre de Ellis", email: "", phone: "" },
-  },
-  {
-    id: "c-yonatan", name: "Yonatan", lastName: "Atzraf", age: 8,
-    birthDate: "2017-08-04", admissionDate: "2026-03-10",
-    specialties: ["Terapia Ocupacional"],
-    assignedSpecialists: ["u-celilia"],
-    avatarBg: T.brandBright,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "Madre de Yonatan", email: "", phone: "" },
-  },
-  {
-    id: "c-nessim", name: "Nessim", lastName: "Guindi Bassan", age: 7,
-    birthDate: "2018-06-13", admissionDate: "2025-11-12",
-    specialties: ["Terapia Ocupacional"],
-    assignedSpecialists: ["u-celilia"],
-    avatarBg: T.amber,
-    nextSession: "2026-08-13", nextSessionTime: "6:00 PM",
-    parentContact: { name: "Familia Guindi Bassan", email: "", phone: "" },
-  },
-  {
-    id: "c-abrahaml", name: "Abraham", lastName: "Levy", age: 5,
-    birthDate: "2020-12-01", admissionDate: "2026-07-23",
-    specialties: ["Terapia Ocupacional"],
-    assignedSpecialists: ["u-celilia"],
-    avatarBg: T.pink,
-    nextSession: "2026-08-13", nextSessionTime: "5:30 PM",
-    parentContact: { name: "Familia Levy", email: "", phone: "" },
-  },
-  {
-    id: "c-joseph", name: "Joseph", lastName: "Benavi", age: 11,
-    birthDate: "2014-01-27", admissionDate: "2025-12-24",
-    specialties: ["Desarrollo (DVLP)"],
-    assignedSpecialists: ["u-daniella"],
-    avatarBg: T.brandBright,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "Evelyn Benavi (madre)", email: "", phone: "+507 6679-8919" },
-  },
-  // ── Lote 2: fichas base (datos completos por editar en la app) ──────────────
-  {
-    id: "c-adam", name: "Adam", lastName: "Abadi", age: null,
-    birthDate: "2019-01-01", admissionDate: "2026-04-16",
-    specialties: ["Terapia Ocupacional", "Psicología"],
-    assignedSpecialists: ["u-celilia", "u-admin"],
-    avatarBg: T.amber,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "Tania Abadi", email: "", phone: "" },
-  },
-  {
-    id: "c-samson", name: "Samson", lastName: "Hutman", age: null,
-    birthDate: "2018-01-01", admissionDate: null,
-    specialties: ["Terapia Ocupacional"],
-    assignedSpecialists: ["u-celilia"],
-    avatarBg: T.pink,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "", email: "", phone: "" },
-  },
-  {
-    id: "c-shella", name: "Shella", lastName: "Naftali Hanono", age: null,
-    birthDate: "2019-01-01", admissionDate: null,
-    specialties: ["Terapia Ocupacional"],
-    assignedSpecialists: ["u-celilia"],
-    avatarBg: T.brandBright,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "", email: "", phone: "" },
-  },
-  {
-    id: "c-haim", name: "Haim", lastName: "Roizenthal", age: null,
-    birthDate: "2019-01-01", admissionDate: null,
-    specialties: ["Terapia Ocupacional", "Psicología"],
-    assignedSpecialists: ["u-celilia", "u-admin"],
-    avatarBg: T.brand,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "Ivonne Roizental", email: "", phone: "" },
-  },
-  {
-    id: "c-gabrielm", name: "Gabriel", lastName: "Mendelsohn", age: null,
-    birthDate: "2019-01-01", admissionDate: null,
-    specialties: ["Terapia Ocupacional"],
-    assignedSpecialists: ["u-celilia"],
-    avatarBg: T.amber,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "", email: "", phone: "" },
-  },
-  {
-    id: "c-fridaabadi", name: "Frida", lastName: "Abadi", age: null,
-    birthDate: "2019-01-01", admissionDate: null,
-    specialties: ["Terapia Ocupacional", "Fonoaudiología"],
-    assignedSpecialists: ["u-celilia", "u-ingrid"],
-    avatarBg: T.pink,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "Eva Lina", email: "", phone: "" },
-  },
-  {
-    id: "c-moshe", name: "Moshe", lastName: "Mizrachi", age: null,
-    birthDate: "2019-01-01", admissionDate: null,
-    specialties: ["Terapia Ocupacional"],
-    assignedSpecialists: ["u-celilia"],
-    avatarBg: T.brandBright,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "", email: "", phone: "" },
-  },
-  {
-    id: "c-sam", name: "Sam", lastName: "Mizrachi", age: null,
-    birthDate: "2019-01-01", admissionDate: null,
-    specialties: ["Terapia Ocupacional"],
-    assignedSpecialists: ["u-celilia"],
-    avatarBg: T.brand,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "", email: "", phone: "" },
-  },
-  {
-    id: "c-milan", name: "Milan", lastName: "Veintain", age: null,
-    birthDate: "2019-01-01", admissionDate: "2026-07-10",
-    specialties: ["Terapia Ocupacional"],
-    assignedSpecialists: ["u-celilia"],
-    avatarBg: T.amber,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "", email: "", phone: "" },
-  },
-  {
-    id: "c-dorita", name: "Dorita", lastName: "Levy", age: null,
-    birthDate: "2019-01-01", admissionDate: null,
-    specialties: ["Terapia Ocupacional"],
-    assignedSpecialists: ["u-celilia"],
-    avatarBg: T.pink,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "", email: "", phone: "" },
-  },
-  {
-    id: "c-jack", name: "Jack", lastName: "Eskenazi", age: null,
-    birthDate: "2019-01-01", admissionDate: null,
-    specialties: ["Terapia Ocupacional"],
-    assignedSpecialists: ["u-celilia"],
-    avatarBg: T.brandBright,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "Sarit Eskenazi", email: "", phone: "" },
-  },
-  {
-    id: "c-gila", name: "Gila", lastName: "Falic", age: null,
-    birthDate: "2019-01-01", admissionDate: null,
-    specialties: ["Terapia Ocupacional"],
-    assignedSpecialists: ["u-celilia"],
-    avatarBg: T.brand,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "Dorita Falic", email: "", phone: "" },
-  },
-  {
-    id: "c-gabrielle", name: "Gabrielle", lastName: "Shabanov", age: null,
-    birthDate: "2019-01-01", admissionDate: null,
-    specialties: ["Terapia Ocupacional"],
-    assignedSpecialists: ["u-celilia"],
-    avatarBg: T.amber,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "Raquel Shabanov", email: "", phone: "" },
-  },
-  {
-    id: "c-isaac", name: "Isaac", lastName: "Mordoch", age: null,
-    birthDate: "2019-01-01", admissionDate: null,
-    specialties: ["Terapia Ocupacional"],
-    assignedSpecialists: ["u-celilia"],
-    avatarBg: T.pink,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "", email: "", phone: "" },
-  },
-  // TO - Idaira Castillo
-  {
-    id: "c-helena", name: "Helena", lastName: "Btesh", age: null,
-    birthDate: "2019-01-01", admissionDate: null,
-    specialties: ["Terapia Ocupacional", "Desarrollo (DVLP)"],
-    assignedSpecialists: ["u-idaira", "u-daniella"],
-    avatarBg: T.brandBright,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "Monique Btesh", email: "", phone: "" },
-  },
-  {
-    id: "c-benjamin", name: "Benjamin", lastName: "Btesh", age: null,
-    birthDate: "2019-01-01", admissionDate: null,
-    specialties: ["Terapia Ocupacional"],
-    assignedSpecialists: ["u-idaira"],
-    avatarBg: T.brand,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "Ariana Lema", email: "", phone: "" },
-  },
-  {
-    id: "c-johan", name: "Johan", lastName: "Hamoui", age: null,
-    birthDate: "2019-01-01", admissionDate: null,
-    specialties: ["Terapia Ocupacional"],
-    assignedSpecialists: ["u-idaira"],
-    avatarBg: T.amber,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "Carol Hamoui", email: "", phone: "" },
-  },
-  {
-    id: "c-jonathanb", name: "Jonathan", lastName: "Benavi", age: null,
-    birthDate: "2019-01-01", admissionDate: null,
-    specialties: ["Terapia Ocupacional"],
-    assignedSpecialists: ["u-idaira"],
-    avatarBg: T.pink,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "Evelyn Benavi", email: "", phone: "" },
-  },
-  {
-    id: "c-shoshana", name: "Shoshana", lastName: "Malka Abbo", age: null,
-    birthDate: "2019-01-01", admissionDate: null,
-    specialties: ["Terapia Ocupacional", "Desarrollo (DVLP)"],
-    assignedSpecialists: ["u-idaira", "u-daniella"],
-    avatarBg: T.brandBright,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "", email: "", phone: "" },
-  },
-  {
-    id: "c-rafaelpc", name: "Rafael", lastName: "Perez Cohen", age: null,
-    birthDate: "2019-01-01", admissionDate: null,
-    specialties: ["Terapia Ocupacional"],
-    assignedSpecialists: ["u-idaira"],
-    avatarBg: T.brand,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "", email: "", phone: "" },
-  },
-  {
-    id: "c-nathalie", name: "Nathalie", lastName: "Azrak", age: null,
-    birthDate: "2019-01-01", admissionDate: null,
-    specialties: ["Terapia Ocupacional"],
-    assignedSpecialists: ["u-idaira"],
-    avatarBg: T.amber,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "", email: "", phone: "" },
-  },
-  // FONO - Ingrid
-  {
-    id: "c-samuell", name: "Samuel", lastName: "Lazar", age: null,
-    birthDate: "2019-01-01", admissionDate: null,
-    specialties: ["Fonoaudiología"],
-    assignedSpecialists: ["u-ingrid"],
-    avatarBg: T.pink,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "Mirli Lazar", email: "", phone: "" },
-  },
-  {
-    id: "c-sebastiano", name: "Sebastiano", lastName: "Natoli", age: null,
-    birthDate: "2019-01-01", admissionDate: null,
-    specialties: ["Fonoaudiología"],
-    assignedSpecialists: ["u-ingrid"],
-    avatarBg: T.brandBright,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "", email: "", phone: "" },
-  },
-  {
-    id: "c-charlie", name: "Charlie", lastName: "Sasportes", age: null,
-    birthDate: "2019-01-01", admissionDate: null,
-    specialties: ["Fonoaudiología", "Psicología"],
-    assignedSpecialists: ["u-ingrid", "u-admin"],
-    avatarBg: T.brand,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "Orly Sasportes", email: "", phone: "" },
-  },
-  // FONO - Milagros
-  {
-    id: "c-abrahamp", name: "Abraham", lastName: "Pesso", age: null,
-    birthDate: "2019-01-01", admissionDate: null,
-    specialties: ["Fonoaudiología"],
-    assignedSpecialists: ["u-milagros"],
-    avatarBg: T.amber,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "Shirley Pesso", email: "", phone: "" },
-  },
-  {
-    id: "c-joel", name: "Joel", lastName: "Amar", age: null,
-    birthDate: "2019-01-01", admissionDate: null,
-    specialties: ["Fonoaudiología"],
-    assignedSpecialists: ["u-milagros"],
-    avatarBg: T.pink,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "Jennifer Israel de Amar", email: "", phone: "" },
-  },
-  {
-    id: "c-selma", name: "Selma", lastName: "Abadi", age: null,
-    birthDate: "2019-01-01", admissionDate: null,
-    specialties: ["Fonoaudiología"],
-    assignedSpecialists: ["u-milagros"],
-    avatarBg: T.brandBright,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "Tania Abadi", email: "", phone: "" },
-  },
-  {
-    id: "c-lily", name: "Lily", lastName: "Bassan", age: null,
-    birthDate: "2019-01-01", admissionDate: null,
-    specialties: ["Fonoaudiología"],
-    assignedSpecialists: ["u-milagros"],
-    avatarBg: T.brand,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "", email: "", phone: "" },
-  },
-  {
-    id: "c-edgar", name: "Edgar", lastName: "Azrak", age: null,
-    birthDate: "2019-01-01", admissionDate: null,
-    specialties: ["Fonoaudiología"],
-    assignedSpecialists: ["u-milagros"],
-    avatarBg: T.amber,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "", email: "", phone: "" },
-  },
-  {
-    id: "c-limor", name: "Limor", lastName: "Guindi", age: null,
-    birthDate: "2019-01-01", admissionDate: null,
-    specialties: ["Fonoaudiología"],
-    assignedSpecialists: ["u-milagros"],
-    avatarBg: T.pink,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "", email: "", phone: "" },
-  },
-  // Psicología - Neyma
-  {
-    id: "c-nathan", name: "Nathan", lastName: "Schachtel", age: null,
-    birthDate: "2019-01-01", admissionDate: null,
-    specialties: ["Psicología"],
-    assignedSpecialists: ["u-neyma"],
-    avatarBg: T.brandBright,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "", email: "", phone: "" },
-  },
-  {
-    id: "c-nissimmilhen", name: "Nissim", lastName: "Milhen", age: null,
-    birthDate: "2019-01-01", admissionDate: null,
-    specialties: ["Psicología"],
-    assignedSpecialists: ["u-neyma"],
-    avatarBg: T.brand,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "", email: "", phone: "" },
-  },
-  // Psicología - Sarita
-  {
-    id: "c-debora", name: "Deborah", lastName: "Hazan Hanono", age: null,
-    birthDate: "2019-01-01", admissionDate: "2026-06-10",
-    specialties: ["Psicología"],
-    assignedSpecialists: ["u-admin"],
-    avatarBg: T.amber,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "", email: "", phone: "" },
-  },
-  {
-    id: "c-eduardon", name: "Eduardo", lastName: "Nissim", age: null,
-    birthDate: "2019-01-01", admissionDate: null,
-    specialties: ["Psicología", "Kids Club"],
-    assignedSpecialists: ["u-admin", "u-mariavirginia"],
-    avatarBg: T.pink,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "Grace Attie Nissim", email: "", phone: "" },
-  },
-  // DVLP - Daniella
-  {
-    id: "c-fridas", name: "Frida", lastName: "Sasson Btesh", age: null,
-    birthDate: "2019-01-01", admissionDate: null,
-    specialties: ["Desarrollo (DVLP)"],
-    assignedSpecialists: ["u-daniella"],
-    avatarBg: T.brandBright,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "", email: "", phone: "" },
-  },
-  {
-    id: "c-guila", name: "Guila", lastName: "Eskenazi", age: null,
-    birthDate: "2019-01-01", admissionDate: null,
-    specialties: ["Desarrollo (DVLP)"],
-    assignedSpecialists: ["u-daniella"],
-    avatarBg: T.brand,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "Sarit Eskenazi", email: "", phone: "" },
-  },
-  {
-    id: "c-linda", name: "Linda", lastName: "Khafif Israel", age: null,
-    birthDate: "2019-01-01", admissionDate: null,
-    specialties: ["Desarrollo (DVLP)"],
-    assignedSpecialists: ["u-daniella"],
-    avatarBg: T.amber,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "Ayelet Khafif", email: "", phone: "" },
-  },
-  {
-    id: "c-mili", name: "Mili", lastName: "Khafif Tawachi", age: null,
-    birthDate: "2019-01-01", admissionDate: null,
-    specialties: ["Desarrollo (DVLP)"],
-    assignedSpecialists: ["u-daniella"],
-    avatarBg: T.pink,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "Zuby Khafif", email: "", phone: "" },
-  },
-  {
-    id: "c-noha", name: "Noha", lastName: "", age: null,
-    birthDate: "2019-01-01", admissionDate: null,
-    specialties: ["Desarrollo (DVLP)"],
-    assignedSpecialists: ["u-daniella"],
-    avatarBg: T.brandBright,
-    nextSession: null, nextSessionTime: null,
-    parentContact: { name: "Dorit Levy", email: "", phone: "" },
-  },
+  { id:"c-noha", name:"Noa", lastName:"Levy Attia", birthDate:"2019-07-16", admissionDate:null, specialties:["Desarrollo (DVLP)"], assignedSpecialists:["u-daniella"], avatarBg:T.amber, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Dorit Levy Attia",phone:"66137921",email:""} },
+  { id:"c-joseph", name:"Joseph", lastName:"Ben Avi", birthDate:"2014-01-27", admissionDate:null, specialties:["Desarrollo (DVLP)"], assignedSpecialists:["u-daniella"], avatarBg:T.brandBright, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Evelyn Ben Avi",phone:"66798919",email:""} },
+  { id:"c-mili", name:"Mili", lastName:"Tawachi Khafif", birthDate:"2016-11-21", admissionDate:null, specialties:["Desarrollo (DVLP)"], assignedSpecialists:["u-daniella"], avatarBg:T.pink, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Zuby Khafif",phone:"66177371",email:""} },
+  { id:"c-charlie", name:"Charlie Yosef", lastName:"Sasportes Eskenazi", birthDate:"2016-01-18", admissionDate:null, specialties:["Fonoaudiología"], assignedSpecialists:["u-ingrid"], avatarBg:T.brand, status:"inactivo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Orly Sasportes",phone:"67478300",email:""} },
+  { id:"c-fridaabadi", name:"Frida", lastName:"Abadi", birthDate:"2018-09-13", admissionDate:null, specialties:["Fonoaudiología","Terapia Ocupacional"], assignedSpecialists:["u-ingrid","u-celilia"], avatarBg:T.pink, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Eva Liana",phone:"66167252",email:""} },
+  { id:"c-samuell", name:"Samuel", lastName:"Lazar", birthDate:"2020-08-11", admissionDate:null, specialties:["Fonoaudiología"], assignedSpecialists:["u-ingrid"], avatarBg:T.amber, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Michal Lazar",phone:"63975615",email:""} },
+  { id:"c-sebastiano", name:"Sebastiano", lastName:"Nataloni", birthDate:"2023-01-07", admissionDate:null, specialties:["Fonoaudiología"], assignedSpecialists:["u-ingrid"], avatarBg:T.brandBright, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Orlymer Perez",phone:"65704425",email:""} },
+  { id:"c-abrahamp", name:"Abraham", lastName:"Pesso", birthDate:"2023-01-10", admissionDate:null, specialties:["Fonoaudiología"], assignedSpecialists:["u-milagros"], avatarBg:T.amber, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Shirley Pesso",phone:"66761188",email:""} },
+  { id:"c-joel", name:"Joel Nessim", lastName:"Amar Israel", birthDate:"2021-01-19", admissionDate:null, specialties:["Fonoaudiología"], assignedSpecialists:["u-milagros"], avatarBg:T.pink, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Jen Israel de Amar",phone:"67474375",email:""} },
+  { id:"c-lily", name:"Lily", lastName:"Bassan Szerer", birthDate:"2018-01-08", admissionDate:null, specialties:["Fonoaudiología"], assignedSpecialists:["u-milagros"], avatarBg:T.brandBright, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Sarita Bassan",phone:"69487740",email:""} },
+  { id:"c-alessandra", name:"Alessandra", lastName:"Benaim Landman", birthDate:"2010-10-12", admissionDate:null, specialties:["Psicología"], assignedSpecialists:["u-neyma"], avatarBg:T.amber, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Alice Benaim",phone:"66797798",email:""} },
+  { id:"c-gabriel", name:"Gabriel", lastName:"Velásquez Páez", birthDate:"2011-07-05", admissionDate:null, specialties:["Psicología"], assignedSpecialists:["u-neyma"], avatarBg:T.pink, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Orlymer Perez",phone:"65704425",email:""} },
+  { id:"c-rafael", name:"Rafael", lastName:"Ben-Avi Rosental", birthDate:"2018-12-23", admissionDate:null, specialties:["Psicología"], assignedSpecialists:["u-neyma"], avatarBg:T.brandBright, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Yael Ben Avi",phone:"66797805",email:""} },
+  { id:"c-nissimmilhen", name:"Nissim Joseph", lastName:"Cohen Milhem", birthDate:"2015-11-25", admissionDate:null, specialties:["Psicología"], assignedSpecialists:["u-neyma"], avatarBg:T.brand, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Nicolle Milhen",phone:"66149000",email:""} },
+  { id:"c-nessim", name:"Nessim", lastName:"Guindi Bassan", birthDate:"2018-06-13", admissionDate:null, specialties:["Psicología","Terapia Ocupacional"], assignedSpecialists:["u-neyma","u-celilia"], avatarBg:T.amber, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Frida Guindi Bassan",phone:"66139408",email:""} },
+  { id:"c-eduardon", name:"Eduardo", lastName:"Nessim", birthDate:"2018-07-05", admissionDate:null, specialties:["Kids Club"], assignedSpecialists:["u-mariavirginia"], avatarBg:T.pink, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Grace Nessim",phone:"66708487",email:""} },
+  { id:"c-edy", name:"Edy", lastName:"Antebi", birthDate:"2020-06-20", admissionDate:null, specialties:["Kids Club","Desarrollo (DVLP)"], assignedSpecialists:["u-mariavirginia","u-daniella"], avatarBg:T.amber, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Natalie Antebi",phone:"67811255",email:""} },
+  { id:"c-eliahu", name:"Eliauh", lastName:"Guindi Zayat", birthDate:"2019-08-06", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-celilia"], avatarBg:T.brandBright, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Adela Guindi",phone:"67819400",email:""} },
+  { id:"c-abrahaml", name:"Abraham Nathan", lastName:"Levy Weinberg", birthDate:"2020-12-01", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-celilia"], avatarBg:T.pink, status:"inactivo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Tony Levy",phone:"66163324",email:""} },
+  { id:"c-sam", name:"Sam", lastName:"Mizrachi", birthDate:"2016-05-11", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-celilia"], avatarBg:T.amber, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Hilda Mizrachi",phone:"66166171",email:""} },
+  { id:"c-moshe", name:"Moshe", lastName:"Mizrachi", birthDate:"2016-05-11", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-celilia"], avatarBg:T.brandBright, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Hilda Mizrachi",phone:"66166171",email:""} },
+  { id:"c-leo", name:"Leo", lastName:"Coleman Bergantino", birthDate:"2023-01-13", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-celilia"], avatarBg:T.pink, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Karen Bergantino",phone:"65505706",email:""} },
+  { id:"c-binyamin", name:"Binyamin", lastName:"Lowfer", birthDate:"2022-06-11", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-celilia"], avatarBg:T.brand, status:"inactivo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Diana Gabay",phone:"69484830",email:""} },
+  { id:"c-shella", name:"Shella", lastName:"Naftali Hanono", birthDate:"2021-12-02", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-celilia"], avatarBg:T.amber, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Bella Hanono",phone:"69368822",email:""} },
+  { id:"c-gabrielm", name:"Gabriel", lastName:"Mendelson Shabanov", birthDate:"2024-03-24", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-celilia"], avatarBg:T.brandBright, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Raquel Shabanov",phone:"62468888",email:""} },
+  { id:"c-ellis", name:"Ellis", lastName:"Yohoros", birthDate:"2019-02-28", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-celilia"], avatarBg:T.pink, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Denisse Yohoros",phone:"65506363",email:""} },
+  { id:"c-milan", name:"Milan David", lastName:"Vainstein Lolo Shamriz", birthDate:"2021-04-21", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-celilia"], avatarBg:T.amber, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Amit Vainstein",phone:"63133224",email:""} },
+  { id:"c-haim", name:"Haim", lastName:"Roizental", birthDate:"2021-04-02", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-celilia"], avatarBg:T.brandBright, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Ivonne Roizental",phone:"60600223",email:""} },
+  { id:"c-samson", name:"Samsone Bodie", lastName:"Hutman", birthDate:"2020-05-16", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-celilia"], avatarBg:T.pink, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Brette Hutman",phone:"64302988",email:""} },
+  { id:"c-jonathan", name:"Jonathan", lastName:"Salomon", birthDate:"2018-08-20", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-celilia"], avatarBg:T.amber, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Ariela Salomon",phone:"66748144",email:""} },
+  { id:"c-elias", name:"Elias", lastName:"Amar", birthDate:"2019-02-22", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-celilia"], avatarBg:T.brand, status:"inactivo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Violeta Soued",phone:"66175471",email:""} },
+  { id:"c-gila", name:"Gila Gladys", lastName:"Falic Kardonski", birthDate:"2023-01-18", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-celilia"], avatarBg:T.brandBright, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Dorita Falic",phone:"64504791",email:""} },
+  { id:"c-dorita", name:"Dorita", lastName:"Levy", birthDate:"2017-02-07", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-celilia"], avatarBg:T.pink, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Karen Levi",phone:"66734520",email:""} },
+  { id:"c-haimbenavi", name:"Haim", lastName:"Ben-Avi", birthDate:"2020-11-24", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-celilia"], avatarBg:T.amber, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Yael Ben Avi",phone:"66797805",email:""} },
+  { id:"c-isaac", name:"Isaac", lastName:"Schachtel Tarazi", birthDate:"2022-12-29", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-celilia"], avatarBg:T.brandBright, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Diana Schachtel",phone:"61127386",email:""} },
+  { id:"c-nathalie", name:"Natalie", lastName:"Azrak Schachtel", birthDate:"2015-06-14", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-idaira"], avatarBg:T.pink, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Joanna Schachtel",phone:"66750311",email:""} },
+  { id:"c-jonathanb", name:"Jonathan", lastName:"Ben Avi", birthDate:"2019-04-22", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-idaira"], avatarBg:T.amber, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Evelyn Ben Avi",phone:"66798919",email:""} },
+  { id:"c-atai", name:"Atai Leon", lastName:"Pion", birthDate:"2017-08-04", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-idaira"], avatarBg:T.brandBright, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Pninit Levin",phone:"60709159",email:""} },
+  { id:"c-benjamin", name:"Benjamin Beno", lastName:"Betesh Vega", birthDate:"2023-06-18", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-idaira"], avatarBg:T.brand, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Joann Vega",phone:"66712819",email:""} },
+  { id:"c-helena", name:"Helena Raquel", lastName:"Btesh", birthDate:"2021-09-03", admissionDate:null, specialties:["Terapia Ocupacional","Desarrollo (DVLP)"], assignedSpecialists:["u-idaira","u-daniella"], avatarBg:T.pink, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Monique Btesh",phone:"66739454",email:""} },
+  { id:"c-johan", name:"Jonah", lastName:"Hamoui Fefer", birthDate:"2019-09-05", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-idaira"], avatarBg:T.amber, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Jeny Hamoui",phone:"8184456377",email:""} },
+  { id:"c-asher", name:"Asher", lastName:"Btesh", birthDate:"2020-02-10", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-idaira"], avatarBg:T.brandBright, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Monique Btesh",phone:"66739454",email:""} },
+  { id:"c-rafaelpc", name:"Rafael", lastName:"Ben Avi Bassan", birthDate:"2013-08-16", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-idaira"], avatarBg:T.pink, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Sara Bassan",phone:"66721580",email:""} },
+  { id:"c-shoshana", name:"Shoshana Aviva", lastName:"Malka Abbo", birthDate:"2018-08-08", admissionDate:null, specialties:["Terapia Ocupacional","Desarrollo (DVLP)"], assignedSpecialists:["u-idaira","u-daniella"], avatarBg:T.amber, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Luisa Abbo",phone:"60600222",email:""} },
 ];
+
 
 const seedObjectives = [
   { id: "o-edy1", childId: "c-edy", name: "Regulación emocional", area: "Desarrollo (DVLP)", createdDate: "2026-01-12", specialistId: "u-daniella", status: "proceso" },
@@ -1085,7 +664,7 @@ function ChildCard({ child, users, sessions, onOpen }) {
             {child.name} {child.lastName}
           </div>
           <div style={{ fontSize: 13, color: T.inkSoft, marginTop: 2 }}>
-            {child.age != null ? `${child.age} años · ` : ""}{child.specialties.join(" · ")}
+            {child.status === "inactivo" && <span style={{color:"#B56060",fontWeight:600,marginRight:4}}>INACTIVO · </span>}{child.age != null ? `${child.age} años · ` : ""}{child.specialties.join(" · ")}
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 18, paddingTop: 14, borderTop: `1px solid ${T.borderSoft}` }}>
@@ -1383,7 +962,7 @@ function CalendarAgenda({ events, loading, error, date, onDateChange, children, 
 /* ============================================================
    CLINICAL DIRECTOR HOME
 ============================================================ */
-function ClinicalDirectorHome({ user, children, users, sessions, objectives, tutors, tutorReports, onOpenChild, calendarEvents, calendarLoading, calendarError, calendarDate, onCalendarDateChange }) {
+function ClinicalDirectorHome({ user, children, users, sessions, objectives, tutors, tutorReports, onOpenChild, calendarEvents, calendarLoading, calendarError, calendarDate, onCalendarDateChange, activityLog, onMarkSeen }) {
   const [query, setQuery] = useState("");
   const [filterSpecialty, setFilterSpecialty] = useState("Todos");
   const [alertTab, setAlertTab] = useState("inactivos");
@@ -1550,6 +1129,8 @@ function ClinicalDirectorHome({ user, children, users, sessions, objectives, tut
         date={calendarDate} onDateChange={onCalendarDateChange}
         children={children} onOpenChild={onOpenChild}
       />
+      <ActivityFeed activityLog={activityLog} users={users} onMarkSeen={onMarkSeen} />
+      <ActivityFeed activityLog={activityLog} users={users} onMarkSeen={onMarkSeen} />
 
       {/* Two-column layout */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 330px", gap: 24, alignItems: "start" }}>
@@ -2183,6 +1764,72 @@ function GabinetePanel({ schools, users, gabineteSessions, onAddSession, onAddSc
 }
 
 /* ============================================================
+   ACTIVITY FEED — alertas en tiempo real para Sarita e Idaira
+============================================================ */
+function ActivityFeed({ activityLog, users, onMarkSeen }) {
+  const recent = activityLog.slice(0, 20);
+  const unseen = activityLog.filter(a => !a.seen).length;
+
+  const TYPE_ICON = { session: "🗒", document: "📄", objective: "🎯", meeting: "🤝" };
+
+  const timeAgo = (ts) => {
+    const mins = Math.floor((new Date() - new Date(ts)) / 60000);
+    if (mins < 1) return "ahora";
+    if (mins < 60) return `hace ${mins}m`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `hace ${hrs}h`;
+    return `hace ${Math.floor(hrs/24)}d`;
+  };
+
+  return (
+    <Card style={{ marginBottom: 20 }}>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+          <Eyebrow>Actividad reciente</Eyebrow>
+          {unseen > 0 && (
+            <span style={{ background:T.brand, color:"#fff", fontSize:11, fontWeight:700, padding:"2px 7px", borderRadius:20 }}>{unseen}</span>
+          )}
+        </div>
+        {unseen > 0 && (
+          <button onClick={onMarkSeen} style={{ background:"none", border:"none", fontSize:12, color:T.brand, cursor:"pointer", fontFamily:"Inter, sans-serif", fontWeight:600 }}>
+            Marcar todo como visto
+          </button>
+        )}
+      </div>
+
+      {recent.length === 0 ? (
+        <div style={{ fontSize:13, color:T.inkFaint, padding:"12px 0", textAlign:"center" }}>Sin actividad reciente</div>
+      ) : (
+        <div style={{ display:"flex", flexDirection:"column" }}>
+          {recent.map((act, i) => {
+            const sp = users.find(u => u.id === act.specialistId);
+            return (
+              <div key={act.id} style={{
+                display:"flex", alignItems:"flex-start", gap:10, padding:"9px 0",
+                borderBottom: i < recent.length-1 ? `1px solid ${T.borderSoft}` : "none",
+                opacity: act.seen ? 0.6 : 1,
+              }}>
+                <div style={{ fontSize:16, flexShrink:0, marginTop:1 }}>{TYPE_ICON[act.type] || "📌"}</div>
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ fontSize:13, fontWeight:600, color:T.ink }}>
+                    {act.childName}
+                    {!act.seen && <span style={{ display:"inline-block", width:6, height:6, borderRadius:"50%", background:T.brand, marginLeft:6, verticalAlign:"middle" }} />}
+                  </div>
+                  <div style={{ fontSize:12, color:T.inkSoft, marginTop:1 }}>
+                    {act.description} · {sp ? sp.name.split(" ")[0] : "—"}
+                  </div>
+                </div>
+                <div style={{ fontSize:11, color:T.inkFaint, flexShrink:0, whiteSpace:"nowrap" }}>{timeAgo(act.timestamp)}</div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+/* ============================================================
    ADMIN DASHBOARD
 ============================================================ */
 function StatStrip({ items }) {
@@ -2202,7 +1849,7 @@ function StatStrip({ items }) {
   );
 }
 
-function AdminDashboard({ children, users, sessions, objectives, parentReports, onOpenChild, calendarEvents, calendarLoading, calendarError, calendarDate, onCalendarDateChange }) {
+function AdminDashboard({ children, users, sessions, objectives, parentReports, onOpenChild, calendarEvents, calendarLoading, calendarError, calendarDate, onCalendarDateChange, activityLog, onMarkSeen }) {
   const specialists = users.filter((u) => u.role === "specialist" || u.role === "clinical_director");
   const today = TODAY;
   const sessionsToday = sessions.filter((s) => s.date === today).length;
@@ -4008,6 +3655,14 @@ Si no hay eventos, responde: []`,
     };
     setSessions((prev) => [...prev, newSession]);
     setWizardOpen(false);
+    const child = children.find(c => c.id === newSession.childId);
+    setActivityLog(prev => [{
+      id: `act-${Date.now()}`, type: "session", timestamp: new Date().toISOString(),
+      specialistId: newSession.specialistId, childId: newSession.childId,
+      childName: child ? `${child.name} ${child.lastName}` : "Paciente",
+      description: `Sesión registrada`,
+      seen: false,
+    }, ...prev]);
     try { db.insertSession(newSession); } catch(e) { console.error("Save session:", e); }
     setToast(true);
     setTimeout(() => setToast(false), 3200);
@@ -4116,6 +3771,7 @@ Si no hay eventos, responde: []`,
           tutors={tutors} tutorReports={tutorReports}
           calendarEvents={calendarEvents} calendarLoading={calendarLoading} calendarError={calendarError}
           calendarDate={calendarDate} onCalendarDateChange={(d) => { setCalendarDate(d); fetchCalendarEvents(d); }}
+          activityLog={activityLog} onMarkSeen={() => setActivityLog(prev => prev.map(a => ({...a, seen:true})))}
           onOpenChild={(id) => { setSelectedChildId(id); setView("child"); }}
         />
       )}
@@ -4125,6 +3781,7 @@ Si no hay eventos, responde: []`,
           children={children} users={users} sessions={sessions} objectives={objectives} parentReports={parentReports}
           calendarEvents={calendarEvents} calendarLoading={calendarLoading} calendarError={calendarError}
           calendarDate={calendarDate} onCalendarDateChange={(d) => { setCalendarDate(d); fetchCalendarEvents(d); }}
+          activityLog={activityLog} onMarkSeen={() => setActivityLog(prev => prev.map(a => ({...a, seen:true})))}
           onOpenChild={(id) => { setSelectedChildId(id); setView("child"); }}
         />
       )}
