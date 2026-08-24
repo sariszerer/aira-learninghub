@@ -3511,6 +3511,7 @@ export default function App() {
   const [schools, setSchools] = useState(seedSchools);
   const [gabineteSessions, setGabineteSessions] = useState(seedGabineteSessions);
   const [tutorReports, setTutorReports] = useState(seedTutorReports);
+  const [activityLog, setActivityLog] = useState([]);
 
   // ── Google Calendar live agenda ─────────────────────────────────────────────
   const [calendarEvents, setCalendarEvents] = useState([]);
