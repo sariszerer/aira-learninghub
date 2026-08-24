@@ -3713,11 +3713,19 @@ Si no hay eventos, responde: []`,
     setMeetings((prev) => [...prev, { id: `mtg-${Date.now()}`, childId: selectedChildId, createdBy: currentUser.id, ...meeting }]);
   }
 
+  if (authLoading) {
+    return (
+      <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:"#FFFBF2" }}>
+        <div style={{ fontFamily:"Fraunces, serif", fontSize:36, fontWeight:500, color:"#175FAF", letterSpacing:"-0.02em" }}>AIRA</div>
+      </div>
+    );
+  }
+
   if (!currentUser) {
     return (
       <>
         <style>{FONTS}</style>
-        <LoginScreen users={users} tutors={tutors} onLogin={setCurrentUser} />
+        <Login />
       </>
     );
   }
