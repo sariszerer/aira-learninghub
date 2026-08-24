@@ -1892,7 +1892,7 @@ function AdminDashboard({ children, users, sessions, objectives, parentReports, 
         children={children} onOpenChild={onOpenChild}
       />
 
-      {(childrenNoRecentSession.length > 0 || childrenReadyForParentReport.length > 0) && (
+      {sessions.length > 0 && (childrenNoRecentSession.length > 0 || childrenReadyForParentReport.length > 0) && (
         <Card style={{ padding: 18, marginBottom: 28, borderColor: T.apoyoTint, background: T.apoyoTint }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, color: T.apoyo, fontWeight: 700, fontSize: 13.5, marginBottom: 10 }}>
             <AlertTriangle size={16} /> Alertas
