@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { db, auth, getAppUser } from "./supabase.js";
+import { signInToGoogle, fetchCalendarEvents as gcalFetch, getStoredToken, clearToken } from "./googleCalendar.js";
 import Login from "./Login.jsx";
 
 /* ============================================================
@@ -785,7 +786,7 @@ function SpecialistHome({ user, children, users, sessions, onOpenChild, calendar
 /* ============================================================
    CALENDAR AGENDA WIDGET
 ============================================================ */
-function CalendarAgenda({ events, loading, error, date, onDateChange, children, onOpenChild }) {
+function CalendarAgenda({ events, loading, error, date, onDateChange, children, onOpenChild, onConnectGcal }) {
   const [links, setLinks] = useState({}); // eventIndex -> childId
   const [linking, setLinking] = useState(null); // index of event being linked
   const [search, setSearch] = useState("");
@@ -837,9 +838,16 @@ function CalendarAgenda({ events, loading, error, date, onDateChange, children, 
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
-      {error && (
+      {error === "conectar" ? (
+        <div style={{ padding: "20px 0", textAlign: "center" }}>
+          <div style={{ fontSize: 13.5, color: T.inkSoft, marginBottom: 14 }}>Conecta Google Calendar para ver la agenda de AIRA</div>
+          <button onClick={onConnectGcal} style={{ background: T.brand, color: "#fff", border: "none", borderRadius: 12, padding: "10px 22px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif", display: "inline-flex", alignItems: "center", gap: 8 }}>
+            📅 Conectar Google Calendar
+          </button>
+        </div>
+      ) : error ? (
         <div style={{ fontSize: 13, color: "#B56060", padding: "10px 14px", background: "#FFF0F0", borderRadius: 10, marginBottom: 12 }}>⚠ {error}</div>
-      )}
+      ) : null}
 
       {!loading && !error && events.length === 0 && (
         <div style={{ fontSize: 13.5, color: T.inkFaint, textAlign: "center", padding: "24px 0" }}>No hay eventos en el calendario para este día.</div>
@@ -1127,7 +1135,7 @@ function ClinicalDirectorHome({ user, children, users, sessions, objectives, tut
       <CalendarAgenda
         events={calendarEvents} loading={calendarLoading} error={calendarError}
         date={calendarDate} onDateChange={onCalendarDateChange}
-        children={children} onOpenChild={onOpenChild}
+        children={children} onOpenChild={onOpenChild} onConnectGcal={handleConnectGcal}
       />
       <ActivityFeed activityLog={activityLog} users={users} onMarkSeen={onMarkSeen} />
       <ActivityFeed activityLog={activityLog} users={users} onMarkSeen={onMarkSeen} />
@@ -1889,7 +1897,7 @@ function AdminDashboard({ children, users, sessions, objectives, parentReports, 
       <CalendarAgenda
         events={calendarEvents} loading={calendarLoading} error={calendarError}
         date={calendarDate} onDateChange={onCalendarDateChange}
-        children={children} onOpenChild={onOpenChild}
+        children={children} onOpenChild={onOpenChild} onConnectGcal={handleConnectGcal}
       />
 
       {sessions.length > 0 && (childrenNoRecentSession.length > 0 || childrenReadyForParentReport.length > 0) && (
@@ -3515,6 +3523,7 @@ export default function App() {
 
   // ── Google Calendar live agenda ─────────────────────────────────────────────
   const [calendarEvents, setCalendarEvents] = useState([]);
+  const [gcalConnected, setGcalConnected] = useState(!!localStorage.getItem("gcal_token"));
   const [calendarLoading, setCalendarLoading] = useState(false);
   const [calendarError, setCalendarError] = useState(null);
   const [calendarDate, setCalendarDate] = useState(TODAY);
@@ -3561,38 +3570,34 @@ export default function App() {
     }
   }, [currentUser, loadFromSupabase]);
 
-    const fetchCalendarEvents = async (date) => {
+  const fetchCalendarEvents = async (date) => {
+    if (!getStoredToken()) { setGcalConnected(false); return; }
     setCalendarLoading(true);
     setCalendarError(null);
     try {
-      const startISO = `${date}T00:00:00-05:00`;
-      const endISO   = `${date}T23:59:59-05:00`;
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-6",
-          max_tokens: 1000,
-          mcp_servers: [{ type: "url", url: "https://calendarmcp.googleapis.com/mcp/v1", name: "google-calendar" }],
-          system: `Eres un asistente que extrae eventos de Google Calendar para AIRA Learning Hub.
-Llama a la herramienta list_events con calendarId="airalearninghub@gmail.com", startTime="${startISO}", endTime="${endISO}", orderBy="startTime", timeZone="America/Panama".
-Responde SOLO con un array JSON válido de objetos con esta estructura exacta (sin markdown, sin texto extra):
-[{"time":"4:00 PM","endTime":"4:45 PM","title":"Nombre del evento","specialist":"nombre especialista si aparece en el título","raw":"título completo original"}]
-Si no hay eventos, responde: []`,
-          messages: [{ role: "user", content: "Lista los eventos del calendario para hoy." }],
-        }),
-      });
-      const data = await response.json();
-      const textBlock = (data.content || []).find(b => b.type === "text");
-      if (!textBlock) throw new Error("Sin respuesta");
-      const clean = textBlock.text.replace(/```json|```/g, "").trim();
-      const events = JSON.parse(clean);
-      setCalendarEvents(Array.isArray(events) ? events : []);
+      const events = await gcalFetch(date);
+      setCalendarEvents(events);
+      setGcalConnected(true);
     } catch (e) {
-      setCalendarError("No se pudo cargar el calendario");
+      if (e.message === "NOT_AUTHENTICATED") {
+        setGcalConnected(false);
+        setCalendarError("conectar");
+      } else {
+        setCalendarError("No se pudo cargar el calendario");
+      }
       setCalendarEvents([]);
     } finally {
       setCalendarLoading(false);
+    }
+  };
+
+  const handleConnectGcal = async () => {
+    try {
+      await signInToGoogle();
+      setGcalConnected(true);
+      fetchCalendarEvents(calendarDate);
+    } catch(e) {
+      setCalendarError("No se pudo conectar con Google");
     }
   };
 
