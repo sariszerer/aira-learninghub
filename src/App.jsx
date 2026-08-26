@@ -3486,12 +3486,18 @@ export default function App() {
 
   // Listen to Supabase auth state
   useEffect(() => {
+    // Add timeout in case Supabase doesn't respond
+    const timeout = setTimeout(() => setAuthLoading(false), 3000);
     auth.getSession().then(async (session) => {
+      clearTimeout(timeout);
       if (session) {
         const appUser = await getAppUser(session.user.id)
         if (appUser) setCurrentUser(appUser)
       }
       setAuthLoading(false)
+    }).catch(() => {
+      clearTimeout(timeout);
+      setAuthLoading(false);
     })
     const { data: { subscription } } = auth.onAuthStateChange(async (event, session) => {
       if (event === "SIGNED_IN" && session) {
