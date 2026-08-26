@@ -3016,60 +3016,99 @@ function ChildProfile({ child, users, sessions, objectives, documents, meetings,
       {tab === "historial" && <HistorialTab child={child} sessions={sessions} objectives={objectives} users={users} onViewReport={onViewReport} />}
       {tab === "objetivos" && (() => {
         const childObjs = objectives.filter((o) => o.childId === child.id);
-        // Group by specialist
-        const bySpecialist = {};
+        // Group by specialist+area combo
+        const groups = {};
         childObjs.forEach((o) => {
-          const key = o.specialistId || "sin-especialista";
-          if (!bySpecialist[key]) bySpecialist[key] = [];
-          bySpecialist[key].push(o);
+          const specId = o.specialistId || "sin-especialista";
+          const area = o.area || "General";
+          const key = `${specId}__${area}`;
+          if (!groups[key]) groups[key] = { specId, area, objs: [] };
+          groups[key].objs.push(o);
         });
-        const specialistGroups = Object.entries(bySpecialist);
+        const groupList = Object.values(groups).sort((a, b) => a.area.localeCompare(b.area));
         const canEdit = (specId) => currentUser.role === "admin" || currentUser.role === "clinical_director" || currentUser.id === specId;
+
+        const AREA_COLORS = {
+          "Terapia Ocupacional": "#175FAF",
+          "Fonoaudiologia": "#7A9E7E",
+          "Funciones Ejecutivas": "#C79A6B",
+          "Psicologia": "#A6779A",
+          "Desarrollo (DVLP)": "#F5C93E",
+          "Kids Club": "#82A166",
+          "General": T.inkSoft,
+        };
+
         return (
-          <div>
-            {specialistGroups.map(([specId, objs]) => {
+          <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+            {groupList.map(({ specId, area, objs }) => {
               const spec = users.find(u => u.id === specId);
-              const area = objs[0]?.area || "General";
               const canEditThis = canEdit(specId);
+              const logrados = objs.filter(o => o.status === "logrado").length;
+              const color = AREA_COLORS[area] || T.inkSoft;
               return (
-                <Card key={specId} style={{ padding: "14px 18px 18px", marginBottom: 16 }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                <div key={`${specId}__${area}`} style={{ marginBottom: 20 }}>
+                  {/* Discipline header */}
+                  <div style={{
+                    display: "flex", alignItems: "center", justifyContent: "space-between",
+                    padding: "10px 18px", background: `${color}12`,
+                    borderLeft: `4px solid ${color}`, borderRadius: "10px 10px 0 0",
+                    borderBottom: `1px solid ${color}30`,
+                  }}>
                     <div>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: T.inkSoft, textTransform: "uppercase", letterSpacing: "0.05em" }}>{area}</div>
-                      <div style={{ fontSize: 13, color: T.inkFaint }}>{spec ? spec.name : "Sin especialista"}</div>
+                      <div style={{ fontSize: 13.5, fontWeight: 700, color, letterSpacing: "0.01em" }}>{area}</div>
+                      <div style={{ fontSize: 12, color: T.inkSoft, marginTop: 1 }}>
+                        {spec ? spec.name : "Sin especialista"} {canEditThis && <span style={{ color: T.brand, fontSize: 11 }}>· puede editar</span>}
+                      </div>
                     </div>
-                    <div style={{ fontSize: 12, color: T.inkSoft }}>
-                      {objs.filter(o => o.status === "logrado").length}/{objs.length} logrados
+                    <div style={{ textAlign: "right" }}>
+                      <div style={{ fontSize: 18, fontWeight: 600, color, fontFamily: "Fraunces, serif" }}>{logrados}/{objs.length}</div>
+                      <div style={{ fontSize: 11, color: T.inkFaint }}>logrados</div>
                     </div>
                   </div>
-                  <ObjectivesList
-                    objectives={objs}
-                    onUpdate={canEditThis ? onUpdateObjective : null}
-                    onAdd={canEditThis ? (data) => onAddObjective({ ...data, childId: child.id, specialistId: specId, createdDate: TODAY, status: "proceso" }) : null}
-                    onDelete={canEditThis ? onDeleteObjective : null}
-                  />
-                </Card>
+                  {/* Objectives list */}
+                  <Card style={{ padding: "6px 18px 14px", borderRadius: "0 0 10px 10px", borderTop: "none", marginTop: 0 }}>
+                    <ObjectivesList
+                      objectives={objs}
+                      onUpdate={canEditThis ? onUpdateObjective : null}
+                      onAdd={canEditThis ? (data) => onAddObjective({ ...data, childId: child.id, specialistId: specId, area, createdDate: TODAY, status: "proceso" }) : null}
+                      onDelete={canEditThis ? onDeleteObjective : null}
+                    />
+                  </Card>
+                </div>
               );
             })}
-            {/* Add objectives for current specialist */}
-            {(currentUser.role === "specialist" || currentUser.role === "admin" || currentUser.role === "clinical_director") && !bySpecialist[currentUser.id] && (
-              <Card style={{ padding: "14px 18px 18px", marginBottom: 16, borderStyle: "dashed" }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: T.inkSoft, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 12 }}>
-                  + Agregar objetivos como {currentUser.name}
+
+            {/* Button to add new discipline block */}
+            {canEdit(currentUser.id) && !groups[`${currentUser.id}__${currentUser.specialty || "General"}`] && (
+              <div style={{ marginBottom: 20 }}>
+                <div style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  padding: "10px 18px", background: `${T.brand}08`,
+                  borderLeft: `4px solid ${T.brand}40`, borderRadius: "10px 10px 0 0",
+                  borderBottom: `1px solid ${T.brand}20`, borderStyle: "dashed",
+                }}>
+                  <div>
+                    <div style={{ fontSize: 13.5, fontWeight: 700, color: T.brand }}>+ {currentUser.specialty || "Nueva disciplina"}</div>
+                    <div style={{ fontSize: 12, color: T.inkSoft }}>{currentUser.name}</div>
+                  </div>
+                </div>
+                <Card style={{ padding: "6px 18px 14px", borderRadius: "0 0 10px 10px", borderTop: "none" }}>
+                  <ObjectivesList
+                    objectives={[]}
+                    onAdd={(data) => onAddObjective({ ...data, childId: child.id, specialistId: currentUser.id, area: currentUser.specialty || "General", createdDate: TODAY, status: "proceso" })}
+                  />
+                </Card>
+              </div>
+            )}
+
+            {groupList.length === 0 && (
+              <Card style={{ padding: "14px 18px 18px" }}>
+                <div style={{ fontSize: 13.5, color: T.inkFaint, textAlign: "center", padding: "16px 0" }}>
+                  Sin objetivos registrados aún.
                 </div>
                 <ObjectivesList
                   objectives={[]}
-                  onAdd={(data) => onAddObjective({ ...data, childId: child.id, specialistId: currentUser.id, createdDate: TODAY, status: "proceso" })}
-                />
-              </Card>
-            )}
-            {specialistGroups.length === 0 && (
-              <Card style={{ padding: "14px 18px 18px" }}>
-                <ObjectivesList
-                  objectives={[]}
-                  onUpdate={onUpdateObjective}
-                  onAdd={(data) => onAddObjective({ ...data, childId: child.id, specialistId: currentUser.id, createdDate: TODAY, status: "proceso" })}
-                  onDelete={onDeleteObjective}
+                  onAdd={(data) => onAddObjective({ ...data, childId: child.id, specialistId: currentUser.id, area: currentUser.specialty || "General", createdDate: TODAY, status: "proceso" })}
                 />
               </Card>
             )}
