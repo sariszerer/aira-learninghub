@@ -748,7 +748,7 @@ function SpecialistHome({ user, children, users, sessions, onOpenChild, calendar
       <CalendarAgenda
         events={calendarEvents} loading={calendarLoading} error={calendarError}
         date={calendarDate} onDateChange={onCalendarDateChange}
-        children={myChildren} onOpenChild={onOpenChild}
+        children={myChildren} onOpenChild={onOpenChild} onConnectGcal={() => {}}
       />
       <TodaySchedule childrenToday={childrenToday} onOpenChild={onOpenChild} />
 
