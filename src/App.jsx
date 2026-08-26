@@ -111,7 +111,7 @@ const seedChildren = [
   { id:"c-gabrielm", name:"Gabriel", lastName:"Mendelson Shabanov", birthDate:"2024-03-24", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-celilia"], avatarBg:T.brandBright, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Raquel Shabanov",phone:"62468888",email:""} },
   { id:"c-ellis", name:"Ellis", lastName:"Yohoros", birthDate:"2019-02-28", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-celilia"], avatarBg:T.pink, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Denisse Yohoros",phone:"65506363",email:""} },
   { id:"c-milan", name:"Milan David", lastName:"Vainstein Lolo Shamriz", birthDate:"2021-04-21", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-celilia"], avatarBg:T.amber, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Amit Vainstein",phone:"63133224",email:""} },
-  { id:"c-haim", name:"Haim", lastName:"Roizental", birthDate:"2021-04-02", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-celilia"], avatarBg:T.brandBright, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Ivonne Roizental",phone:"60600223",email:""} },
+  { id:"c-haim", name:"Haim", lastName:"Roizental", birthDate:"2021-04-02", admissionDate:null, specialties:["Terapia Ocupacional","Funciones Ejecutivas","Fonoaudiología"], assignedSpecialists:["u-celilia","u-admin","u-ingrid"], avatarBg:T.brandBright, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Ivonne Roizental",phone:"60600223",email:""} },
   { id:"c-samson", name:"Samsone Bodie", lastName:"Hutman", birthDate:"2020-05-16", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-celilia"], avatarBg:T.pink, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Brette Hutman",phone:"64302988",email:""} },
   { id:"c-jonathan", name:"Jonathan", lastName:"Salomon", birthDate:"2018-08-20", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-celilia"], avatarBg:T.amber, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Ariela Salomon",phone:"66748144",email:""} },
   { id:"c-elias", name:"Elias", lastName:"Amar", birthDate:"2019-02-22", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-celilia"], avatarBg:T.brand, status:"inactivo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Violeta Soued",phone:"66175471",email:""} },
@@ -2434,16 +2434,43 @@ function ResumenTab({ child, objectives, sessions, users, onRenewPackage, onClos
         </div>
       )}
 
-      <Eyebrow>Objetivos actuales</Eyebrow>
-      <Card style={{ padding: "6px 18px", marginBottom: 22 }}>
-        <ObjectivesList objectives={childObjectives} />
-      </Card>
+      {/* Quick objectives summary per specialist */}
+      {childObjectives.length > 0 && (() => {
+        const AREA_COLORS = {"Terapia Ocupacional":"#175FAF","Fonoaudiologia":"#7A9E7E","Funciones Ejecutivas":"#C79A6B","Psicologia":"#A6779A","Psicologia Clinica":"#A6779A","Desarrollo (DVLP)":"#B8860B","Kids Club":"#82A166"};
+        const groups = {};
+        childObjectives.forEach(o => {
+          const k = o.specialistId || "x";
+          if (!groups[k]) groups[k] = { objs: [], area: o.area };
+          groups[k].objs.push(o);
+        });
+        return (
+          <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(Object.keys(groups).length, 3)}, 1fr)`, gap: 10, marginBottom: 20 }}>
+            {Object.entries(groups).map(([specId, { objs, area }]) => {
+              const spec = users.find(u => u.id === specId);
+              const logrados = objs.filter(o => o.status === "logrado").length;
+              const color = AREA_COLORS[area] || T.inkSoft;
+              const pct = objs.length > 0 ? (logrados / objs.length) * 100 : 0;
+              return (
+                <div key={specId} style={{ background: "#fff", border: `0.5px solid ${T.border}`, borderTop: `3px solid ${color}`, borderRadius: "0 0 10px 10px", padding: "12px 14px" }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color, marginBottom: 1 }}>{area}</div>
+                  <div style={{ fontSize: 11.5, color: T.inkSoft, marginBottom: 8 }}>{spec?.name || "—"}</div>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+                    <span style={{ fontFamily: "Fraunces, serif", fontSize: 20, fontWeight: 500, color }}>{logrados}</span>
+                    <span style={{ fontSize: 12, color: T.inkSoft }}>/ {objs.length}</span>
+                  </div>
+                  <div style={{ height: 3, background: T.borderSoft, borderRadius: 2, marginTop: 6, overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${pct}%`, background: color, borderRadius: 2 }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        );
+      })()}
 
       {last ? (
-        <Card style={{ padding: 20, background: T.brandTint, border: "none" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, color: T.brand, fontWeight: 700, fontSize: 13, marginBottom: 12 }}>
-            <Clock size={15} /> Última sesión
-          </div>
+        <Card style={{ padding: 18, marginBottom: 22 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: T.inkSoft, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 12 }}>Última sesión</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
             <Field label="Fecha" value={fmtDate(last.date)} />
             <Field label="Especialista" value={lastSpecialist?.name || "—"} />
@@ -3079,9 +3106,26 @@ function ChildProfile({ child, users, sessions, objectives, documents, meetings,
                     {/* Objectives */}
                     <div style={{ borderTop: `0.5px solid ${T.border}`, padding: "6px 14px 10px" }}>
                       {objs.map((o) => (
-                        <div key={o.id} style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "7px 0", borderBottom: `0.5px solid ${T.borderSoft}` }}>
-                          <span style={{ fontSize: 14, flexShrink: 0, marginTop: 1 }}>{o.status === "logrado" ? "✅" : o.status === "apoyo" ? "🔴" : "🟡"}</span>
-                          <span style={{ fontSize: 12.5, color: o.status === "logrado" ? "#2E7D32" : T.ink, lineHeight: 1.4 }}>{o.name}</span>
+                        <div key={o.id} style={{ padding: "7px 0", borderBottom: `0.5px solid ${T.borderSoft}` }}>
+                          <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+                            <span style={{ fontSize: 14, flexShrink: 0, marginTop: 1 }}>{o.status === "logrado" ? "✅" : o.status === "apoyo" ? "🔴" : "🟡"}</span>
+                            <span style={{ fontSize: 12.5, color: o.status === "logrado" ? "#2E7D32" : T.ink, lineHeight: 1.4, flex: 1 }}>{o.name}</span>
+                          </div>
+                          {canEditThis && onUpdateObjective && (
+                            <div style={{ display: "flex", gap: 4, marginTop: 5, marginLeft: 22 }}>
+                              {["logrado","proceso","apoyo"].map(s => (
+                                <button key={s} onClick={() => onUpdateObjective({...o, status: s})}
+                                  style={{ fontSize: 11, padding: "2px 8px", borderRadius: 6, cursor: "pointer", fontFamily: "Inter, sans-serif",
+                                    border: o.status === s ? "none" : `0.5px solid ${T.border}`,
+                                    background: o.status === s ? (s === "logrado" ? "#E8F5E9" : s === "apoyo" ? "#FFEBEE" : "#FFF8E1") : "#fff",
+                                    color: o.status === s ? (s === "logrado" ? "#2E7D32" : s === "apoyo" ? "#C62828" : "#F57F17") : T.inkSoft,
+                                    fontWeight: o.status === s ? 600 : 400,
+                                  }}>
+                                  {s === "logrado" ? "✅ Logrado" : s === "proceso" ? "🟡 En proceso" : "🔴 Necesita apoyo"}
+                                </button>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       ))}
                       {canEditThis && (
