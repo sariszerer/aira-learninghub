@@ -2270,7 +2270,7 @@ function ObjectivesList({ objectives, compact, onUpdate, onAdd, onDelete }) {
   );
 }
 
-function ResumenTab({ child, objectives, sessions, users, onRenewPackage }) {
+function ResumenTab({ child, objectives, sessions, users, onRenewPackage, onCloseProcess, currentUser }) {
   const PAQUETE = 8;
   const childObjectives = objectives.filter((o) => o.childId === child.id);
   const childSessions = sessions.filter((s) => s.childId === child.id).sort((a, b) => b.date.localeCompare(a.date));
@@ -2290,6 +2290,8 @@ function ResumenTab({ child, objectives, sessions, users, onRenewPackage }) {
   const pct = (currentInPackage / PAQUETE) * 100;
   const barColor = currentInPackage >= 7 ? "#E53935" : currentInPackage >= 5 ? T.amberDeep : currentInPackage >= 3 ? T.amber : "#81C784";
   const [confirmRenew, setConfirmRenew] = useState(false);
+  const [showCloseProcess, setShowCloseProcess] = useState(false);
+  const [closeNote, setCloseNote] = useState("");
 
   return (
     <div>
@@ -2321,6 +2323,14 @@ function ResumenTab({ child, objectives, sessions, users, onRenewPackage }) {
                   padding: "7px 14px", fontSize: 12.5, cursor: "pointer", fontFamily: "Inter, sans-serif",
                 }}>
                   Renovar anticipado
+                </button>
+              )}
+              {onCloseProcess && (
+                <button onClick={() => setShowCloseProcess(true)} style={{
+                  background: "none", border: `1px solid ${T.apoyo}`, borderRadius: 10, color: T.apoyo,
+                  padding: "7px 14px", fontSize: 12.5, cursor: "pointer", fontFamily: "Inter, sans-serif", fontWeight: 600,
+                }}>
+                  Cerrar proceso
                 </button>
               )}
             </div>
@@ -2367,6 +2377,61 @@ function ResumenTab({ child, objectives, sessions, users, onRenewPackage }) {
             </div>
           )}
         </Card>
+      )}
+
+      {/* Cerrar proceso modal */}
+      {showCloseProcess && (
+        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.45)", zIndex:200, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+          <div style={{ background:"#fff", borderRadius:20, padding:"32px", maxWidth:520, width:"100%", boxShadow:"0 20px 60px rgba(0,0,0,0.25)" }}>
+            <div style={{ fontFamily:"Fraunces, serif", fontSize:22, fontWeight:500, color:T.ink, marginBottom:6 }}>
+              Objetivos Alcanzados 🎓
+            </div>
+            <div style={{ fontSize:13.5, color:T.inkSoft, marginBottom:20 }}>
+              {child.name} {child.lastName} · {totalSessions} sesiones · Paquete {packageNum}
+            </div>
+
+            {childObjectives.length > 0 && (
+              <div style={{ marginBottom:20 }}>
+                <div style={{ fontSize:12, fontWeight:700, color:T.inkSoft, textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:8 }}>Objetivos trabajados</div>
+                {childObjectives.map((o) => (
+                  <div key={o.id} style={{ display:"flex", alignItems:"center", gap:8, padding:"6px 0", borderBottom:`1px solid ${T.borderSoft}` }}>
+                    <span style={{ fontSize:16 }}>{o.status === "logrado" ? "✅" : o.status === "apoyo" ? "🔴" : "🟡"}</span>
+                    <span style={{ fontSize:13, color:T.ink }}>{o.name}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div style={{ marginBottom:20 }}>
+              <div style={{ fontSize:12, fontWeight:700, color:T.inkSoft, textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:6 }}>Nota de cierre</div>
+              <textarea
+                value={closeNote}
+                onChange={(e) => setCloseNote(e.target.value)}
+                placeholder="Describe los logros alcanzados, recomendaciones y motivo de cierre del proceso..."
+                rows={4}
+                style={{ width:"100%", padding:"10px 12px", borderRadius:10, border:`1.5px solid ${T.border}`, fontSize:13.5, fontFamily:"Inter, sans-serif", outline:"none", resize:"vertical", boxSizing:"border-box" }}
+                onFocus={(e) => e.target.style.borderColor = T.brand}
+                onBlur={(e) => e.target.style.borderColor = T.border}
+              />
+            </div>
+
+            <div style={{ display:"flex", gap:10, justifyContent:"flex-end" }}>
+              <button onClick={() => { setShowCloseProcess(false); setCloseNote(""); }} style={{ padding:"10px 18px", borderRadius:10, border:`1px solid ${T.border}`, background:"#fff", color:T.inkSoft, fontSize:14, fontFamily:"Inter, sans-serif", cursor:"pointer" }}>
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  if (onCloseProcess) onCloseProcess(child.id, closeNote, childObjectives, totalSessions);
+                  setShowCloseProcess(false);
+                  setCloseNote("");
+                }}
+                style={{ padding:"10px 22px", borderRadius:10, border:"none", background:"#4CAF50", color:"#fff", fontSize:14, fontWeight:600, fontFamily:"Inter, sans-serif", cursor:"pointer" }}
+              >
+                Generar Reporte de Logros
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       <Eyebrow>Objetivos actuales</Eyebrow>
@@ -2786,7 +2851,7 @@ function InterdisciplinaryTab({ child, meetings, users, onAddMeeting }) {
   );
 }
 
-function ChildProfile({ child, users, sessions, objectives, documents, meetings, parentReports, currentUser, onOpenSessionForm, onViewReport, onGenerateFull, onGenerateEvolution, onGenerateParentReport, onAddDocument, onAddMeeting, onUpdateObjective, onAddObjective, onDeleteObjective, onRenewPackage, onUpdateChild }) {
+function ChildProfile({ child, users, sessions, objectives, documents, meetings, parentReports, currentUser, onOpenSessionForm, onViewReport, onGenerateFull, onGenerateEvolution, onGenerateParentReport, onAddDocument, onAddMeeting, onUpdateObjective, onAddObjective, onDeleteObjective, onRenewPackage, onUpdateChild, onCloseProcess }) {
   const [tab, setTab] = useState("resumen");
   const [editingProfile, setEditingProfile] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -2947,7 +3012,7 @@ function ChildProfile({ child, users, sessions, objectives, documents, meetings,
         ))}
       </div>
 
-      {tab === "resumen" && <ResumenTab child={child} objectives={objectives} sessions={sessions} users={users} onRenewPackage={onRenewPackage} />}
+      {tab === "resumen" && <ResumenTab child={child} objectives={objectives} sessions={sessions} users={users} onRenewPackage={onRenewPackage} onCloseProcess={onCloseProcess} currentUser={currentUser} />}
       {tab === "historial" && <HistorialTab child={child} sessions={sessions} objectives={objectives} users={users} onViewReport={onViewReport} />}
       {tab === "objetivos" && (
         <Card style={{ padding: "6px 18px 18px" }}>
@@ -3696,6 +3761,36 @@ export default function App() {
     try { await db.updateChild(childId, updates); } catch(e) { console.error("Update child:", e); }
   }
 
+  async function handleCloseProcess(childId, note, objectives, totalSessions) {
+    const child = children.find(c => c.id === childId);
+    if (!child) return;
+    // Create a closure document (Reporte de Logros)
+    const doc = {
+      id: `d-close-${Date.now()}`,
+      childId,
+      type: "reporte",
+      title: "Reporte de Logros - Cierre de Proceso",
+      date: TODAY,
+      authorId: currentUser.id,
+      notes: note || "Proceso cerrado con objetivos alcanzados.",
+      fields: {
+        totalSessions,
+        objectives: objectives.map(o => ({ name: o.name, status: o.status })),
+        closedBy: currentUser.name,
+        closedDate: TODAY,
+      }
+    };
+    setDocuments(prev => [doc, ...prev]);
+    setActivityLog(prev => [{
+      id: `act-${Date.now()}`, type: "document", timestamp: new Date().toISOString(),
+      specialistId: currentUser.id, childId,
+      childName: `${child.name} ${child.lastName}`,
+      description: "Reporte de Logros generado - Cierre de proceso",
+      seen: false,
+    }, ...prev]);
+    try { await db.insertDocument(doc); } catch(e) { console.error("Close process:", e); }
+  }
+
   async function handleRenewPackage(childId) {
     const today = TODAY;
     setChildren((prev) => prev.map((c) => {
@@ -3832,6 +3927,7 @@ export default function App() {
           onDeleteObjective={handleDeleteObjective}
           onRenewPackage={handleRenewPackage}
           onUpdateChild={handleUpdateChild}
+          onCloseProcess={handleCloseProcess}
           onOpenSessionForm={() => setWizardOpen(true)}
           onViewReport={(s) => setViewingReport(s)}
           onGenerateFull={() => setFullHistoryOpen(true)}
