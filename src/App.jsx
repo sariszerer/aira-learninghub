@@ -1135,9 +1135,8 @@ function ClinicalDirectorHome({ user, children, users, sessions, objectives, tut
       <CalendarAgenda
         events={calendarEvents} loading={calendarLoading} error={calendarError}
         date={calendarDate} onDateChange={onCalendarDateChange}
-        children={children} onOpenChild={onOpenChild} onConnectGcal={handleConnectGcal}
+        children={children} onOpenChild={onOpenChild} onConnectGcal={() => {}}
       />
-      <ActivityFeed activityLog={activityLog} users={users} onMarkSeen={onMarkSeen} />
       <ActivityFeed activityLog={activityLog} users={users} onMarkSeen={onMarkSeen} />
 
       {/* Two-column layout */}
@@ -1897,7 +1896,7 @@ function AdminDashboard({ children, users, sessions, objectives, parentReports, 
       <CalendarAgenda
         events={calendarEvents} loading={calendarLoading} error={calendarError}
         date={calendarDate} onDateChange={onCalendarDateChange}
-        children={children} onOpenChild={onOpenChild} onConnectGcal={handleConnectGcal}
+        children={children} onOpenChild={onOpenChild} onConnectGcal={() => {}}
       />
 
       {sessions.length > 0 && (childrenNoRecentSession.length > 0 || childrenReadyForParentReport.length > 0) && (
