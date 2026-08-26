@@ -25,3 +25,5 @@ VITE_SUPABASE_KEY=sb_publishable_Onhfm9YSu_nGuePJK0dXmg_mspQYt6E
 ## Deploy
 
 El deploy es automático via Vercel al hacer push a `main`.
+
+<!-- deploy trigger -->
