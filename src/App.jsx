@@ -2387,7 +2387,7 @@ function ResumenTab({ child, objectives, sessions, users, onRenewPackage, onClos
               Objetivos Alcanzados 🎓
             </div>
             <div style={{ fontSize:13.5, color:T.inkSoft, marginBottom:20 }}>
-              {child.name} {child.lastName} · {totalSessions} sesiones · Paquete {packageNum}
+              {child.name} {child.lastName} · {totalSessions} sesiones
             </div>
 
             {childObjectives.length > 0 && (
@@ -2396,7 +2396,7 @@ function ResumenTab({ child, objectives, sessions, users, onRenewPackage, onClos
                 {childObjectives.map((o) => (
                   <div key={o.id} style={{ display:"flex", alignItems:"center", gap:8, padding:"6px 0", borderBottom:`1px solid ${T.borderSoft}` }}>
                     <span style={{ fontSize:16 }}>{o.status === "logrado" ? "✅" : o.status === "apoyo" ? "🔴" : "🟡"}</span>
-                    <span style={{ fontSize:13, color:T.ink }}>{o.name}</span>
+                    <span style={{ fontSize:13, color: o.status === "logrado" ? "#2E7D32" : T.ink, fontWeight: o.status === "logrado" ? 600 : 400 }}>{o.name}</span>
                   </div>
                 ))}
               </div>
@@ -3014,16 +3014,68 @@ function ChildProfile({ child, users, sessions, objectives, documents, meetings,
 
       {tab === "resumen" && <ResumenTab child={child} objectives={objectives} sessions={sessions} users={users} onRenewPackage={onRenewPackage} onCloseProcess={onCloseProcess} currentUser={currentUser} />}
       {tab === "historial" && <HistorialTab child={child} sessions={sessions} objectives={objectives} users={users} onViewReport={onViewReport} />}
-      {tab === "objetivos" && (
-        <Card style={{ padding: "6px 18px 18px" }}>
-          <ObjectivesList
-            objectives={objectives.filter((o) => o.childId === child.id)}
-            onUpdate={onUpdateObjective}
-            onAdd={(data) => onAddObjective({ ...data, childId: child.id, specialistId: currentUser.id, createdDate: TODAY, status: "proceso" })}
-            onDelete={onDeleteObjective}
-          />
-        </Card>
-      )}
+      {tab === "objetivos" && (() => {
+        const childObjs = objectives.filter((o) => o.childId === child.id);
+        // Group by specialist
+        const bySpecialist = {};
+        childObjs.forEach((o) => {
+          const key = o.specialistId || "sin-especialista";
+          if (!bySpecialist[key]) bySpecialist[key] = [];
+          bySpecialist[key].push(o);
+        });
+        const specialistGroups = Object.entries(bySpecialist);
+        const canEdit = (specId) => currentUser.role === "admin" || currentUser.role === "clinical_director" || currentUser.id === specId;
+        return (
+          <div>
+            {specialistGroups.map(([specId, objs]) => {
+              const spec = users.find(u => u.id === specId);
+              const area = objs[0]?.area || "General";
+              const canEditThis = canEdit(specId);
+              return (
+                <Card key={specId} style={{ padding: "14px 18px 18px", marginBottom: 16 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                    <div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: T.inkSoft, textTransform: "uppercase", letterSpacing: "0.05em" }}>{area}</div>
+                      <div style={{ fontSize: 13, color: T.inkFaint }}>{spec ? spec.name : "Sin especialista"}</div>
+                    </div>
+                    <div style={{ fontSize: 12, color: T.inkSoft }}>
+                      {objs.filter(o => o.status === "logrado").length}/{objs.length} logrados
+                    </div>
+                  </div>
+                  <ObjectivesList
+                    objectives={objs}
+                    onUpdate={canEditThis ? onUpdateObjective : null}
+                    onAdd={canEditThis ? (data) => onAddObjective({ ...data, childId: child.id, specialistId: specId, createdDate: TODAY, status: "proceso" }) : null}
+                    onDelete={canEditThis ? onDeleteObjective : null}
+                  />
+                </Card>
+              );
+            })}
+            {/* Add objectives for current specialist */}
+            {(currentUser.role === "specialist" || currentUser.role === "admin" || currentUser.role === "clinical_director") && !bySpecialist[currentUser.id] && (
+              <Card style={{ padding: "14px 18px 18px", marginBottom: 16, borderStyle: "dashed" }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: T.inkSoft, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 12 }}>
+                  + Agregar objetivos como {currentUser.name}
+                </div>
+                <ObjectivesList
+                  objectives={[]}
+                  onAdd={(data) => onAddObjective({ ...data, childId: child.id, specialistId: currentUser.id, createdDate: TODAY, status: "proceso" })}
+                />
+              </Card>
+            )}
+            {specialistGroups.length === 0 && (
+              <Card style={{ padding: "14px 18px 18px" }}>
+                <ObjectivesList
+                  objectives={[]}
+                  onUpdate={onUpdateObjective}
+                  onAdd={(data) => onAddObjective({ ...data, childId: child.id, specialistId: currentUser.id, createdDate: TODAY, status: "proceso" })}
+                  onDelete={onDeleteObjective}
+                />
+              </Card>
+            )}
+          </div>
+        );
+      })()}
       {tab === "anamnesis" && (
         <AnamnesisTab
           child={child} documents={documents} users={users} currentUser={currentUser}
