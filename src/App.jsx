@@ -3576,6 +3576,14 @@ export default function App() {
   }, [currentUser, loadFromSupabase]);
 
   const fetchCalendarEvents = async (date) => {
+    // Only load if we already have a token
+    const token = getStoredToken();
+    if (!token) {
+      setGcalConnected(false);
+      setCalendarError("conectar");
+      setCalendarLoading(false);
+      return;
+    }
     setCalendarLoading(true);
     setCalendarError(null);
     try {
