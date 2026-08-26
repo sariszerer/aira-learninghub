@@ -970,7 +970,7 @@ function CalendarAgenda({ events, loading, error, date, onDateChange, children, 
 /* ============================================================
    CLINICAL DIRECTOR HOME
 ============================================================ */
-function ClinicalDirectorHome({ user, children, users, sessions, objectives, tutors, tutorReports, onOpenChild, calendarEvents, calendarLoading, calendarError, calendarDate, onCalendarDateChange, activityLog, onMarkSeen }) {
+function ClinicalDirectorHome({ user, children, users, sessions, objectives, tutors, tutorReports, onOpenChild, calendarEvents, calendarLoading, calendarError, calendarDate, onCalendarDateChange, activityLog, onMarkSeen, onConnectGcal }) {
   const [query, setQuery] = useState("");
   const [filterSpecialty, setFilterSpecialty] = useState("Todos");
   const [alertTab, setAlertTab] = useState("inactivos");
@@ -1135,7 +1135,7 @@ function ClinicalDirectorHome({ user, children, users, sessions, objectives, tut
       <CalendarAgenda
         events={calendarEvents} loading={calendarLoading} error={calendarError}
         date={calendarDate} onDateChange={onCalendarDateChange}
-        children={children} onOpenChild={onOpenChild} onConnectGcal={() => {}}
+        children={children} onOpenChild={onOpenChild} onConnectGcal={onConnectGcal}
       />
       <ActivityFeed activityLog={activityLog} users={users} onMarkSeen={onMarkSeen} />
 
@@ -1856,7 +1856,7 @@ function StatStrip({ items }) {
   );
 }
 
-function AdminDashboard({ children, users, sessions, objectives, parentReports, onOpenChild, calendarEvents, calendarLoading, calendarError, calendarDate, onCalendarDateChange, activityLog, onMarkSeen }) {
+function AdminDashboard({ children, users, sessions, objectives, parentReports, onOpenChild, calendarEvents, calendarLoading, calendarError, calendarDate, onCalendarDateChange, activityLog, onMarkSeen, onConnectGcal }) {
   const specialists = users.filter((u) => u.role === "specialist" || u.role === "clinical_director");
   const today = TODAY;
   const sessionsToday = sessions.filter((s) => s.date === today).length;
@@ -1896,7 +1896,7 @@ function AdminDashboard({ children, users, sessions, objectives, parentReports, 
       <CalendarAgenda
         events={calendarEvents} loading={calendarLoading} error={calendarError}
         date={calendarDate} onDateChange={onCalendarDateChange}
-        children={children} onOpenChild={onOpenChild} onConnectGcal={() => {}}
+        children={children} onOpenChild={onOpenChild} onConnectGcal={onConnectGcal}
       />
 
       {sessions.length > 0 && (childrenNoRecentSession.length > 0 || childrenReadyForParentReport.length > 0) && (
@@ -3777,6 +3777,7 @@ export default function App() {
           calendarDate={calendarDate} onCalendarDateChange={(d) => { setCalendarDate(d); fetchCalendarEvents(d); }}
           activityLog={activityLog} onMarkSeen={() => setActivityLog(prev => prev.map(a => ({...a, seen:true})))}
           onOpenChild={(id) => { setSelectedChildId(id); setView("child"); }}
+          onConnectGcal={handleConnectGcal}
         />
       )}
 
@@ -3787,6 +3788,7 @@ export default function App() {
           calendarDate={calendarDate} onCalendarDateChange={(d) => { setCalendarDate(d); fetchCalendarEvents(d); }}
           activityLog={activityLog} onMarkSeen={() => setActivityLog(prev => prev.map(a => ({...a, seen:true})))}
           onOpenChild={(id) => { setSelectedChildId(id); setView("child"); }}
+          onConnectGcal={handleConnectGcal}
         />
       )}
 
