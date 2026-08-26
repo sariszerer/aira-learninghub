@@ -3576,9 +3576,23 @@ export default function App() {
   }, [currentUser, loadFromSupabase]);
 
   const fetchCalendarEvents = async (date) => {
-    setGcalConnected(false);
-    setCalendarError("conectar");
-    setCalendarEvents([]);
+    setCalendarLoading(true);
+    setCalendarError(null);
+    try {
+      const events = await gcalFetch(date);
+      setCalendarEvents(events);
+      setGcalConnected(true);
+    } catch (e) {
+      if (e.message === "NOT_AUTHENTICATED") {
+        setGcalConnected(false);
+        setCalendarError("conectar");
+      } else {
+        setCalendarError("No se pudo cargar el calendario");
+      }
+      setCalendarEvents([]);
+    } finally {
+      setCalendarLoading(false);
+    }
   };
 
   const handleConnectGcal = async () => {
