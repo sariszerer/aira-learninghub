@@ -2295,25 +2295,50 @@ function ResumenTab({ child, objectives, sessions, users, onRenewPackage, onClos
 
   return (
     <div>
-      {/* Sessions summary - simple */}
-      {totalSessions > 0 && (
-        <Card style={{ marginBottom: 22, padding: "16px 20px" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: T.inkSoft, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>Sesiones totales</div>
-              <div style={{ fontFamily: "Fraunces, serif", fontSize: 28, fontWeight: 500, color: T.ink }}>{totalSessions}</div>
+      {/* Sessions by specialty */}
+      {totalSessions > 0 && (() => {
+        const AREA_COLORS = {"Terapia Ocupacional":"#175FAF","Fonoaudiologia":"#7A9E7E","Funciones Ejecutivas":"#C79A6B","Psicologia":"#A6779A","Psicologia Clinica":"#A6779A","Desarrollo (DVLP)":"#B8860B","Kids Club":"#82A166"};
+        const bySpec = {};
+        childSessions.forEach(s => {
+          const spec = users.find(u => u.id === s.specialistId);
+          const area = s.specialty || spec?.specialty || "General";
+          if (!bySpec[area]) bySpec[area] = 0;
+          bySpec[area]++;
+        });
+        const specList = Object.entries(bySpec).sort((a,b) => b[1]-a[1]);
+        return (
+          <Card style={{ marginBottom: 22, padding: "16px 20px" }}>
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16 }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: T.inkSoft, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 12 }}>Sesiones</div>
+                <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
+                  {specList.map(([area, count]) => {
+                    const color = AREA_COLORS[area] || T.inkSoft;
+                    return (
+                      <div key={area} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                        <div style={{ fontFamily: "Fraunces, serif", fontSize: 26, fontWeight: 500, color }}>{count}</div>
+                        <div style={{ fontSize: 11.5, color, fontWeight: 600 }}>{area}</div>
+                      </div>
+                    );
+                  })}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 2, paddingLeft: 20, borderLeft: `1px solid ${T.border}` }}>
+                    <div style={{ fontFamily: "Fraunces, serif", fontSize: 26, fontWeight: 500, color: T.inkSoft }}>{totalSessions}</div>
+                    <div style={{ fontSize: 11.5, color: T.inkSoft, fontWeight: 600 }}>Total</div>
+                  </div>
+                </div>
+              </div>
+              {onCloseProcess && (
+                <button onClick={() => setShowCloseProcess(true)} style={{
+                  background: "none", border: `1px solid ${T.apoyo}`, borderRadius: 10, color: T.apoyo,
+                  padding: "8px 16px", fontSize: 13, cursor: "pointer", fontFamily: "Inter, sans-serif", fontWeight: 600, flexShrink: 0,
+                }}>
+                  Cerrar proceso
+                </button>
+              )}
             </div>
-            {onCloseProcess && (
-              <button onClick={() => setShowCloseProcess(true)} style={{
-                background: "none", border: `1px solid ${T.apoyo}`, borderRadius: 10, color: T.apoyo,
-                padding: "8px 16px", fontSize: 13, cursor: "pointer", fontFamily: "Inter, sans-serif", fontWeight: 600,
-              }}>
-                Cerrar proceso
-              </button>
-            )}
-          </div>
-        </Card>
-      )}
+          </Card>
+        );
+      })()}
 
       {/* Cerrar proceso modal */}
       {showCloseProcess && (
