@@ -104,12 +104,12 @@ const seedChildren = [
   { id:"c-eliahu", name:"Eliauh", lastName:"Guindi Zayat", birthDate:"2019-08-06", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-celilia"], avatarBg:T.brandBright, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Adela Guindi",phone:"67819400",email:""} },
   { id:"c-abrahaml", name:"Abraham Nathan", lastName:"Levy Weinberg", birthDate:"2020-12-01", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-celilia"], avatarBg:T.pink, status:"inactivo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Tony Levy",phone:"66163324",email:""} },
   { id:"c-sam", name:"Sam", lastName:"Mizrachi", birthDate:"2016-05-11", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-celilia"], avatarBg:T.amber, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Hilda Mizrachi",phone:"66166171",email:""} },
-  { id:"c-moshe", name:"Moshe", lastName:"Mizrachi", birthDate:"2016-05-11", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-celilia"], avatarBg:T.brandBright, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Hilda Mizrachi",phone:"66166171",email:""} },
+  { id:"c-moshe", name:"Moshe", lastName:"Benoliel", birthDate:"2016-05-11", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-celilia"], avatarBg:T.brandBright, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Hilda Mizrachi",phone:"66166171",email:""} },
   { id:"c-leo", name:"Leo", lastName:"Coleman Bergantino", birthDate:"2023-01-13", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-celilia"], avatarBg:T.pink, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Karen Bergantino",phone:"65505706",email:""} },
   { id:"c-binyamin", name:"Binyamin", lastName:"Lowfer", birthDate:"2022-06-11", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-celilia"], avatarBg:T.brand, status:"inactivo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Diana Gabay",phone:"69484830",email:""} },
   { id:"c-shella", name:"Shella", lastName:"Naftali Hanono", birthDate:"2021-12-02", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-celilia"], avatarBg:T.amber, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Bella Hanono",phone:"69368822",email:""} },
   { id:"c-gabrielm", name:"Gabriel", lastName:"Mendelson Shabanov", birthDate:"2024-03-24", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-celilia"], avatarBg:T.brandBright, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Raquel Shabanov",phone:"62468888",email:""} },
-  { id:"c-ellis", name:"Ellis", lastName:"Yohoros", birthDate:"2019-02-28", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-celilia"], avatarBg:T.pink, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Denisse Yohoros",phone:"65506363",email:""} },
+  { id:"c-ellis", name:"Ellis", lastName:"Benoliel", birthDate:"2019-02-28", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-celilia"], avatarBg:T.pink, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Denisse Yohoros",phone:"65506363",email:""} },
   { id:"c-milan", name:"Milan David", lastName:"Vainstein Lolo Shamriz", birthDate:"2021-04-21", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-celilia"], avatarBg:T.amber, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Amit Vainstein",phone:"63133224",email:""} },
   { id:"c-haim", name:"Haim", lastName:"Roizental", birthDate:"2021-04-02", admissionDate:null, specialties:["Terapia Ocupacional","Funciones Ejecutivas","Fonoaudiología"], assignedSpecialists:["u-celilia","u-admin","u-ingrid"], avatarBg:T.brandBright, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Ivonne Roizental",phone:"60600223",email:""} },
   { id:"c-samson", name:"Samsone Bodie", lastName:"Hutman", birthDate:"2020-05-16", admissionDate:null, specialties:["Terapia Ocupacional"], assignedSpecialists:["u-celilia"], avatarBg:T.pink, status:"activo", nextSession:null, nextSessionTime:null, packageNum:1, packageStart:null, parentContact:{name:"Brette Hutman",phone:"64302988",email:""} },
@@ -1857,6 +1857,8 @@ function StatStrip({ items }) {
 }
 
 function AdminDashboard({ children, users, sessions, objectives, parentReports, onOpenChild, calendarEvents, calendarLoading, calendarError, calendarDate, onCalendarDateChange, activityLog, onMarkSeen, onConnectGcal }) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [alertsOpen, setAlertsOpen] = useState(true);
   const specialists = users.filter((u) => u.role === "specialist" || u.role === "clinical_director");
   const today = TODAY;
   const sessionsToday = sessions.filter((s) => s.date === today).length;
@@ -1901,21 +1903,26 @@ function AdminDashboard({ children, users, sessions, objectives, parentReports, 
 
       {sessions.length > 0 && (childrenNoRecentSession.length > 0 || childrenReadyForParentReport.length > 0) && (
         <Card style={{ padding: 18, marginBottom: 28, borderColor: T.apoyoTint, background: T.apoyoTint }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, color: T.apoyo, fontWeight: 700, fontSize: 13.5, marginBottom: 10 }}>
-            <AlertTriangle size={16} /> Alertas
-          </div>
-          <div style={{ fontSize: 14, color: T.ink }}>
-            {childrenNoRecentSession.map((c) => (
-              <div key={c.id} style={{ padding: "6px 0" }}>
-                <b>{c.name} {c.lastName}</b> no tiene sesiones registradas en los últimos 7 días.
-              </div>
-            ))}
-            {childrenReadyForParentReport.map((c) => (
-              <div key={c.id} style={{ padding: "6px 0" }}>
-                <b>{c.name} {c.lastName}</b> acumuló 8 sesiones desde el último reporte a padres — listo para generar uno nuevo.
-              </div>
-            ))}
-          </div>
+          <button onClick={() => setAlertsOpen(a => !a)} style={{ display: "flex", alignItems: "center", gap: 8, color: T.apoyo, fontWeight: 700, fontSize: 13.5, marginBottom: alertsOpen ? 10 : 0, background: "none", border: "none", cursor: "pointer", padding: 0, width: "100%", textAlign: "left" }}>
+            <AlertTriangle size={16} />
+            Alertas
+            <span style={{ fontSize: 12, background: T.apoyo, color: "#fff", borderRadius: 10, padding: "1px 7px", marginLeft: 2 }}>{childrenNoRecentSession.length + childrenReadyForParentReport.length}</span>
+            <span style={{ marginLeft: "auto", fontSize: 12, color: T.apoyo }}>{alertsOpen ? "▲ Minimizar" : "▼ Ver"}</span>
+          </button>
+          {alertsOpen && (
+            <div style={{ fontSize: 14, color: T.ink }}>
+              {childrenNoRecentSession.map((c) => (
+                <div key={c.id} style={{ padding: "6px 0" }}>
+                  <b>{c.name} {c.lastName}</b> no tiene sesiones registradas en los últimos 7 días.
+                </div>
+              ))}
+              {childrenReadyForParentReport.map((c) => (
+                <div key={c.id} style={{ padding: "6px 0" }}>
+                  <b>{c.name} {c.lastName}</b> acumuló 8 sesiones desde el último reporte a padres — listo para generar uno nuevo.
+                </div>
+              ))}
+            </div>
+          )}
         </Card>
       )}
 
@@ -1951,28 +1958,49 @@ function AdminDashboard({ children, users, sessions, objectives, parentReports, 
 
       <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 20 }}>
         <div>
-          <Eyebrow>Todos los pacientes</Eyebrow>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+            <Eyebrow style={{ margin: 0 }}>Todos los pacientes</Eyebrow>
+          </div>
+          <div style={{ position: "relative", marginBottom: 8 }}>
+            <input
+              type="text" placeholder="Buscar paciente..."
+              value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ width: "100%", padding: "9px 12px 9px 34px", borderRadius: 10, border: `1px solid ${T.border}`, fontSize: 14, fontFamily: "Inter, sans-serif", outline: "none", boxSizing: "border-box", color: T.ink, background: "#fff" }}
+              onFocus={(e) => e.target.style.borderColor = T.brand}
+              onBlur={(e) => e.target.style.borderColor = T.border}
+            />
+            <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: T.inkFaint, fontSize: 15, pointerEvents: "none" }}>🔍</span>
+          </div>
           <Card style={{ padding: 6 }}>
-            {children.map((c, i) => {
-              const specs = c.assignedSpecialists.map((id) => users.find((u) => u.id === id)?.name.split(" ")[0]).join(", ");
-              return (
-                <button key={c.id} onClick={() => onOpenChild(c.id)} style={{
-                  width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "12px 12px",
-                  border: "none", borderTop: i > 0 ? `1px solid ${T.borderSoft}` : "none", background: "transparent",
-                  cursor: "pointer", textAlign: "left",
-                }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = T.surfaceSunk)}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                >
-                  <Avatar name={c.name + " " + c.lastName} bg={c.avatarBg} size={38} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 600, fontSize: 14.5, color: T.ink }}>{c.name} {c.lastName}</div>
-                    <div style={{ fontSize: 12, color: T.inkFaint }}>{specs}</div>
-                  </div>
-                  <ChevronRight size={16} color={T.inkFaint} />
-                </button>
-              );
-            })}
+            {(() => {
+              const q = searchQuery.trim().toLowerCase();
+              const filtered = q ? children.filter(c =>
+                (c.name + " " + c.lastName).toLowerCase().includes(q) ||
+                c.lastName.toLowerCase().includes(q) ||
+                c.name.toLowerCase().includes(q)
+              ) : children;
+              if (filtered.length === 0) return <div style={{ padding: "16px 12px", color: T.inkFaint, fontSize: 13.5 }}>Sin resultados para "{searchQuery}"</div>;
+              return filtered.map((c, i) => {
+                const specs = c.assignedSpecialists.map((id) => users.find((u) => u.id === id)?.name.split(" ")[0]).join(", ");
+                return (
+                  <button key={c.id} onClick={() => onOpenChild(c.id)} style={{
+                    width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "12px 12px",
+                    border: "none", borderTop: i > 0 ? `1px solid ${T.borderSoft}` : "none", background: "transparent",
+                    cursor: "pointer", textAlign: "left",
+                  }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = T.surfaceSunk)}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                  >
+                    <Avatar name={c.name + " " + c.lastName} bg={c.avatarBg} size={38} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 600, fontSize: 14.5, color: T.ink }}>{c.name} {c.lastName}</div>
+                      <div style={{ fontSize: 12, color: T.inkFaint }}>{specs}</div>
+                    </div>
+                    <ChevronRight size={16} color={T.inkFaint} />
+                  </button>
+                );
+              });
+            })()}
           </Card>
         </div>
         <div>
