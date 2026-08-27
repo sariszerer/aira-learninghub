@@ -2782,27 +2782,105 @@ function AddMeetingModal({ onClose, onSave }) {
   );
 }
 
-function InterdisciplinaryTab({ child, meetings, users, onAddMeeting }) {
+function InterdisciplinaryTab({ child, meetings, users, onAddMeeting, currentUser, documents, onAddDocument }) {
   const [adding, setAdding] = useState(false);
+  const [addingPautas, setAddingPautas] = useState(false);
+  const [pautasNote, setPautasNote] = useState("");
+  const [pautasDate, setPautasDate] = useState(TODAY);
   const childMeetings = meetings.filter((m) => m.childId === child.id).sort((a, b) => b.date.localeCompare(a.date));
+
+  // Pautas de Crianza sessions — only visible to admin, clinical_director, and u-admin specialist
+  const canSeePautas = currentUser && (currentUser.role === "admin" || currentUser.role === "clinical_director" || currentUser.id === "u-admin");
+  const pautasSessions = (documents || []).filter(d => d.childId === child.id && d.type === "pautas_crianza").sort((a, b) => b.date.localeCompare(a.date));
+
+  const savePautas = () => {
+    if (!pautasNote.trim()) return;
+    const doc = {
+      id: `d-pautas-${Date.now()}`,
+      childId: child.id,
+      type: "pautas_crianza",
+      title: `Pautas de Crianza - ${fmtDate(pautasDate)}`,
+      date: pautasDate,
+      authorId: currentUser.id,
+      notes: pautasNote.trim(),
+      fields: {},
+    };
+    if (onAddDocument) onAddDocument(doc);
+    setPautasNote("");
+    setAddingPautas(false);
+  };
+
   return (
-    <div>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-        <div style={{ fontSize: 13.5, color: T.inkSoft, maxWidth: 420 }}>
-          Comunicación y coordinación con la escuela, especialistas externos u otros actores en el proceso de {child.name}.
+    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+
+      {/* Pautas de Crianza — restricted */}
+      {canSeePautas && (
+        <div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: T.ink }}>Pautas de Crianza</div>
+              <div style={{ fontSize: 12.5, color: T.inkSoft, marginTop: 2 }}>Sesiones con padres · Confidencial — solo visible para Sarita e Idaira</div>
+            </div>
+            <Btn variant="amber" icon={Plus} onClick={() => setAddingPautas(true)}>Registrar sesión</Btn>
+          </div>
+          {addingPautas && (
+            <Card style={{ padding: 16, marginBottom: 12 }}>
+              <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
+                <input type="date" value={pautasDate} onChange={e => setPautasDate(e.target.value)}
+                  style={{ padding: "6px 10px", borderRadius: 8, border: `1px solid ${T.border}`, fontSize: 13, fontFamily: "Inter, sans-serif" }} />
+              </div>
+              <textarea value={pautasNote} onChange={e => setPautasNote(e.target.value)}
+                placeholder="Resumen de la sesión con padres, temas trabajados, acuerdos..."
+                rows={4}
+                style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${T.border}`, fontSize: 13.5, fontFamily: "Inter, sans-serif", outline: "none", resize: "vertical", boxSizing: "border-box", marginBottom: 10 }}
+              />
+              <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                <button onClick={() => setAddingPautas(false)} style={{ padding: "7px 14px", borderRadius: 8, border: `1px solid ${T.border}`, background: "#fff", color: T.inkSoft, fontSize: 13, fontFamily: "Inter, sans-serif", cursor: "pointer" }}>Cancelar</button>
+                <button onClick={savePautas} style={{ padding: "7px 16px", borderRadius: 8, border: "none", background: T.brand, color: "#fff", fontSize: 13, fontWeight: 600, fontFamily: "Inter, sans-serif", cursor: "pointer" }}>Guardar</button>
+              </div>
+            </Card>
+          )}
+          {pautasSessions.length === 0 && !addingPautas ? (
+            <div style={{ color: T.inkFaint, fontSize: 13.5, padding: "12px 0" }}>Aún no hay sesiones de Pautas de Crianza registradas.</div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {pautasSessions.map(d => (
+                <Card key={d.id} style={{ padding: "12px 16px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: T.brand }}>{fmtDate(d.date)}</div>
+                    <div style={{ fontSize: 12, color: T.inkFaint }}>Sarita Szerer</div>
+                  </div>
+                  <div style={{ fontSize: 13.5, color: T.ink, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{d.notes}</div>
+                </Card>
+              ))}
+            </div>
+          )}
+          <div style={{ borderBottom: `1px solid ${T.border}`, margin: "8px 0 0" }} />
         </div>
-        <Btn variant="amber" icon={Plus} onClick={() => setAdding(true)}>Registrar minuta</Btn>
+      )}
+
+      {/* Interdisciplinary minutes */}
+      <div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: T.ink }}>Minutas interdisciplinarias</div>
+            <div style={{ fontSize: 12.5, color: T.inkSoft, marginTop: 2 }}>
+              Comunicación con escuela, especialistas externos u otros actores.
+            </div>
+          </div>
+          <Btn variant="amber" icon={Plus} onClick={() => setAdding(true)}>Registrar minuta</Btn>
+        </div>
+        {childMeetings.length === 0 ? (
+          <div style={{ color: T.inkFaint, fontSize: 14, textAlign: "center", padding: 24 }}>Aún no hay minutas registradas.</div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {childMeetings.map((m) => <MeetingCard key={m.id} meeting={m} users={users} />)}
+          </div>
+        )}
+        {adding && (
+          <AddMeetingModal onClose={() => setAdding(false)} onSave={(m) => { onAddMeeting(m); setAdding(false); }} />
+        )}
       </div>
-      {childMeetings.length === 0 ? (
-        <div style={{ color: T.inkFaint, fontSize: 14, textAlign: "center", padding: 40 }}>Aún no hay minutas registradas.</div>
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {childMeetings.map((m) => <MeetingCard key={m.id} meeting={m} users={users} />)}
-        </div>
-      )}
-      {adding && (
-        <AddMeetingModal onClose={() => setAdding(false)} onSave={(m) => { onAddMeeting(m); setAdding(false); }} />
-      )}
     </div>
   );
 }
@@ -3133,7 +3211,7 @@ function ChildProfile({ child, users, sessions, objectives, documents, meetings,
         />
       )}
       {tab === "interdisciplinario" && (
-        <InterdisciplinaryTab child={child} meetings={meetings} users={users} onAddMeeting={onAddMeeting} />
+        <InterdisciplinaryTab child={child} meetings={meetings} users={users} onAddMeeting={onAddMeeting} currentUser={currentUser} documents={documents} onAddDocument={onAddDocument} />
       )}
     </div>
   );
