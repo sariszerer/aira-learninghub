@@ -2295,87 +2295,23 @@ function ResumenTab({ child, objectives, sessions, users, onRenewPackage, onClos
 
   return (
     <div>
-      {/* Package widget */}
+      {/* Sessions summary - simple */}
       {totalSessions > 0 && (
         <Card style={{ marginBottom: 22, padding: "16px 20px" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: T.inkSoft, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                Paquete {packageNum}
-              </div>
-              <div style={{ fontFamily: "Fraunces, serif", fontSize: 22, fontWeight: 500, color: T.ink, marginTop: 2 }}>
-                {currentInPackage} <span style={{ fontSize: 14, color: T.inkSoft }}>/ {PAQUETE} sesiones</span>
-              </div>
-              <div style={{ fontSize: 12, color: T.inkFaint, marginTop: 2 }}>{totalSessions} sesiones en total</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: T.inkSoft, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>Sesiones totales</div>
+              <div style={{ fontFamily: "Fraunces, serif", fontSize: 28, fontWeight: 500, color: T.ink }}>{totalSessions}</div>
             </div>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {currentInPackage >= 6 && !confirmRenew && (
-                <button onClick={() => setConfirmRenew(true)} style={{
-                  background: T.amberDeep, color: "#fff", border: "none", borderRadius: 10,
-                  padding: "8px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif",
-                }}>
-                  🔄 Renovar paquete
-                </button>
-              )}
-              {currentInPackage < 6 && onRenewPackage && (
-                <button onClick={() => setConfirmRenew(true)} style={{
-                  background: "none", border: `1px solid ${T.border}`, borderRadius: 10, color: T.inkSoft,
-                  padding: "7px 14px", fontSize: 12.5, cursor: "pointer", fontFamily: "Inter, sans-serif",
-                }}>
-                  Renovar anticipado
-                </button>
-              )}
-              {onCloseProcess && (
-                <button onClick={() => setShowCloseProcess(true)} style={{
-                  background: "none", border: `1px solid ${T.apoyo}`, borderRadius: 10, color: T.apoyo,
-                  padding: "7px 14px", fontSize: 12.5, cursor: "pointer", fontFamily: "Inter, sans-serif", fontWeight: 600,
-                }}>
-                  Cerrar proceso
-                </button>
-              )}
-            </div>
+            {onCloseProcess && (
+              <button onClick={() => setShowCloseProcess(true)} style={{
+                background: "none", border: `1px solid ${T.apoyo}`, borderRadius: 10, color: T.apoyo,
+                padding: "8px 16px", fontSize: 13, cursor: "pointer", fontFamily: "Inter, sans-serif", fontWeight: 600,
+              }}>
+                Cerrar proceso
+              </button>
+            )}
           </div>
-
-          {/* Progress bar with 8 dots */}
-          <div style={{ display: "flex", gap: 4, marginBottom: 6 }}>
-            {Array.from({ length: PAQUETE }).map((_, i) => (
-              <div key={i} style={{
-                flex: 1, height: 8, borderRadius: 4,
-                background: i < currentInPackage ? barColor : T.borderSoft,
-                transition: "background 0.2s",
-              }} />
-            ))}
-          </div>
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <span style={{ fontSize: 11, color: T.inkFaint }}>
-              {packageStart ? `Inicio paquete: ${fmtDate(packageStart)}` : "Sin fecha de inicio registrada"}
-            </span>
-            <span style={{ fontSize: 11, fontWeight: 600, color: barColor }}>
-              {currentInPackage >= 7 ? "¡Renovar ahora!" : currentInPackage >= 5 ? "Próximo a vencer" : "En curso"}
-            </span>
-          </div>
-
-          {/* Confirm renew */}
-          {confirmRenew && (
-            <div style={{ marginTop: 14, padding: "12px 14px", background: `${T.amber}15`, borderRadius: 10, border: `1px solid ${T.amber}` }}>
-              <div style={{ fontSize: 13.5, fontWeight: 600, color: T.ink, marginBottom: 8 }}>
-                ¿Confirmar inicio del paquete {packageNum + 1}?
-              </div>
-              <div style={{ fontSize: 12.5, color: T.inkSoft, marginBottom: 10 }}>
-                El contador se reiniciará desde hoy ({fmtDate(TODAY)}). Las sesiones anteriores quedan en el historial.
-              </div>
-              <div style={{ display: "flex", gap: 8 }}>
-                <button onClick={() => { onRenewPackage(child.id); setConfirmRenew(false); }} style={{
-                  background: T.brand, color: "#fff", border: "none", borderRadius: 8,
-                  padding: "7px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif",
-                }}>Sí, iniciar paquete {packageNum + 1}</button>
-                <button onClick={() => setConfirmRenew(false)} style={{
-                  background: "#fff", color: T.inkSoft, border: `1px solid ${T.border}`, borderRadius: 8,
-                  padding: "7px 12px", fontSize: 13, cursor: "pointer", fontFamily: "Inter, sans-serif",
-                }}>Cancelar</button>
-              </div>
-            </div>
-          )}
         </Card>
       )}
 
@@ -2434,39 +2370,7 @@ function ResumenTab({ child, objectives, sessions, users, onRenewPackage, onClos
         </div>
       )}
 
-      {/* Quick objectives summary per specialist */}
-      {childObjectives.length > 0 && (() => {
-        const AREA_COLORS = {"Terapia Ocupacional":"#175FAF","Fonoaudiologia":"#7A9E7E","Funciones Ejecutivas":"#C79A6B","Psicologia":"#A6779A","Psicologia Clinica":"#A6779A","Desarrollo (DVLP)":"#B8860B","Kids Club":"#82A166"};
-        const groups = {};
-        childObjectives.forEach(o => {
-          const k = o.specialistId || "x";
-          if (!groups[k]) groups[k] = { objs: [], area: o.area };
-          groups[k].objs.push(o);
-        });
-        return (
-          <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(Object.keys(groups).length, 3)}, 1fr)`, gap: 10, marginBottom: 20 }}>
-            {Object.entries(groups).map(([specId, { objs, area }]) => {
-              const spec = users.find(u => u.id === specId);
-              const logrados = objs.filter(o => o.status === "logrado").length;
-              const color = AREA_COLORS[area] || T.inkSoft;
-              const pct = objs.length > 0 ? (logrados / objs.length) * 100 : 0;
-              return (
-                <div key={specId} style={{ background: "#fff", border: `0.5px solid ${T.border}`, borderTop: `3px solid ${color}`, borderRadius: "0 0 10px 10px", padding: "12px 14px" }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color, marginBottom: 1 }}>{area}</div>
-                  <div style={{ fontSize: 11.5, color: T.inkSoft, marginBottom: 8 }}>{spec?.name || "—"}</div>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-                    <span style={{ fontFamily: "Fraunces, serif", fontSize: 20, fontWeight: 500, color }}>{logrados}</span>
-                    <span style={{ fontSize: 12, color: T.inkSoft }}>/ {objs.length}</span>
-                  </div>
-                  <div style={{ height: 3, background: T.borderSoft, borderRadius: 2, marginTop: 6, overflow: "hidden" }}>
-                    <div style={{ height: "100%", width: `${pct}%`, background: color, borderRadius: 2 }} />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        );
-      })()}
+
 
       {last ? (
         <Card style={{ padding: 18, marginBottom: 22 }}>
