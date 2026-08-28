@@ -81,6 +81,8 @@ const seedUsers = [
   { id: "u-ingrid", name: "Ingrid Villa", role: "specialist", specialty: "Fonoaudiología", avatarBg: "#9AA4C4" },
   { id: "u-daniella", name: "Daniella Azrak", role: "specialist", specialty: "Desarrollo (DVLP)", avatarBg: "#C79A6B" },
   { id: "u-mariavirginia", name: "María Virginia Sierralta", role: "specialist", specialty: "Kids Club", avatarBg: "#B58AC7" },
+  { id: "u-laura", name: "Laura González", role: "specialist", specialty: "Psicología Clínica", avatarBg: "#9B6B9B" },
+  { id: "u-claudia", name: "Claudia Nigrinis", role: "clinical_director", specialty: "Psicología", title: "Directora Clínica", avatarBg: "#C0392B" },
 ];
 
 const seedChildren = [
@@ -227,6 +229,7 @@ const SPECIALIST_COLORS = {
   "u-daniella":     "#7B5EA7",  // Daniella — morado
   "u-mariavirginia":"#E8856A",  // Mavi — salmon
   "u-laura":        "#9B6B9B",  // Laura — lila
+  "u-claudia":      "#C0392B",  // Claudia — rojo
 };
 
 const seedDocuments = [
