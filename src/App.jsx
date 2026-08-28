@@ -898,7 +898,6 @@ function CalendarAgenda({ events, loading, error, date, onDateChange, children, 
                   background: isLinking ? T.bg : T.surfaceSunk,
                   borderLeft: `3px solid ${spColor}`,
                   border: isLinking ? `1.5px solid ${T.brand}` : undefined,
-                  borderLeft: `3px solid ${spColor}`,
                 }}>
                   {/* Time */}
                   <div style={{ minWidth: 58, textAlign: "right", flexShrink: 0 }}>
@@ -4368,6 +4367,21 @@ export default function App() {
     setMeetings((prev) => [...prev, { id: `mtg-${Date.now()}`, childId: selectedChildId, createdBy: currentUser.id, ...meeting }]);
   }
 
+  async function handleAddTutorReport(report) {
+    setTutorReports((prev) => [...prev, report]);
+    try { await db.insertTutorReport(report); } catch(e) { console.error("Add tutor report:", e); }
+  }
+
+  async function handleAddGabineteSession(session) {
+    setGabineteSessions((prev) => [...prev, session]);
+    try { await db.insertGabineteSession(session); } catch(e) { console.error("Add gabinete session:", e); }
+  }
+
+  async function handleAddSchool(school) {
+    setSchools((prev) => [...prev, school]);
+    try { await db.insertSchool(school); } catch(e) { console.error("Add school:", e); }
+  }
+
   if (authLoading) {
     return (
       <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:"#FFFBF2" }}>
@@ -4409,15 +4423,6 @@ export default function App() {
           tutorReports={tutorReports}
           onOpenChild={(id) => { setSelectedChildId(id); setView("child"); }}
           onAddTutorReport={handleAddTutorReport}
-        />
-      )}
-
-      {view === "home" && currentUser.role === "shadow" && (
-        <ShadowHome
-          user={currentUser} children={children} users={users} objectives={objectives}
-          shadowReports={shadowReports}
-          onOpenChild={(id) => { setSelectedChildId(id); setView("child"); }}
-          onAddShadowReport={handleAddShadowReport}
         />
       )}
 

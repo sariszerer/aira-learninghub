@@ -17,7 +17,7 @@ function saveToken(token) {
   sessionStorage.setItem("gcal_token", token);
 }
 
-function clearToken() {
+export function clearToken() {
   _accessToken = null;
   sessionStorage.removeItem("gcal_token");
 }
