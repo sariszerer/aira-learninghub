@@ -3145,7 +3145,7 @@ function ChildProfile({ child, users, sessions, objectives, documents, meetings,
   const specialists = child.assignedSpecialists.map((id) => users.find((u) => u.id === id)).filter(Boolean);
   const tabs = [
     { id: "resumen", label: "Resumen" },
-    { id: "historial", label: "Historial" },
+    { id: "sesiones", label: "Sesiones" },
     { id: "objetivos", label: "Objetivos" },
     { id: "plan", label: "Plan de Trabajo" },
     { id: "anamnesis", label: "Anamnesis" },
@@ -3283,7 +3283,87 @@ function ChildProfile({ child, users, sessions, objectives, documents, meetings,
       </div>
 
       {tab === "resumen" && <ResumenTab child={child} objectives={objectives} sessions={sessions} users={users} onRenewPackage={onRenewPackage} onCloseProcess={onCloseProcess} currentUser={currentUser} />}
-      {tab === "historial" && <HistorialTab child={child} sessions={sessions} objectives={objectives} users={users} onViewReport={onViewReport} onUpdateSession={onUpdateSession} currentUser={currentUser} />}
+      {tab === "sesiones" && (() => {
+        const AREA_COLORS = {"Terapia Ocupacional":"#175FAF","Fonoaudiologia":"#7A9E7E","Funciones Ejecutivas":"#C79A6B","Psicologia":"#A6779A","Psicologia Clinica":"#A6779A","Pautas de Crianza":"#C79A6B","Desarrollo (DVLP)":"#B8860B","Kids Club":"#82A166"};
+        const childSessions = sessions.filter(s => s.childId === child.id).sort((a,b) => b.date.localeCompare(a.date));
+        const [editingSession, setEditingSession] = useState(null);
+        const [filterSpec, setFilterSpec] = useState(null);
+
+        // Group sessions by specialty
+        const specs = [...new Set(childSessions.map(s => s.specialty))].filter(Boolean);
+
+        const canEdit = (s) => currentUser && (currentUser.role === "admin" || currentUser.role === "clinical_director" || currentUser.id === s.specialistId);
+
+        const filtered = filterSpec ? childSessions.filter(s => s.specialty === filterSpec) : childSessions;
+
+        return (
+          <div>
+            {editingSession && (
+              <EditSessionModal
+                session={editingSession}
+                objectives={objectives}
+                users={users}
+                onClose={() => setEditingSession(null)}
+                onSave={(updated) => { if (onUpdateSession) onUpdateSession(updated); setEditingSession(null); }}
+              />
+            )}
+            {/* Filter buttons per discipline */}
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
+              <button onClick={() => setFilterSpec(null)}
+                style={{ padding: "5px 12px", borderRadius: 20, border: `1.5px solid ${filterSpec === null ? T.ink : T.border}`, background: filterSpec === null ? T.ink : "#fff", color: filterSpec === null ? "#fff" : T.inkSoft, fontSize: 12, fontWeight: 500, fontFamily: "Inter, sans-serif", cursor: "pointer" }}>
+                Todas ({childSessions.length})
+              </button>
+              {specs.map(sp => {
+                const color = AREA_COLORS[sp] || T.inkSoft;
+                const count = childSessions.filter(s => s.specialty === sp).length;
+                const active = filterSpec === sp;
+                return (
+                  <button key={sp} onClick={() => setFilterSpec(active ? null : sp)}
+                    style={{ padding: "5px 12px", borderRadius: 20, border: `1.5px solid ${active ? color : T.border}`, background: active ? color : "#fff", color: active ? "#fff" : color, fontSize: 12, fontWeight: 500, fontFamily: "Inter, sans-serif", cursor: "pointer" }}>
+                    {sp} ({count})
+                  </button>
+                );
+              })}
+            </div>
+            {/* Session list */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {filtered.map(s => {
+                const specialist = users.find(u => u.id === s.specialistId);
+                const color = AREA_COLORS[s.specialty] || T.inkSoft;
+                const objs = (s.objectivesWorked || []).map(ow => objectives.find(o => o.id === ow.objectiveId)?.name).filter(Boolean);
+                const acts = Array.isArray(s.activities) ? s.activities : [];
+                return (
+                  <Card key={s.id} style={{ padding: "14px 16px", borderLeft: `3px solid ${color}` }}>
+                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: T.amberDeep }}>{fmtDateShort(s.date)}</span>
+                          <span style={{ fontSize: 12, fontWeight: 600, color }}>{s.specialty}</span>
+                          <span style={{ fontSize: 12, color: T.inkSoft }}>{specialist?.name?.split(" ")[0]}</span>
+                          {s.duration && <span style={{ fontSize: 11, color: T.inkFaint }}>{s.duration} min</span>}
+                        </div>
+                        {objs.length > 0 && <div style={{ fontSize: 12.5, color: T.inkSoft, marginBottom: 3 }}><b>Objetivos:</b> {objs.join(" · ")}</div>}
+                        {acts.length > 0 && <div style={{ fontSize: 12.5, color: T.inkSoft, marginBottom: 3 }}><b>Actividades:</b> {acts.join(" · ")}</div>}
+                        {s.observation && <div style={{ fontSize: 13, color: T.ink, lineHeight: 1.5, marginTop: 5, whiteSpace: "pre-wrap" }}>{s.observation}</div>}
+                        {s.nextSteps && <div style={{ fontSize: 12.5, color: T.inkSoft, marginTop: 4, fontStyle: "italic" }}>→ {s.nextSteps}</div>}
+                      </div>
+                      {canEdit(s) && (
+                        <button onClick={() => setEditingSession(s)}
+                          style={{ fontSize: 12, padding: "4px 10px", borderRadius: 6, border: `0.5px solid ${T.border}`, background: "#fff", color: T.inkSoft, cursor: "pointer", fontFamily: "Inter, sans-serif", flexShrink: 0 }}>
+                          Editar
+                        </button>
+                      )}
+                    </div>
+                  </Card>
+                );
+              })}
+              {filtered.length === 0 && (
+                <div style={{ color: T.inkFaint, fontSize: 14, textAlign: "center", padding: 32 }}>Sin sesiones registradas.</div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
       {tab === "objetivos" && (() => {
         const childObjs = objectives.filter((o) => o.childId === child.id);
         const groups = {};
@@ -3354,17 +3434,17 @@ function ChildProfile({ child, users, sessions, objectives, documents, meetings,
                             <span style={{ fontSize: 14, flexShrink: 0, marginTop: 1 }}>{o.status === "logrado" ? "✅" : o.status === "apoyo" ? "🔴" : "🟡"}</span>
                             <span style={{ fontSize: 12.5, color: o.status === "logrado" ? "#2E7D32" : T.ink, lineHeight: 1.4, flex: 1 }}>{o.name}</span>
                           </div>
-                          {canEditThis && onUpdateObjective && (
+                          {canEditThis && (
                             <div style={{ display: "flex", gap: 4, marginTop: 5, marginLeft: 22 }}>
-                              {["logrado","proceso","apoyo"].map(s => (
-                                <button key={s} onClick={() => onUpdateObjective({...o, status: s})}
+                              {["logrado","proceso","apoyo"].map(st => (
+                                <button key={st} onClick={() => { if(onUpdateObjective) onUpdateObjective({...o, status: st}); }}
                                   style={{ fontSize: 11, padding: "2px 8px", borderRadius: 6, cursor: "pointer", fontFamily: "Inter, sans-serif",
-                                    border: o.status === s ? "none" : `0.5px solid ${T.border}`,
-                                    background: o.status === s ? (s === "logrado" ? "#E8F5E9" : s === "apoyo" ? "#FFEBEE" : "#FFF8E1") : "#fff",
-                                    color: o.status === s ? (s === "logrado" ? "#2E7D32" : s === "apoyo" ? "#C62828" : "#F57F17") : T.inkSoft,
-                                    fontWeight: o.status === s ? 600 : 400,
+                                    border: o.status === st ? "none" : `0.5px solid ${T.border}`,
+                                    background: o.status === st ? (st === "logrado" ? "#E8F5E9" : st === "apoyo" ? "#FFEBEE" : "#FFF8E1") : "#fff",
+                                    color: o.status === st ? (st === "logrado" ? "#2E7D32" : st === "apoyo" ? "#C62828" : "#F57F17") : T.inkSoft,
+                                    fontWeight: o.status === st ? 600 : 400,
                                   }}>
-                                  {s === "logrado" ? "✅ Logrado" : s === "proceso" ? "🟡 En proceso" : "🔴 Necesita apoyo"}
+                                  {st === "logrado" ? "✅ Logrado" : st === "proceso" ? "🟡 En proceso" : "🔴 Apoyo"}
                                 </button>
                               ))}
                             </div>
