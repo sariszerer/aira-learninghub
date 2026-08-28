@@ -201,6 +201,9 @@ const DOC_TYPES = {
   evaluacion: { label: "Evaluación", plural: "Evaluaciones" },
   reporte: { label: "Reporte", plural: "Reportes" },
   informe: { label: "Informe", plural: "Informes" },
+  anamnesis: { label: "Anamnesis", plural: "Anamnesis" },
+  plan_trabajo: { label: "Plan de trabajo", plural: "Planes de trabajo" },
+  pautas_crianza: { label: "Pautas de Crianza", plural: "Pautas de Crianza" },
 };
 
 const seedDocuments = [
@@ -3567,183 +3570,140 @@ function StepDots({ step, total }) {
 }
 
 function SessionWizard({ child, currentUser, objectives, onClose, onSave }) {
-  const [step, setStep] = useState(0);
+  const [date, setDate] = useState(TODAY);
   const [duration, setDuration] = useState(45);
   const [selectedObjIds, setSelectedObjIds] = useState([]);
-  const [customObjectives, setCustomObjectives] = useState([]);
-  const [newObjName, setNewObjName] = useState("");
-  const [selectedActivities, setSelectedActivities] = useState([]);
-  const [customActivities, setCustomActivities] = useState([]);
-  const [newActivity, setNewActivity] = useState("");
-  const [perf, setPerf] = useState({});
+  const [customObjText, setCustomObjText] = useState("");
+  const [activities, setActivities] = useState("");
   const [observation, setObservation] = useState("");
   const [nextSteps, setNextSteps] = useState("");
 
-  const childObjectives = objectives.filter((o) => o.childId === child.id);
-  const allObjectiveOptions = [...childObjectives, ...customObjectives.map((n, i) => ({ id: `new-${i}`, name: n }))];
-  const allActivities = [...ACTIVITY_CATALOG, ...customActivities];
-  const selectedObjectiveObjs = allObjectiveOptions.filter((o) => selectedObjIds.includes(o.id));
+  // Only show this specialist's objectives for this child
+  const myObjectives = objectives.filter(o => 
+    o.childId === child.id && 
+    (currentUser.role === "admin" || currentUser.role === "clinical_director" || o.specialistId === currentUser.id)
+  );
 
-  const steps = ["Datos", "¿Qué trabajamos?", "¿Qué hicimos?", "¿Cómo le fue?", "Observación", "Próxima sesión"];
-  const canNext = [true, selectedObjIds.length > 0, selectedActivities.length > 0, selectedObjectiveObjs.every((o) => perf[o.id]), true, true][step];
-
-  const toggleObj = (id) => setSelectedObjIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
-  const toggleAct = (a) => setSelectedActivities((prev) => prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a]);
+  // Session number for this specialist + child
+  const toggleObj = (id) => setSelectedObjIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
 
   const handleSave = () => {
+    if (!date) return;
     onSave({
       childId: child.id,
       specialistId: currentUser.id,
       specialty: currentUser.specialty,
-      date: TODAY,
+      date,
       duration,
-      objectivesWorked: selectedObjectiveObjs.map((o) => ({ objectiveId: o.id, status: perf[o.id] })),
-      activities: selectedActivities,
-      observation,
-      nextSteps,
-      _newObjectiveNames: customObjectives,
+      objectivesWorked: selectedObjIds.map(id => ({ objectiveId: id, status: "proceso" })),
+      activities: activities.split("\n").map(a => a.trim()).filter(Boolean),
+      observation: observation.trim(),
+      nextSteps: nextSteps.trim(),
     });
   };
 
+  const AREA_COLORS = {"Terapia Ocupacional":"#175FAF","Fonoaudiologia":"#7A9E7E","Funciones Ejecutivas":"#C79A6B","Psicologia":"#A6779A","Desarrollo (DVLP)":"#B8860B","Kids Club":"#82A166"};
+  const color = AREA_COLORS[currentUser.specialty] || "#888";
+
   return (
-    <Modal onClose={onClose} width={620}>
-      <ModalHeader title="Registrar sesión" subtitle={`${child.name} ${child.lastName} · Paso ${step + 1} de 6 — ${steps[step]}`} onClose={onClose} />
-      <div style={{ padding: 24, maxHeight: "62vh", overflowY: "auto" }}>
+    <Modal onClose={onClose} width={600}>
+      <ModalHeader title="Registro de sesión" subtitle={`${child.name} ${child.lastName} · ${currentUser.specialty}`} onClose={onClose} />
+      <div style={{ padding: 24, maxHeight: "72vh", overflowY: "auto", display: "flex", flexDirection: "column", gap: 20 }}>
 
-        {step === 0 && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-              <Field label="Niño" value={`${child.name} ${child.lastName}`} />
-              <Field label="Fecha" value={fmtDate(TODAY)} />
-              <Field label="Especialista" value={currentUser.name} />
-              <Field label="Especialidad" value={currentUser.specialty} />
-            </div>
-            <div style={{ marginTop: 8 }}>
-              <div style={{ fontSize: 12.5, fontWeight: 700, color: T.inkFaint, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>Duración</div>
-              <div style={{ display: "flex", gap: 8 }}>
-                {[30, 40, 45, 60].map((d) => (
-                  <Chip key={d} label={`${d} min`} selected={duration === d} onClick={() => setDuration(d)} />
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {step === 1 && (
+        {/* Fecha + Duración */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
           <div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 9, marginBottom: 14 }}>
-              {allObjectiveOptions.map((o) => (
-                <Chip key={o.id} label={o.name} selected={selectedObjIds.includes(o.id)} onClick={() => toggleObj(o.id)} />
+            <div style={{ fontSize: 12, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>Fecha</div>
+            <input type="date" value={date} onChange={e => setDate(e.target.value)}
+              style={{ ...inputStyle, width: "100%", boxSizing: "border-box" }} />
+          </div>
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>Duración</div>
+            <div style={{ display: "flex", gap: 6 }}>
+              {[30, 40, 45, 60].map(d => (
+                <button key={d} onClick={() => setDuration(d)} style={{
+                  flex: 1, padding: "8px 4px", borderRadius: 8, border: `1.5px solid ${duration === d ? color : "#ddd"}`,
+                  background: duration === d ? `${color}15` : "#fff", color: duration === d ? color : "#888",
+                  fontSize: 12, fontWeight: duration === d ? 700 : 400, fontFamily: "Inter, sans-serif", cursor: "pointer"
+                }}>{d}m</button>
               ))}
             </div>
-            <div style={{ display: "flex", gap: 8 }}>
-              <input
-                value={newObjName} onChange={(e) => setNewObjName(e.target.value)}
-                placeholder="Agregar objetivo..." style={inputStyle}
-              />
-              <Btn variant="ghost" icon={Plus} onClick={() => {
-                if (!newObjName.trim()) return;
-                setCustomObjectives((p) => [...p, newObjName.trim()]);
-                setNewObjName("");
-              }}>Agregar</Btn>
-            </div>
           </div>
-        )}
+        </div>
 
-        {step === 2 && (
-          <div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 9, marginBottom: 14 }}>
-              {allActivities.map((a) => (
-                <Chip key={a} label={a} selected={selectedActivities.includes(a)} onClick={() => toggleAct(a)} tone="amber" />
-              ))}
-            </div>
-            <div style={{ display: "flex", gap: 8 }}>
-              <input
-                value={newActivity} onChange={(e) => setNewActivity(e.target.value)}
-                placeholder="Otra actividad..." style={inputStyle}
-              />
-              <Btn variant="ghost" icon={Plus} onClick={() => {
-                if (!newActivity.trim()) return;
-                setCustomActivities((p) => [...p, newActivity.trim()]);
-                setSelectedActivities((p) => [...p, newActivity.trim()]);
-                setNewActivity("");
-              }}>Agregar</Btn>
-            </div>
-          </div>
-        )}
-
-        {step === 3 && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            {selectedObjectiveObjs.map((o) => (
-              <div key={o.id}>
-                <div style={{ fontWeight: 700, fontSize: 14.5, color: T.ink, marginBottom: 8 }}>{o.name}</div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  {Object.entries(STATUS).map(([key, s]) => (
-                    <button key={key} onClick={() => setPerf((p) => ({ ...p, [o.id]: key }))} style={{
-                      flex: 1, padding: "10px 8px", borderRadius: 11, cursor: "pointer",
-                      border: `1.5px solid ${perf[o.id] === key ? s.color : T.border}`,
-                      background: perf[o.id] === key ? s.tint : "#fff",
-                      color: perf[o.id] === key ? s.color : T.inkSoft,
-                      fontWeight: 700, fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+        {/* Objetivos trabajados */}
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>Objetivos de la sesión</div>
+          {myObjectives.length > 0 ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {myObjectives.map(o => {
+                const selected = selectedObjIds.includes(o.id);
+                return (
+                  <button key={o.id} onClick={() => toggleObj(o.id)} style={{
+                    display: "flex", alignItems: "center", gap: 10, padding: "10px 12px",
+                    borderRadius: 8, border: `1.5px solid ${selected ? color : "#ddd"}`,
+                    background: selected ? `${color}10` : "#fff", cursor: "pointer", textAlign: "left",
+                    fontFamily: "Inter, sans-serif"
+                  }}>
+                    <div style={{
+                      width: 18, height: 18, borderRadius: 4, border: `2px solid ${selected ? color : "#ccc"}`,
+                      background: selected ? color : "#fff", flexShrink: 0,
+                      display: "flex", alignItems: "center", justifyContent: "center"
                     }}>
-                      <span style={{ width: 8, height: 8, borderRadius: 999, background: s.color }} />
-                      {s.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {step === 4 && (
-          <div>
-            <div style={{ fontSize: 14.5, fontWeight: 700, color: T.ink, marginBottom: 4 }}>¿Cómo estuvo durante la sesión?</div>
-            <div style={{ fontSize: 12.5, color: T.inkFaint, marginBottom: 10 }}>Opcional, pero recomendado.</div>
-            <textarea
-              value={observation} onChange={(e) => setObservation(e.target.value)}
-              placeholder="Ej: Participó adecuadamente. Presentó frustración al cambiar de actividad, pero logró continuar con apoyo verbal."
-              rows={5} style={{ ...inputStyle, width: "100%", resize: "vertical", boxSizing: "border-box" }}
-            />
-          </div>
-        )}
-
-        {step === 5 && (
-          <div>
-            <div style={{ fontSize: 14.5, fontWeight: 700, color: T.ink, marginBottom: 4 }}>Continuar trabajando</div>
-            <div style={{ fontSize: 12.5, color: T.inkFaint, marginBottom: 10 }}>Un apunte corto para la próxima sesión.</div>
-            <input
-              value={nextSteps} onChange={(e) => setNextSteps(e.target.value)}
-              placeholder="Ej: Flexibilidad ante cambios y motricidad fina."
-              style={{ ...inputStyle, width: "100%", boxSizing: "border-box" }}
-            />
-          </div>
-        )}
-      </div>
-
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 24px", borderTop: `1px solid ${T.border}` }}>
-        <StepDots step={step} total={6} />
-        <div style={{ display: "flex", gap: 10 }}>
-          {step > 0 && <Btn variant="ghost" onClick={() => setStep((s) => s - 1)}>Atrás</Btn>}
-          {step < 5 ? (
-            <Btn variant="primary" disabled={!canNext} onClick={() => setStep((s) => s + 1)} icon={ChevronRight}>Continuar</Btn>
+                      {selected && <span style={{ color: "#fff", fontSize: 12, fontWeight: 700 }}>✓</span>}
+                    </div>
+                    <span style={{ fontSize: 13, color: selected ? color : "#333", fontWeight: selected ? 600 : 400 }}>{o.name}</span>
+                  </button>
+                );
+              })}
+            </div>
           ) : (
-            <Btn variant="amber" onClick={handleSave} icon={Check}>Guardar sesión</Btn>
+            <div style={{ fontSize: 13, color: "#aaa", padding: "8px 0" }}>No hay objetivos definidos para esta disciplina aún.</div>
           )}
+          <div style={{ marginTop: 8 }}>
+            <input value={customObjText} onChange={e => setCustomObjText(e.target.value)}
+              placeholder="Agregar objetivo puntual de esta sesión..."
+              style={{ ...inputStyle, width: "100%", boxSizing: "border-box", fontSize: 13 }} />
+          </div>
+        </div>
+
+        {/* Actividades realizadas */}
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>Actividades realizadas</div>
+          <textarea value={activities} onChange={e => setActivities(e.target.value)} rows={3}
+            placeholder={"Una por línea, ej:\nColor Code\nJuego de turnos\nMasilla"}
+            style={{ ...inputStyle, width: "100%", boxSizing: "border-box", resize: "vertical", lineHeight: 1.6 }} />
+        </div>
+
+        {/* Observaciones */}
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>Observaciones clínicas</div>
+          <textarea value={observation} onChange={e => setObservation(e.target.value)} rows={4}
+            placeholder="Cómo estuvo el paciente, avances, dificultades observadas..."
+            style={{ ...inputStyle, width: "100%", boxSizing: "border-box", resize: "vertical", lineHeight: 1.6 }} />
+        </div>
+
+        {/* Recomendaciones */}
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>Recomendaciones para casa / escuela</div>
+          <textarea value={nextSteps} onChange={e => setNextSteps(e.target.value)} rows={3}
+            placeholder="Indicaciones para los padres o el equipo escolar..."
+            style={{ ...inputStyle, width: "100%", boxSizing: "border-box", resize: "vertical", lineHeight: 1.6 }} />
+        </div>
+
+      </div>
+      <div style={{ padding: "14px 24px", borderTop: "1px solid #eee", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ fontSize: 13, color: "#aaa" }}>{currentUser.name} · {currentUser.specialty}</div>
+        <div style={{ display: "flex", gap: 10 }}>
+          <Btn variant="ghost" onClick={onClose}>Cancelar</Btn>
+          <Btn variant="primary" disabled={!date} onClick={handleSave}>Guardar sesión</Btn>
         </div>
       </div>
     </Modal>
   );
 }
 
-const inputStyle = {
-  padding: "10px 13px", borderRadius: 10, border: `1.5px solid ${T.border}`,
-  fontSize: 14, fontFamily: "Inter, sans-serif", outline: "none", flex: 1,
-};
 
-/* ============================================================
-   SAVED TOAST
-============================================================ */
 function SavedToast() {
   return (
     <div style={{
