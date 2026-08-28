@@ -2441,29 +2441,76 @@ function ResumenTab({ child, objectives, sessions, users, onRenewPackage, onClos
   );
 }
 
-function HistorialTab({ child, sessions, objectives, users, onViewReport }) {
+function HistorialTab({ child, sessions, objectives, users, onViewReport, onUpdateSession, currentUser }) {
   const childSessions = sessions.filter((s) => s.childId === child.id).sort((a, b) => b.date.localeCompare(a.date));
+  const [editingId, setEditingId] = useState(null);
+  const [editObs, setEditObs] = useState("");
+  const [editNext, setEditNext] = useState("");
+
   if (childSessions.length === 0) {
     return <div style={{ color: T.inkFaint, fontSize: 14, textAlign: "center", padding: 40 }}>Aún no hay sesiones registradas para este paciente.</div>;
   }
+
+  const canEdit = (s) => currentUser && (currentUser.role === "admin" || currentUser.role === "clinical_director" || currentUser.id === s.specialistId);
+
+  const startEdit = (s) => { setEditingId(s.id); setEditObs(s.observation || ""); setEditNext(s.nextSteps || ""); };
+  const cancelEdit = () => { setEditingId(null); setEditObs(""); setEditNext(""); };
+  const saveEdit = (s) => {
+    if (onUpdateSession) onUpdateSession({ ...s, observation: editObs, nextSteps: editNext });
+    cancelEdit();
+  };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       {childSessions.map((s) => {
         const specialist = users.find((u) => u.id === s.specialistId);
-        const objs = s.objectivesWorked.map((ow) => objectives.find((o) => o.id === ow.objectiveId)?.name).filter(Boolean);
+        const objs = (s.objectivesWorked || []).map((ow) => objectives.find((o) => o.id === ow.objectiveId)?.name).filter(Boolean);
+        const isEditing = editingId === s.id;
+        const AREA_COLORS = {"Terapia Ocupacional":"#175FAF","Fonoaudiologia":"#7A9E7E","Funciones Ejecutivas":"#C79A6B","Psicologia":"#A6779A","Psicologia Clinica":"#A6779A","Desarrollo (DVLP)":"#B8860B","Kids Club":"#82A166"};
+        const color = AREA_COLORS[s.specialty] || T.inkSoft;
         return (
-          <Card key={s.id} style={{ padding: 18 }}>
+          <Card key={s.id} style={{ padding: 18, borderLeft: `3px solid ${color}` }}>
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: T.amberDeep, letterSpacing: "0.04em" }}>{fmtDateShort(s.date)}</div>
-                <div style={{ fontFamily: "Fraunces, serif", fontSize: 16.5, fontWeight: 600, color: T.ink, marginTop: 4 }}>
-                  {s.specialty} — {specialist?.name.split(" ")[0]}
+              <div style={{ flex: 1 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: T.amberDeep, letterSpacing: "0.04em" }}>{fmtDateShort(s.date)}</div>
+                  <div style={{ fontSize: 12, color, fontWeight: 600 }}>{s.specialty}</div>
+                  <div style={{ fontSize: 12, color: T.inkSoft }}>{specialist?.name.split(" ")[0]}</div>
                 </div>
-                <div style={{ fontSize: 13, color: T.inkSoft, marginTop: 6 }}>
-                  <b style={{ color: T.inkSoft }}>Objetivos:</b> {objs.join(" / ")}
-                </div>
+                {objs.length > 0 && (
+                  <div style={{ fontSize: 13, color: T.inkSoft, marginBottom: 6 }}>
+                    {objs.join(" · ")}
+                  </div>
+                )}
+                {isEditing ? (
+                  <div style={{ marginTop: 8 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: T.inkFaint, textTransform: "uppercase", marginBottom: 4 }}>Observaciones clínicas</div>
+                    <textarea value={editObs} onChange={e => setEditObs(e.target.value)} rows={4}
+                      placeholder="Observaciones de la sesión..."
+                      style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1.5px solid ${T.brand}`, fontSize: 13.5, fontFamily: "Inter, sans-serif", outline: "none", resize: "vertical", boxSizing: "border-box", marginBottom: 8 }}
+                    />
+                    <div style={{ fontSize: 11, fontWeight: 700, color: T.inkFaint, textTransform: "uppercase", marginBottom: 4 }}>Próximos pasos / Tareas para casa</div>
+                    <textarea value={editNext} onChange={e => setEditNext(e.target.value)} rows={2}
+                      placeholder="Recomendaciones para el hogar..."
+                      style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1.5px solid ${T.brand}`, fontSize: 13.5, fontFamily: "Inter, sans-serif", outline: "none", resize: "vertical", boxSizing: "border-box", marginBottom: 10 }}
+                    />
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button onClick={() => saveEdit(s)} style={{ padding: "7px 16px", borderRadius: 8, border: "none", background: T.brand, color: "#fff", fontSize: 13, fontWeight: 600, fontFamily: "Inter, sans-serif", cursor: "pointer" }}>Guardar</button>
+                      <button onClick={cancelEdit} style={{ padding: "7px 12px", borderRadius: 8, border: `1px solid ${T.border}`, background: "#fff", color: T.inkSoft, fontSize: 13, fontFamily: "Inter, sans-serif", cursor: "pointer" }}>Cancelar</button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {s.observation && <div style={{ fontSize: 13.5, color: T.ink, lineHeight: 1.5, marginTop: 4, whiteSpace: "pre-wrap" }}>{s.observation}</div>}
+                    {s.nextSteps && <div style={{ fontSize: 13, color: T.inkSoft, marginTop: 6, fontStyle: "italic" }}>→ {s.nextSteps}</div>}
+                  </>
+                )}
               </div>
-              <Btn variant="ghost" size="sm" onClick={() => onViewReport(s)}>Ver reporte</Btn>
+              {!isEditing && (
+                <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                  {canEdit(s) && <Btn variant="ghost" size="sm" onClick={() => startEdit(s)}>Editar</Btn>}
+                </div>
+              )}
             </div>
           </Card>
         );
@@ -2496,9 +2543,16 @@ function ReportCard({ icon: Icon, tone, title, description, action, actionLabel,
   );
 }
 
-function DocumentsSection({ type, documents, users, onAdd }) {
+function DocumentsSection({ type, documents, users, onAdd, onUpdateDocument, currentUser }) {
   const meta = DOC_TYPES[type];
   const docs = documents.filter((d) => d.type === type).sort((a, b) => b.date.localeCompare(a.date));
+  const [editingId, setEditingId] = useState(null);
+  const [editNotes, setEditNotes] = useState("");
+  const [expandedId, setExpandedId] = useState(null);
+
+  const startEdit = (d) => { setEditingId(d.id); setEditNotes(d.notes || ""); setExpandedId(d.id); };
+  const saveEdit = (d) => { if (onUpdateDocument) onUpdateDocument({ ...d, notes: editNotes }); setEditingId(null); };
+
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
@@ -2513,14 +2567,50 @@ function DocumentsSection({ type, documents, users, onAdd }) {
         <Card style={{ padding: 6 }}>
           {docs.map((d, i) => {
             const author = users.find((u) => u.id === d.authorId);
+            const isEditing = editingId === d.id;
+            const isExpanded = expandedId === d.id;
+            const isPdf = d.fields?.pdfUrl || d.fields?.pdfData;
+            const canEdit = currentUser && (currentUser.role === "admin" || currentUser.role === "clinical_director" || currentUser.id === d.authorId);
             return (
               <div key={d.id} style={{ padding: "13px 14px", borderTop: i > 0 ? `1px solid ${T.border}` : "none" }}>
-                <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10 }}>
-                  <div style={{ fontWeight: 700, fontSize: 14, color: T.ink }}>{d.title}</div>
-                  <div style={{ fontSize: 12, color: T.inkFaint, whiteSpace: "nowrap" }}>{fmtDateShort(d.date)}</div>
+                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      {isPdf && <span style={{ fontSize: 11, background: "#FFEBEE", color: "#C62828", padding: "2px 6px", borderRadius: 4, fontWeight: 600 }}>PDF</span>}
+                      <div style={{ fontWeight: 700, fontSize: 14, color: T.ink }}>{d.title}</div>
+                    </div>
+                    <div style={{ fontSize: 12, color: T.inkSoft, marginTop: 2 }}>{author?.name || "—"} · {fmtDateShort(d.date)}</div>
+                  </div>
+                  <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                    {isPdf && (
+                      <a href={d.fields.pdfUrl} target="_blank" rel="noreferrer"
+                        style={{ fontSize: 12, color: T.brand, textDecoration: "none", padding: "4px 8px", border: `1px solid ${T.border}`, borderRadius: 6 }}>
+                        Ver PDF
+                      </a>
+                    )}
+                    {canEdit && !isEditing && (
+                      <button onClick={() => startEdit(d)} style={{ fontSize: 12, color: T.inkSoft, background: "none", border: `1px solid ${T.border}`, borderRadius: 6, padding: "4px 8px", cursor: "pointer" }}>Editar</button>
+                    )}
+                    {d.notes && !isEditing && (
+                      <button onClick={() => setExpandedId(isExpanded ? null : d.id)} style={{ fontSize: 12, color: T.brand, background: "none", border: "none", cursor: "pointer", padding: "4px 0" }}>
+                        {isExpanded ? "▲ Cerrar" : "▼ Ver"}
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <div style={{ fontSize: 12, color: T.inkSoft, marginTop: 2 }}>{author?.name || "—"}</div>
-                {d.notes && <div style={{ fontSize: 13.5, color: T.ink, marginTop: 6, lineHeight: 1.5 }}>{d.notes}</div>}
+                {isEditing ? (
+                  <div style={{ marginTop: 10 }}>
+                    <textarea value={editNotes} onChange={e => setEditNotes(e.target.value)} rows={8}
+                      style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1.5px solid ${T.brand}`, fontSize: 13.5, fontFamily: "Inter, sans-serif", outline: "none", resize: "vertical", boxSizing: "border-box", lineHeight: 1.6, whiteSpace: "pre-wrap" }}
+                    />
+                    <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                      <button onClick={() => saveEdit(d)} style={{ padding: "7px 16px", borderRadius: 8, border: "none", background: T.brand, color: "#fff", fontSize: 13, fontWeight: 600, fontFamily: "Inter, sans-serif", cursor: "pointer" }}>Guardar</button>
+                      <button onClick={() => setEditingId(null)} style={{ padding: "7px 12px", borderRadius: 8, border: `1px solid ${T.border}`, background: "#fff", color: T.inkSoft, fontSize: 13, fontFamily: "Inter, sans-serif", cursor: "pointer" }}>Cancelar</button>
+                    </div>
+                  </div>
+                ) : isExpanded && d.notes ? (
+                  <div style={{ fontSize: 13.5, color: T.ink, marginTop: 8, lineHeight: 1.6, whiteSpace: "pre-wrap", padding: "10px 12px", background: T.surfaceSunk, borderRadius: 8 }}>{d.notes}</div>
+                ) : null}
               </div>
             );
           })}
@@ -2535,10 +2625,39 @@ function AddDocumentModal({ type, onClose, onSave }) {
   const [title, setTitle] = useState("");
   const [date, setDate] = useState(TODAY);
   const [notes, setNotes] = useState("");
+  const [mode, setMode] = useState("text"); // "text" | "pdf"
+  const [pdfFile, setPdfFile] = useState(null);
+  const [pdfData, setPdfData] = useState(null);
+  const fileRef = React.useRef();
+
+  const handlePdf = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setPdfFile(file);
+    if (!title) setTitle(file.name.replace(/\.pdf$/i, ""));
+    const reader = new FileReader();
+    reader.onload = (ev) => setPdfData(ev.target.result);
+    reader.readAsDataURL(file);
+  };
+
+  const handleSave = () => {
+    const fields = mode === "pdf" && pdfData ? { pdfData, pdfName: pdfFile?.name } : {};
+    onSave({ type, title: title.trim(), date, notes: notes.trim(), fields });
+  };
+
   return (
-    <Modal onClose={onClose} width={480}>
+    <Modal onClose={onClose} width={520}>
       <ModalHeader title={`Agregar ${meta.label.toLowerCase()}`} onClose={onClose} />
       <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 14 }}>
+        {/* Mode toggle */}
+        <div style={{ display: "flex", gap: 8, marginBottom: 4 }}>
+          <button onClick={() => setMode("text")} style={{ flex: 1, padding: "8px", borderRadius: 8, border: `1.5px solid ${mode === "text" ? T.brand : T.border}`, background: mode === "text" ? `${T.brand}10` : "#fff", color: mode === "text" ? T.brand : T.inkSoft, fontSize: 13, fontWeight: mode === "text" ? 600 : 400, fontFamily: "Inter, sans-serif", cursor: "pointer" }}>
+            ✏️ Texto / Notas
+          </button>
+          <button onClick={() => setMode("pdf")} style={{ flex: 1, padding: "8px", borderRadius: 8, border: `1.5px solid ${mode === "pdf" ? T.brand : T.border}`, background: mode === "pdf" ? `${T.brand}10` : "#fff", color: mode === "pdf" ? T.brand : T.inkSoft, fontSize: 13, fontWeight: mode === "pdf" ? 600 : 400, fontFamily: "Inter, sans-serif", cursor: "pointer" }}>
+            📄 Subir PDF
+          </button>
+        </div>
         <div>
           <FieldLabel>Título</FieldLabel>
           <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={`Ej: ${meta.label} inicial`} style={{ ...inputStyle, width: "100%", boxSizing: "border-box" }} />
@@ -2547,14 +2666,46 @@ function AddDocumentModal({ type, onClose, onSave }) {
           <FieldLabel>Fecha</FieldLabel>
           <input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={{ ...inputStyle, width: "100%", boxSizing: "border-box" }} />
         </div>
-        <div>
-          <FieldLabel>Notas</FieldLabel>
-          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={4} placeholder="Contenido, hallazgos u observaciones..." style={{ ...inputStyle, width: "100%", boxSizing: "border-box", resize: "vertical" }} />
-        </div>
+        {mode === "text" ? (
+          <div>
+            <FieldLabel>Contenido</FieldLabel>
+            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={6}
+              placeholder="Escribe el contenido, hallazgos u observaciones..."
+              style={{ ...inputStyle, width: "100%", boxSizing: "border-box", resize: "vertical", lineHeight: 1.6, whiteSpace: "pre-wrap" }} />
+          </div>
+        ) : (
+          <div>
+            <FieldLabel>Archivo PDF</FieldLabel>
+            <div onClick={() => fileRef.current?.click()} style={{ border: `2px dashed ${pdfFile ? T.brand : T.border}`, borderRadius: 10, padding: "24px", textAlign: "center", cursor: "pointer", background: pdfFile ? `${T.brand}06` : "#fafafa" }}>
+              {pdfFile ? (
+                <div>
+                  <div style={{ fontSize: 24, marginBottom: 4 }}>📄</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: T.brand }}>{pdfFile.name}</div>
+                  <div style={{ fontSize: 12, color: T.inkSoft, marginTop: 2 }}>{(pdfFile.size / 1024).toFixed(0)} KB · Listo para subir</div>
+                </div>
+              ) : (
+                <div>
+                  <div style={{ fontSize: 28, marginBottom: 4 }}>📤</div>
+                  <div style={{ fontSize: 14, color: T.inkSoft }}>Haz clic para seleccionar un PDF</div>
+                  <div style={{ fontSize: 12, color: T.inkFaint, marginTop: 2 }}>Evaluaciones, informes, reportes</div>
+                </div>
+              )}
+            </div>
+            <input ref={fileRef} type="file" accept=".pdf" style={{ display: "none" }} onChange={handlePdf} />
+            {pdfFile && (
+              <div style={{ marginTop: 10 }}>
+                <FieldLabel>Notas adicionales (opcional)</FieldLabel>
+                <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2}
+                  placeholder="Observaciones sobre el documento..."
+                  style={{ ...inputStyle, width: "100%", boxSizing: "border-box", resize: "vertical" }} />
+              </div>
+            )}
+          </div>
+        )}
       </div>
       <div style={{ padding: "14px 24px", borderTop: `1px solid ${T.border}`, display: "flex", justifyContent: "flex-end", gap: 10 }}>
         <Btn variant="ghost" onClick={onClose}>Cancelar</Btn>
-        <Btn variant="primary" disabled={!title.trim()} onClick={() => onSave({ type, title: title.trim(), date, notes: notes.trim() })}>Guardar</Btn>
+        <Btn variant="primary" disabled={!title.trim() || (mode === "pdf" && !pdfFile)} onClick={handleSave}>Guardar</Btn>
       </div>
     </Modal>
   );
@@ -2913,7 +3064,7 @@ function InterdisciplinaryTab({ child, meetings, users, onAddMeeting, currentUse
   );
 }
 
-function ChildProfile({ child, users, sessions, objectives, documents, meetings, parentReports, currentUser, onOpenSessionForm, onViewReport, onGenerateFull, onGenerateEvolution, onGenerateParentReport, onAddDocument, onAddMeeting, onUpdateObjective, onAddObjective, onDeleteObjective, onRenewPackage, onUpdateChild, onCloseProcess }) {
+function ChildProfile({ child, users, sessions, objectives, documents, meetings, parentReports, currentUser, onOpenSessionForm, onViewReport, onGenerateFull, onGenerateEvolution, onGenerateParentReport, onAddDocument, onAddMeeting, onUpdateObjective, onAddObjective, onDeleteObjective, onRenewPackage, onUpdateChild, onCloseProcess, onUpdateSession, onUpdateDocument }) {
   const [tab, setTab] = useState("resumen");
   const [editingProfile, setEditingProfile] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -3075,7 +3226,7 @@ function ChildProfile({ child, users, sessions, objectives, documents, meetings,
       </div>
 
       {tab === "resumen" && <ResumenTab child={child} objectives={objectives} sessions={sessions} users={users} onRenewPackage={onRenewPackage} onCloseProcess={onCloseProcess} currentUser={currentUser} />}
-      {tab === "historial" && <HistorialTab child={child} sessions={sessions} objectives={objectives} users={users} onViewReport={onViewReport} />}
+      {tab === "historial" && <HistorialTab child={child} sessions={sessions} objectives={objectives} users={users} onViewReport={onViewReport} onUpdateSession={onUpdateSession} currentUser={currentUser} />}
       {tab === "objetivos" && (() => {
         const childObjs = objectives.filter((o) => o.childId === child.id);
         const groups = {};
@@ -3962,6 +4113,16 @@ export default function App() {
     try { await db.updateChild(childId, updates); } catch(e) { console.error("Update child:", e); }
   }
 
+  async function handleUpdateSession(session) {
+    setSessions(prev => prev.map(s => s.id === session.id ? session : s));
+    try { await db.updateSession(session); } catch(e) { console.error("Update session:", e); }
+  }
+
+  async function handleUpdateDocument(doc) {
+    setDocuments(prev => prev.map(d => d.id === doc.id ? doc : d));
+    try { await db.updateDocument(doc); } catch(e) { console.error("Update document:", e); }
+  }
+
   async function handleCloseProcess(childId, note, objectives, totalSessions) {
     const child = children.find(c => c.id === childId);
     if (!child) return;
@@ -4129,6 +4290,8 @@ export default function App() {
           onRenewPackage={handleRenewPackage}
           onUpdateChild={handleUpdateChild}
           onCloseProcess={handleCloseProcess}
+          onUpdateSession={handleUpdateSession}
+          onUpdateDocument={handleUpdateDocument}
           onOpenSessionForm={() => setWizardOpen(true)}
           onViewReport={(s) => setViewingReport(s)}
           onGenerateFull={() => setFullHistoryOpen(true)}
