@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback } from "react";
+import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { db, auth, getAppUser } from "./supabase.js";
 import { signInToGoogle, fetchCalendarEvents as gcalFetch, getStoredToken, clearToken } from "./googleCalendar.js";
 import Login from "./Login.jsx";
@@ -2687,7 +2687,7 @@ function AddDocumentModal({ type, onClose, onSave }) {
   const [mode, setMode] = useState("text"); // "text" | "pdf"
   const [pdfFile, setPdfFile] = useState(null);
   const [pdfData, setPdfData] = useState(null);
-  const fileRef = React.useRef();
+  const fileRef = useRef();
 
   const handlePdf = (e) => {
     const file = e.target.files[0];
@@ -3417,7 +3417,7 @@ function ChildProfile({ child, users, sessions, objectives, documents, meetings,
 
         // Also show specialists assigned to this child who have no objectives yet
         const assignedSpecIds = child.assignedSpecialists || [];
-        const specsWithNoObjs = assignedSpecIds.filter(sid => !groups[Object.keys(groups).find(k => k.startsWith(sid))]);
+        const specsWithNoObjs = assignedSpecIds.filter(sid => !Object.keys(groups).some(k => k.startsWith(sid)));
 
         return (
           <div>
