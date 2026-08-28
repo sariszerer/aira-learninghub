@@ -2680,7 +2680,7 @@ function DocumentsSection({ type, documents, users, onAdd, onUpdateDocument, cur
 }
 
 function AddDocumentModal({ type, onClose, onSave }) {
-  const meta = DOC_TYPES[type];
+  const meta = DOC_TYPES[type] || { label: type, plural: type };
   const [title, setTitle] = useState("");
   const [date, setDate] = useState(TODAY);
   const [notes, setNotes] = useState("");
@@ -3495,7 +3495,7 @@ function ChildProfile({ child, users, sessions, objectives, documents, meetings,
                       <div style={{ fontSize: 12, color: T.inkSoft, marginBottom: 10 }}>{spec.name}</div>
                       <div style={{ fontSize: 12, color: T.inkFaint, fontStyle: "italic", padding: "8px 0" }}>Sin objetivos definidos.</div>
                     </div>
-                    {canEditThis && (
+              {(canEditThis || currentUser?.role === "admin" || currentUser?.role === "clinical_director") && (
                       <div style={{ borderTop: `0.5px solid ${T.border}`, padding: "6px 14px 10px" }}>
                         <ObjectivesList
                           objectives={[]}
