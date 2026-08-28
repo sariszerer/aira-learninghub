@@ -3120,6 +3120,101 @@ function InterdisciplinaryTab({ child, meetings, users, onAddMeeting, currentUse
   );
 }
 
+function SesionesTab({ child, sessions, objectives, users, currentUser, onUpdateSession }) {
+  const AREA_COLORS = {"Terapia Ocupacional":"#175FAF","Fonoaudiologia":"#7A9E7E","Funciones Ejecutivas":"#C79A6B","Psicologia":"#A6779A","Psicologia Clinica":"#A6779A","Pautas de Crianza":"#C79A6B","Desarrollo (DVLP)":"#B8860B","Kids Club":"#82A166"};
+  const [editingSession, setEditingSession] = useState(null);
+  const [filterSpec, setFilterSpec] = useState(null);
+
+  const childSessions = sessions.filter(s => s.childId === child.id).sort((a,b) => b.date.localeCompare(a.date));
+  const specs = [...new Set(childSessions.map(s => s.specialty))].filter(Boolean);
+  const canEdit = (s) => currentUser && (currentUser.role === "admin" || currentUser.role === "clinical_director" || currentUser.id === s.specialistId);
+  const filtered = filterSpec ? childSessions.filter(s => s.specialty === filterSpec) : childSessions;
+
+  return (
+    <div>
+      {editingSession && (
+        <EditSessionModal
+          session={editingSession} objectives={objectives} users={users}
+          onClose={() => setEditingSession(null)}
+          onSave={(updated) => { if (onUpdateSession) onUpdateSession(updated); setEditingSession(null); }}
+        />
+      )}
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
+        <button onClick={() => setFilterSpec(null)}
+          style={{ padding: "5px 12px", borderRadius: 20, border: `1.5px solid ${filterSpec === null ? T.ink : T.border}`, background: filterSpec === null ? T.ink : "#fff", color: filterSpec === null ? "#fff" : T.inkSoft, fontSize: 12, fontWeight: 500, fontFamily: "Inter, sans-serif", cursor: "pointer" }}>
+          Todas ({childSessions.length})
+        </button>
+        {specs.map(sp => {
+          const color = AREA_COLORS[sp] || T.inkSoft;
+          const count = childSessions.filter(s => s.specialty === sp).length;
+          const active = filterSpec === sp;
+          return (
+            <button key={sp} onClick={() => setFilterSpec(active ? null : sp)}
+              style={{ padding: "5px 12px", borderRadius: 20, border: `1.5px solid ${active ? color : T.border}`, background: active ? color : "#fff", color: active ? "#fff" : color, fontSize: 12, fontWeight: 500, fontFamily: "Inter, sans-serif", cursor: "pointer" }}>
+              {sp} ({count})
+            </button>
+          );
+        })}
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {filtered.map(s => {
+          const specialist = users.find(u => u.id === s.specialistId);
+          const color = AREA_COLORS[s.specialty] || T.inkSoft;
+          const objs = (s.objectivesWorked || []).map(ow => objectives.find(o => o.id === ow.objectiveId)?.name).filter(Boolean);
+          const acts = Array.isArray(s.activities) ? s.activities : [];
+          return (
+            <Card key={s.id} style={{ padding: "14px 16px", borderLeft: `3px solid ${color}` }}>
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: T.amberDeep }}>{fmtDateShort(s.date)}</span>
+                    <span style={{ fontSize: 12, fontWeight: 600, color }}>{s.specialty}</span>
+                    <span style={{ fontSize: 12, color: T.inkSoft }}>{specialist?.name?.split(" ")[0]}</span>
+                    {s.duration && <span style={{ fontSize: 11, color: T.inkFaint }}>{s.duration} min</span>}
+                  </div>
+                  {objs.length > 0 && <div style={{ fontSize: 12.5, color: T.inkSoft, marginBottom: 3 }}><b>Objetivos:</b> {objs.join(" · ")}</div>}
+                  {acts.length > 0 && <div style={{ fontSize: 12.5, color: T.inkSoft, marginBottom: 3 }}><b>Actividades:</b> {acts.join(" · ")}</div>}
+                  {s.observation && <div style={{ fontSize: 13, color: T.ink, lineHeight: 1.5, marginTop: 5, whiteSpace: "pre-wrap" }}>{s.observation}</div>}
+                  {s.nextSteps && <div style={{ fontSize: 12.5, color: T.inkSoft, marginTop: 4, fontStyle: "italic" }}>→ {s.nextSteps}</div>}
+                </div>
+                {canEdit(s) && (
+                  <button onClick={() => setEditingSession(s)}
+                    style={{ fontSize: 12, padding: "4px 10px", borderRadius: 6, border: `0.5px solid ${T.border}`, background: "#fff", color: T.inkSoft, cursor: "pointer", fontFamily: "Inter, sans-serif", flexShrink: 0 }}>
+                    Editar
+                  </button>
+                )}
+              </div>
+            </Card>
+          );
+        })}
+        {filtered.length === 0 && <div style={{ color: T.inkFaint, fontSize: 14, textAlign: "center", padding: 32 }}>Sin sesiones registradas.</div>}
+      </div>
+    </div>
+  );
+}
+
+function PlanTrabajoTab({ child, documents, users, currentUser, onAddDocument, onUpdateDocument }) {
+  const [adding, setAdding] = useState(false);
+  const canAdd = currentUser && (currentUser.role === "admin" || currentUser.role === "clinical_director" || currentUser.role === "specialist");
+  const planDocs = documents.filter(d => d.childId === child.id && d.type === "plan_trabajo");
+
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+        <div style={{ fontSize: 13.5, color: T.inkSoft }}>Plan terapéutico por disciplina — objetivos, metodología y metas del proceso.</div>
+        {canAdd && <Btn variant="amber" icon={Plus} onClick={() => setAdding(true)}>Agregar plan</Btn>}
+      </div>
+      {adding && (
+        <AddDocumentModal type="plan_trabajo" onClose={() => setAdding(false)}
+          onSave={(d) => { onAddDocument({ ...d, childId: child.id, authorId: currentUser.id, id: `d-plan-${Date.now()}` }); setAdding(false); }}
+        />
+      )}
+      <DocumentsSection type="plan_trabajo" documents={planDocs} users={users}
+        onAdd={() => setAdding(true)} onUpdateDocument={onUpdateDocument} currentUser={currentUser} />
+    </div>
+  );
+}
+
 function ChildProfile({ child, users, sessions, objectives, documents, meetings, parentReports, currentUser, onOpenSessionForm, onViewReport, onGenerateFull, onGenerateEvolution, onGenerateParentReport, onAddDocument, onAddMeeting, onUpdateObjective, onAddObjective, onDeleteObjective, onRenewPackage, onUpdateChild, onCloseProcess, onUpdateSession, onUpdateDocument }) {
   const [tab, setTab] = useState("resumen");
   const [editingProfile, setEditingProfile] = useState(false);
@@ -3283,87 +3378,7 @@ function ChildProfile({ child, users, sessions, objectives, documents, meetings,
       </div>
 
       {tab === "resumen" && <ResumenTab child={child} objectives={objectives} sessions={sessions} users={users} onRenewPackage={onRenewPackage} onCloseProcess={onCloseProcess} currentUser={currentUser} />}
-      {tab === "sesiones" && (() => {
-        const AREA_COLORS = {"Terapia Ocupacional":"#175FAF","Fonoaudiologia":"#7A9E7E","Funciones Ejecutivas":"#C79A6B","Psicologia":"#A6779A","Psicologia Clinica":"#A6779A","Pautas de Crianza":"#C79A6B","Desarrollo (DVLP)":"#B8860B","Kids Club":"#82A166"};
-        const childSessions = sessions.filter(s => s.childId === child.id).sort((a,b) => b.date.localeCompare(a.date));
-        const [editingSession, setEditingSession] = useState(null);
-        const [filterSpec, setFilterSpec] = useState(null);
-
-        // Group sessions by specialty
-        const specs = [...new Set(childSessions.map(s => s.specialty))].filter(Boolean);
-
-        const canEdit = (s) => currentUser && (currentUser.role === "admin" || currentUser.role === "clinical_director" || currentUser.id === s.specialistId);
-
-        const filtered = filterSpec ? childSessions.filter(s => s.specialty === filterSpec) : childSessions;
-
-        return (
-          <div>
-            {editingSession && (
-              <EditSessionModal
-                session={editingSession}
-                objectives={objectives}
-                users={users}
-                onClose={() => setEditingSession(null)}
-                onSave={(updated) => { if (onUpdateSession) onUpdateSession(updated); setEditingSession(null); }}
-              />
-            )}
-            {/* Filter buttons per discipline */}
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
-              <button onClick={() => setFilterSpec(null)}
-                style={{ padding: "5px 12px", borderRadius: 20, border: `1.5px solid ${filterSpec === null ? T.ink : T.border}`, background: filterSpec === null ? T.ink : "#fff", color: filterSpec === null ? "#fff" : T.inkSoft, fontSize: 12, fontWeight: 500, fontFamily: "Inter, sans-serif", cursor: "pointer" }}>
-                Todas ({childSessions.length})
-              </button>
-              {specs.map(sp => {
-                const color = AREA_COLORS[sp] || T.inkSoft;
-                const count = childSessions.filter(s => s.specialty === sp).length;
-                const active = filterSpec === sp;
-                return (
-                  <button key={sp} onClick={() => setFilterSpec(active ? null : sp)}
-                    style={{ padding: "5px 12px", borderRadius: 20, border: `1.5px solid ${active ? color : T.border}`, background: active ? color : "#fff", color: active ? "#fff" : color, fontSize: 12, fontWeight: 500, fontFamily: "Inter, sans-serif", cursor: "pointer" }}>
-                    {sp} ({count})
-                  </button>
-                );
-              })}
-            </div>
-            {/* Session list */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {filtered.map(s => {
-                const specialist = users.find(u => u.id === s.specialistId);
-                const color = AREA_COLORS[s.specialty] || T.inkSoft;
-                const objs = (s.objectivesWorked || []).map(ow => objectives.find(o => o.id === ow.objectiveId)?.name).filter(Boolean);
-                const acts = Array.isArray(s.activities) ? s.activities : [];
-                return (
-                  <Card key={s.id} style={{ padding: "14px 16px", borderLeft: `3px solid ${color}` }}>
-                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                          <span style={{ fontSize: 12, fontWeight: 700, color: T.amberDeep }}>{fmtDateShort(s.date)}</span>
-                          <span style={{ fontSize: 12, fontWeight: 600, color }}>{s.specialty}</span>
-                          <span style={{ fontSize: 12, color: T.inkSoft }}>{specialist?.name?.split(" ")[0]}</span>
-                          {s.duration && <span style={{ fontSize: 11, color: T.inkFaint }}>{s.duration} min</span>}
-                        </div>
-                        {objs.length > 0 && <div style={{ fontSize: 12.5, color: T.inkSoft, marginBottom: 3 }}><b>Objetivos:</b> {objs.join(" · ")}</div>}
-                        {acts.length > 0 && <div style={{ fontSize: 12.5, color: T.inkSoft, marginBottom: 3 }}><b>Actividades:</b> {acts.join(" · ")}</div>}
-                        {s.observation && <div style={{ fontSize: 13, color: T.ink, lineHeight: 1.5, marginTop: 5, whiteSpace: "pre-wrap" }}>{s.observation}</div>}
-                        {s.nextSteps && <div style={{ fontSize: 12.5, color: T.inkSoft, marginTop: 4, fontStyle: "italic" }}>→ {s.nextSteps}</div>}
-                      </div>
-                      {canEdit(s) && (
-                        <button onClick={() => setEditingSession(s)}
-                          style={{ fontSize: 12, padding: "4px 10px", borderRadius: 6, border: `0.5px solid ${T.border}`, background: "#fff", color: T.inkSoft, cursor: "pointer", fontFamily: "Inter, sans-serif", flexShrink: 0 }}>
-                          Editar
-                        </button>
-                      )}
-                    </div>
-                  </Card>
-                );
-              })}
-              {filtered.length === 0 && (
-                <div style={{ color: T.inkFaint, fontSize: 14, textAlign: "center", padding: 32 }}>Sin sesiones registradas.</div>
-              )}
-            </div>
-          </div>
-        );
-      })()}
+      {tab === "sesiones" && <SesionesTab child={child} sessions={sessions} objectives={objectives} users={users} currentUser={currentUser} onUpdateSession={onUpdateSession} />}
       {tab === "objetivos" && (() => {
         const childObjs = objectives.filter((o) => o.childId === child.id);
         const groups = {};
@@ -3513,34 +3528,7 @@ function ChildProfile({ child, users, sessions, objectives, documents, meetings,
           </div>
         );
       })()}
-      {tab === "plan" && (() => {
-        const planDocs = documents.filter(d => d.childId === child.id && d.type === "plan_trabajo").sort((a,b) => b.date.localeCompare(a.date));
-        const [addingPlan, setAddingPlan] = useState(false);
-        const canAdd = currentUser && (currentUser.role === "admin" || currentUser.role === "clinical_director" || currentUser.role === "specialist");
-        return (
-          <div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-              <div style={{ fontSize: 13.5, color: T.inkSoft }}>
-                Plan terapéutico por disciplina — objetivos, metodología y metas del proceso.
-              </div>
-              {canAdd && <Btn variant="amber" icon={Plus} onClick={() => setAddingPlan(true)}>Agregar plan</Btn>}
-            </div>
-            {planDocs.length === 0 && !addingPlan && (
-              <Card style={{ padding: 24, textAlign: "center" }}>
-                <div style={{ fontSize: 13.5, color: T.inkFaint }}>Aún no hay planes de trabajo registrados.</div>
-                {canAdd && <div style={{ marginTop: 8 }}><Btn variant="ghost" icon={Plus} onClick={() => setAddingPlan(true)}>Agregar plan de trabajo</Btn></div>}
-              </Card>
-            )}
-            {addingPlan && (
-              <AddDocumentModal type="plan_trabajo" onClose={() => setAddingPlan(false)}
-                onSave={(d) => { onAddDocument({ ...d, childId: child.id, authorId: currentUser.id, id: `d-plan-${Date.now()}` }); setAddingPlan(false); }}
-              />
-            )}
-            <DocumentsSection type="plan_trabajo" documents={documents.filter(d => d.childId === child.id)} users={users}
-              onAdd={() => setAddingPlan(true)} onUpdateDocument={onUpdateDocument} currentUser={currentUser} />
-          </div>
-        );
-      })()}
+      {tab === "plan" && <PlanTrabajoTab child={child} documents={documents} users={users} currentUser={currentUser} onAddDocument={onAddDocument} onUpdateDocument={onUpdateDocument} />}
 
       {tab === "anamnesis" && (
         <AnamnesisTab
