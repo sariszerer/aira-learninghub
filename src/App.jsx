@@ -3147,6 +3147,7 @@ function ChildProfile({ child, users, sessions, objectives, documents, meetings,
     { id: "resumen", label: "Resumen" },
     { id: "historial", label: "Historial" },
     { id: "objetivos", label: "Objetivos" },
+    { id: "plan", label: "Plan de Trabajo" },
     { id: "anamnesis", label: "Anamnesis" },
     { id: "reportes", label: "Reportes" },
     { id: "interdisciplinario", label: "Interdisciplinario" },
@@ -3432,6 +3433,35 @@ function ChildProfile({ child, users, sessions, objectives, documents, meetings,
           </div>
         );
       })()}
+      {tab === "plan" && (() => {
+        const planDocs = documents.filter(d => d.childId === child.id && d.type === "plan_trabajo").sort((a,b) => b.date.localeCompare(a.date));
+        const [addingPlan, setAddingPlan] = useState(false);
+        const canAdd = currentUser && (currentUser.role === "admin" || currentUser.role === "clinical_director" || currentUser.role === "specialist");
+        return (
+          <div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+              <div style={{ fontSize: 13.5, color: T.inkSoft }}>
+                Plan terapéutico por disciplina — objetivos, metodología y metas del proceso.
+              </div>
+              {canAdd && <Btn variant="amber" icon={Plus} onClick={() => setAddingPlan(true)}>Agregar plan</Btn>}
+            </div>
+            {planDocs.length === 0 && !addingPlan && (
+              <Card style={{ padding: 24, textAlign: "center" }}>
+                <div style={{ fontSize: 13.5, color: T.inkFaint }}>Aún no hay planes de trabajo registrados.</div>
+                {canAdd && <div style={{ marginTop: 8 }}><Btn variant="ghost" icon={Plus} onClick={() => setAddingPlan(true)}>Agregar plan de trabajo</Btn></div>}
+              </Card>
+            )}
+            {addingPlan && (
+              <AddDocumentModal type="plan_trabajo" onClose={() => setAddingPlan(false)}
+                onSave={(d) => { onAddDocument({ ...d, childId: child.id, authorId: currentUser.id, id: `d-plan-${Date.now()}` }); setAddingPlan(false); }}
+              />
+            )}
+            <DocumentsSection type="plan_trabajo" documents={documents.filter(d => d.childId === child.id)} users={users}
+              onAdd={() => setAddingPlan(true)} onUpdateDocument={onUpdateDocument} currentUser={currentUser} />
+          </div>
+        );
+      })()}
+
       {tab === "anamnesis" && (
         <AnamnesisTab
           child={child} documents={documents} users={users} currentUser={currentUser}
