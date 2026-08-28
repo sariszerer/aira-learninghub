@@ -218,15 +218,15 @@ const inputStyle = {
 };
 
 const SPECIALIST_COLORS = {
-  "u-admin":        "#C79A6B",  // Sarita — dorado FE
-  "u-idaira":       "#7FA88A",  // Idaira — verde sage
-  "u-celilia":      "#175FAF",  // Celilia — azul TO
-  "u-neyma":        "#A6779A",  // Neyma — morado psicología
-  "u-milagros":     "#7A9E7E",  // Milagros — verde fono
-  "u-ingrid":       "#4A90B8",  // Ingrid — azul fono
-  "u-daniella":     "#B8860B",  // Daniella — ocre DVLP
-  "u-mariavirginia":"#82A166",  // Mavi — verde Kids Club
-  "u-laura":        "#9B6B9B",  // Laura — lila psicología
+  "u-admin":        "#7FA88A",  // Sarita — verde sage
+  "u-idaira":       "#C0392B",  // Idaira — rojo
+  "u-celilia":      "#9B7EC8",  // Celilia — lila
+  "u-neyma":        "#D4A843",  // Neyma — amarillo
+  "u-milagros":     "#4A90B8",  // Milagros — azul
+  "u-ingrid":       "#E07A3A",  // Ingrid — naranja
+  "u-daniella":     "#7B5EA7",  // Daniella — morado
+  "u-mariavirginia":"#E8856A",  // Mavi — salmon
+  "u-laura":        "#9B6B9B",  // Laura — lila
 };
 
 const seedDocuments = [
@@ -3283,7 +3283,7 @@ function ChildProfile({ child, users, sessions, objectives, documents, meetings,
   ];
 
   return (
-    <div style={{ maxWidth: 860, margin: "0 auto", padding: "32px 20px 60px" }}>
+    <div className="aira-profile" style={{ maxWidth: 860, margin: "0 auto", padding: "32px 20px 60px" }}>
       <div style={{ display: "flex", gap: 20, alignItems: "flex-start", marginBottom: 30 }}>
         <Avatar name={child.name + " " + child.lastName} bg={child.avatarBg} size={72} />
         <div style={{ flex: 1 }}>
@@ -4047,7 +4047,34 @@ function ParentReportModal({ child, sessions, objectives, parentReports, onClose
 /* ============================================================
    ROOT APP
 ============================================================ */
-export default function App() {
+export default function MobileStyles() {
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      @media (max-width: 640px) {
+        /* Child profile padding */
+        .aira-profile { padding: 16px 12px 60px !important; }
+        /* Tabs scroll horizontal */
+        .aira-tabs { overflow-x: auto !important; -webkit-overflow-scrolling: touch !important; white-space: nowrap !important; flex-wrap: nowrap !important; padding-bottom: 2px; }
+        .aira-tabs button { flex-shrink: 0 !important; }
+        /* Objective columns stack */
+        .aira-obj-grid { grid-template-columns: 1fr !important; }
+        /* Session resumen grid stack */
+        .aira-session-grid { grid-template-columns: 1fr 1fr !important; }
+        /* Modal - slide from bottom */
+        .aira-modal-overlay { align-items: flex-end !important; padding: 0 !important; }
+        .aira-modal-box { border-radius: 20px 20px 0 0 !important; max-height: 90vh !important; width: 100% !important; max-width: 100% !important; }
+        /* Header stack */
+        .aira-header { flex-direction: column !important; gap: 12px !important; }
+      }
+    `;
+    document.head.appendChild(style);
+    return () => document.head.removeChild(style);
+  }, []);
+  return null;
+}
+
+function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
 
@@ -4350,7 +4377,8 @@ export default function App() {
     return (
       <>
         <style>{FONTS}</style>
-        <Login />
+        <MobileStyles />
+    <Login />
       </>
     );
   }
