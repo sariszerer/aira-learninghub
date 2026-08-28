@@ -206,6 +206,29 @@ const DOC_TYPES = {
   pautas_crianza: { label: "Pautas de Crianza", plural: "Pautas de Crianza" },
 };
 
+const inputStyle = {
+  padding: "9px 12px",
+  borderRadius: 8,
+  border: "1px solid #ddd",
+  fontSize: 14,
+  fontFamily: "Inter, sans-serif",
+  outline: "none",
+  color: "#333",
+  background: "#fff",
+};
+
+const SPECIALIST_COLORS = {
+  "u-admin":        "#C79A6B",  // Sarita — dorado FE
+  "u-idaira":       "#7FA88A",  // Idaira — verde sage
+  "u-celilia":      "#175FAF",  // Celilia — azul TO
+  "u-neyma":        "#A6779A",  // Neyma — morado psicología
+  "u-milagros":     "#7A9E7E",  // Milagros — verde fono
+  "u-ingrid":       "#4A90B8",  // Ingrid — azul fono
+  "u-daniella":     "#B8860B",  // Daniella — ocre DVLP
+  "u-mariavirginia":"#82A166",  // Mavi — verde Kids Club
+  "u-laura":        "#9B6B9B",  // Laura — lila psicología
+};
+
 const seedDocuments = [
   {
     id: "d-edy1", childId: "c-edy", type: "anamnesis", title: "Anamnesis inicial",
@@ -2180,12 +2203,12 @@ function DailyReportModal({ session, child, specialist, objectives, onClose }) {
 /* ============================================================
    CHILD PROFILE
 ============================================================ */
-function ObjectivesList({ objectives, compact, onUpdate, onAdd, onDelete }) {
+function ObjectivesList({ objectives, compact, onUpdate, onAdd, onDelete, defaultArea }) {
   const [editing, setEditing] = useState(null); // obj id being edited
   const [editName, setEditName] = useState("");
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState("");
-  const [newArea, setNewArea] = useState("");
+  const [newArea, setNewArea] = useState(defaultArea || "");
 
   const STATUS_OPTS = [
     { val: "logrado", label: "✅ Logrado" },
@@ -3132,6 +3155,7 @@ function SesionesTab({ child, sessions, objectives, users, currentUser, onUpdate
   const specs = [...new Set(childSessions.map(s => s.specialty))].filter(Boolean);
   const canEdit = (s) => currentUser && (currentUser.role === "admin" || currentUser.role === "clinical_director" || currentUser.id === s.specialistId);
   const filtered = filterSpec ? childSessions.filter(s => s.specialty === filterSpec) : childSessions;
+  const getSessionColor = (s) => SPECIALIST_COLORS[s.specialistId] || "#888";
 
   return (
     <div>
@@ -3148,7 +3172,9 @@ function SesionesTab({ child, sessions, objectives, users, currentUser, onUpdate
           Todas ({childSessions.length})
         </button>
         {specs.map(sp => {
-          const color = AREA_COLORS[sp] || T.inkSoft;
+          // Get the specialist for this specialty to use their color
+          const specForColor = childSessions.find(s => s.specialty === sp);
+          const color = SPECIALIST_COLORS[specForColor?.specialistId] || AREA_COLORS[sp] || T.inkSoft;
           const count = childSessions.filter(s => s.specialty === sp).length;
           const active = filterSpec === sp;
           return (
@@ -3162,7 +3188,7 @@ function SesionesTab({ child, sessions, objectives, users, currentUser, onUpdate
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {filtered.map(s => {
           const specialist = users.find(u => u.id === s.specialistId);
-          const color = AREA_COLORS[s.specialty] || T.inkSoft;
+          const color = getSessionColor(s);
           const objs = (s.objectivesWorked || []).map(ow => objectives.find(o => o.id === ow.objectiveId)?.name).filter(Boolean);
           const acts = Array.isArray(s.activities) ? s.activities : [];
           return (
@@ -3172,7 +3198,7 @@ function SesionesTab({ child, sessions, objectives, users, currentUser, onUpdate
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                     <span style={{ fontSize: 12, fontWeight: 700, color: T.amberDeep }}>{fmtDateShort(s.date)}</span>
                     <span style={{ fontSize: 12, fontWeight: 600, color }}>{s.specialty}</span>
-                    <span style={{ fontSize: 12, color: T.inkSoft }}>{specialist?.name?.split(" ")[0]}</span>
+                    <span style={{ fontSize: 12, color, opacity: 0.8 }}>{specialist?.name?.split(" ")[0]}</span>
                     {s.duration && <span style={{ fontSize: 11, color: T.inkFaint }}>{s.duration} min</span>}
                   </div>
                   {objs.length > 0 && <div style={{ fontSize: 12.5, color: T.inkSoft, marginBottom: 3 }}><b>Objetivos:</b> {objs.join(" · ")}</div>}
@@ -3240,7 +3266,12 @@ function ChildProfile({ child, users, sessions, objectives, documents, meetings,
     setEditingProfile(false);
   };
 
-  const specialists = child.assignedSpecialists.map((id) => users.find((u) => u.id === id)).filter(Boolean);
+  const specialistIdsFromSessions = [...new Set(
+    sessions.filter(s => s.childId === child.id).map(s => s.specialistId).filter(Boolean)
+  )];
+  const specialists = specialistIdsFromSessions.length > 0
+    ? specialistIdsFromSessions.map(id => users.find(u => u.id === id)).filter(Boolean)
+    : child.assignedSpecialists.map((id) => users.find((u) => u.id === id)).filter(Boolean);
   const tabs = [
     { id: "resumen", label: "Resumen" },
     { id: "sesiones", label: "Sesiones" },
@@ -3270,8 +3301,8 @@ function ChildProfile({ child, users, sessions, objectives, documents, meetings,
           <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
             {specialists.map((s) => (
               <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <Avatar name={s.name} bg={s.avatarBg} size={22} />
-                <span style={{ fontSize: 12.5, color: T.inkSoft }}>{s.name}</span>
+                <Avatar name={s.name} bg={SPECIALIST_COLORS[s.id] || s.avatarBg} size={22} />
+                <span style={{ fontSize: 12.5, color: SPECIALIST_COLORS[s.id] || T.inkSoft, fontWeight: 500 }}>{s.name}</span>
               </div>
             ))}
           </div>
@@ -3397,9 +3428,12 @@ function ChildProfile({ child, users, sessions, objectives, documents, meetings,
         const AREA_COLORS = {
           "Terapia Ocupacional": "#175FAF",
           "Fonoaudiologia": "#7A9E7E",
+          "Fonoaudiología": "#7A9E7E",
           "Funciones Ejecutivas": "#C79A6B",
           "Psicologia": "#A6779A",
+          "Psicología": "#A6779A",
           "Psicologia Clinica": "#A6779A",
+          "Psicología Clínica": "#A6779A",
           "Desarrollo (DVLP)": "#B8860B",
           "Kids Club": "#82A166",
           "General": T.inkSoft,
@@ -3415,9 +3449,11 @@ function ChildProfile({ child, users, sessions, objectives, documents, meetings,
           "General": T.surfaceSunk,
         };
 
-        // Also show specialists assigned to this child who have no objectives yet
-        const assignedSpecIds = child.assignedSpecialists || [];
-        const specsWithNoObjs = assignedSpecIds.filter(sid => !Object.keys(groups).some(k => k.startsWith(sid)));
+        // Show specialists who have sessions with this child but no objectives
+        const specsFromSessions = [...new Set(
+          sessions.filter(s => s.childId === child.id).map(s => s.specialistId).filter(Boolean)
+        )];
+        const specsWithNoObjs = specsFromSessions.filter(sid => !Object.keys(groups).some(k => k.startsWith(sid)));
 
         return (
           <div>
@@ -3499,7 +3535,8 @@ function ChildProfile({ child, users, sessions, objectives, documents, meetings,
                       <div style={{ borderTop: `0.5px solid ${T.border}`, padding: "6px 14px 10px" }}>
                         <ObjectivesList
                           objectives={[]}
-                          onAdd={(data) => onAddObjective({ ...data, childId: child.id, specialistId: sid, area, createdDate: TODAY, status: "proceso" })}
+                          defaultArea={area}
+                          onAdd={(data) => onAddObjective({ ...data, childId: child.id, specialistId: sid, area: data.area || area, createdDate: TODAY, status: "proceso" })}
                         />
                       </div>
                     )}
