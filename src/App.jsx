@@ -3435,10 +3435,12 @@ function FirmaConsentimientoPublic({ token }) {
 }
 
 
-function ReportesTab({ child, documents, users, sessions, parentReports, onAddDocument, onGenerateFull, onGenerateEvolution, onGenerateParentReport }) {
+function ReportesTab({ child, documents, users, sessions, parentReports, currentUser, onAddDocument, onUpdateDocument, onGenerateFull, onGenerateEvolution, onGenerateParentReport }) {
   const [addingType, setAddingType] = useState(null);
   const sinceLast = sessionsSinceLastParentReport(child.id, sessions, parentReports);
   const readyForParentReport = sinceLast.length >= 8;
+  // Only this child's documents — otherwise every patient's Reportes tab shows every other patient's evaluations/reports too.
+  const childDocuments = documents.filter((d) => d.childId === child.id);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
@@ -3471,7 +3473,8 @@ function ReportesTab({ child, documents, users, sessions, parentReports, onAddDo
 
       <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
         {Object.keys(DOC_TYPES).filter(type => type !== "anamnesis").map((type) => (
-          <DocumentsSection key={type} type={type} documents={documents} users={users} onAdd={() => setAddingType(type)} />
+          <DocumentsSection key={type} type={type} documents={childDocuments} users={users}
+            onAdd={() => setAddingType(type)} onUpdateDocument={onUpdateDocument} currentUser={currentUser} />
         ))}
       </div>
 
@@ -3479,7 +3482,7 @@ function ReportesTab({ child, documents, users, sessions, parentReports, onAddDo
         <AddDocumentModal
           type={addingType}
           onClose={() => setAddingType(null)}
-          onSave={(doc) => { onAddDocument(doc); setAddingType(null); }}
+          onSave={(doc) => { onAddDocument({ ...doc, childId: child.id, authorId: currentUser.id }); setAddingType(null); }}
         />
       )}
     </div>
@@ -4097,6 +4100,7 @@ function ChildProfile({ child, users, sessions, objectives, documents, meetings,
       {tab === "reportes" && (
         <ReportesTab
           child={child} documents={documents} users={users} sessions={sessions} parentReports={parentReports}
+          currentUser={currentUser} onUpdateDocument={onUpdateDocument}
           onAddDocument={onAddDocument} onGenerateFull={onGenerateFull} onGenerateEvolution={onGenerateEvolution}
           onGenerateParentReport={onGenerateParentReport}
         />
