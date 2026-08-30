@@ -14,10 +14,19 @@ copyFileSync(join(distAssetsDir, entryFile), join('assets', 'aira-app.js'))
 const version = Math.floor(Date.now() / 1000)
 const indexPath = 'index.html'
 const html = readFileSync(indexPath, 'utf8')
-const updated = html.replace(
-  /\/assets\/aira-app\.js\?v=\d+/,
-  `/assets/aira-app.js?v=${version}`
-)
+
+// Match the script src whether or not it already has a ?v= query string,
+// so this can't silently no-op again if a manual edit ever strips the version.
+const scriptSrcPattern = /\/assets\/aira-app\.js(\?v=\d+)?/
+if (!scriptSrcPattern.test(html)) {
+  console.error('postbuild: could not find "/assets/aira-app.js" script src in index.html — version was NOT bumped, cache-busting is broken!')
+  process.exit(1)
+}
+const updated = html.replace(scriptSrcPattern, `/assets/aira-app.js?v=${version}`)
+if (updated === html) {
+  console.error('postbuild: index.html unchanged after replace — version was NOT bumped, cache-busting is broken!')
+  process.exit(1)
+}
 writeFileSync(indexPath, updated)
 
 console.log(`postbuild: copied ${entryFile} -> assets/aira-app.js, version=${version}`)
