@@ -1884,9 +1884,10 @@ function StatStrip({ items }) {
   );
 }
 
-function AdminDashboard({ children, users, sessions, objectives, parentReports, onOpenChild, calendarEvents, calendarLoading, calendarError, calendarDate, onCalendarDateChange, activityLog, onMarkSeen, onConnectGcal }) {
+function AdminDashboard({ children, users, sessions, objectives, parentReports, onOpenChild, calendarEvents, calendarLoading, calendarError, calendarDate, onCalendarDateChange, activityLog, onMarkSeen, onConnectGcal, currentUser, onAddChild }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [alertsOpen, setAlertsOpen] = useState(true);
+  const [showAddPatient, setShowAddPatient] = useState(false);
   const specialists = users.filter((u) => u.role === "specialist" || u.role === "clinical_director");
   const today = TODAY;
   const sessionsToday = sessions.filter((s) => s.date === today).length;
@@ -1988,6 +1989,9 @@ function AdminDashboard({ children, users, sessions, objectives, parentReports, 
         <div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
             <Eyebrow style={{ margin: 0 }}>Todos los pacientes</Eyebrow>
+            {onAddChild && (
+              <Btn variant="amber" size="sm" icon={Plus} onClick={() => setShowAddPatient(true)}>Agregar paciente</Btn>
+            )}
           </div>
           <div style={{ position: "relative", marginBottom: 8 }}>
             <input
@@ -2049,6 +2053,19 @@ function AdminDashboard({ children, users, sessions, objectives, parentReports, 
           </Card>
         </div>
       </div>
+
+      {showAddPatient && onAddChild && (
+        <AddPatientWizard
+          users={users}
+          currentUser={currentUser}
+          onClose={() => setShowAddPatient(false)}
+          onCreate={(child, anamnesisDoc) => {
+            onAddChild(child, anamnesisDoc);
+            setShowAddPatient(false);
+            onOpenChild(child.id);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -2834,6 +2851,38 @@ function AnamnesisTab({ child, documents, users, currentUser, onAddDocument, onU
 
   const anamnesisDoc = documents.find(d => d.childId === child.id && d.type === "anamnesis" && d.fields?.isForm);
   const canEdit = currentUser && (currentUser.role === "admin" || currentUser.role === "clinical_director" || currentUser.role === "specialist");
+  const [signLink, setSignLink] = useState(null);
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  const generateSignLink = () => {
+    const token = (typeof crypto !== "undefined" && crypto.randomUUID)
+      ? crypto.randomUUID()
+      : `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
+    const baseFields = anamnesisDoc?.fields || { isForm: true, ...form };
+    const doc = {
+      id: anamnesisDoc?.id || `d-anamnesis-${child.id}`,
+      childId: child.id,
+      type: "anamnesis",
+      title: `Anamnesis — ${child.name} ${child.lastName}`,
+      date: anamnesisDoc?.date || TODAY,
+      authorId: anamnesisDoc?.authorId || currentUser.id,
+      notes: anamnesisDoc?.notes || "",
+      fields: { ...baseFields, isForm: true, consentToken: token, consentChildName: `${child.name} ${child.lastName}` },
+    };
+    if (anamnesisDoc && onUpdateDocument) onUpdateDocument(doc);
+    else if (onAddDocument) onAddDocument(doc);
+    setLinkCopied(false);
+    setSignLink(`${window.location.origin}${window.location.pathname}?firmar=${token}`);
+  };
+
+  const copySignLink = () => {
+    if (!signLink) return;
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(signLink).then(() => setLinkCopied(true));
+    } else {
+      setLinkCopied(true);
+    }
+  };
 
   const F = ({ label, name, multiline, rows = 3 }) => (
     <div style={{ marginBottom: 14 }}>
@@ -2956,9 +3005,23 @@ function AnamnesisTab({ child, documents, users, currentUser, onAddDocument, onU
               Yo, en calidad de representante legal de <b>{child.name} {child.lastName}</b>, autorizo la evaluación y acompañamiento psicopedagógico/psicosocial.
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
-              <F label="Firma acudiente" name="firmaAcudiente" />
+              <F label="Firma acudiente (si firma en persona)" name="firmaAcudiente" />
               <F label="Firma profesional" name="firmaProfesional" />
               <F label="Fecha" name="fechaFirma" />
+            </div>
+            <div style={{ marginTop: 6, padding: 14, background: T.surfaceSunk, borderRadius: 10 }}>
+              <div style={{ fontSize: 12.5, color: T.inkSoft, marginBottom: 10, lineHeight: 1.5 }}>
+                ¿El acudiente no está presente? Genera un link para que firme a distancia desde su celular — la firma queda registrada aquí automáticamente.
+              </div>
+              <Btn variant="ghost" size="sm" onClick={generateSignLink}>Generar link para firma</Btn>
+              {signLink && (
+                <div style={{ marginTop: 10, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                  <input readOnly value={signLink} onFocus={(e) => e.target.select()}
+                    style={{ flex: 1, minWidth: 200, padding: "7px 10px", borderRadius: 8, border: `1px solid ${T.border}`, fontSize: 12.5, fontFamily: "monospace", color: T.ink, background: "#fff" }}
+                  />
+                  <Btn variant="subtle" size="sm" onClick={copySignLink}>{linkCopied ? "¡Copiado!" : "Copiar"}</Btn>
+                </div>
+              )}
             </div>
           </Section>
 
@@ -2990,6 +3053,35 @@ function AnamnesisTab({ child, documents, users, currentUser, onAddDocument, onU
                   <div style={{ fontSize: 13.5, color: T.ink, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{value}</div>
                 </div>
               ))}
+
+              <div style={{ marginTop: 10, paddingTop: 16, borderTop: `1px solid ${T.border}` }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: T.inkFaint, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>Consentimiento informado</div>
+                {anamnesisDoc.fields.firmaAcudienteImg ? (
+                  <div>
+                    <img src={anamnesisDoc.fields.firmaAcudienteImg} alt="Firma del acudiente" style={{ maxWidth: 300, height: "auto", border: `1px solid ${T.border}`, borderRadius: 8, background: "#fff" }} />
+                    <div style={{ fontSize: 12, color: T.inkSoft, marginTop: 6 }}>
+                      Firmado a distancia {anamnesisDoc.fields.fechaFirmaAcudiente ? `el ${fmtDateShort(anamnesisDoc.fields.fechaFirmaAcudiente.slice(0,10))}` : ""}
+                    </div>
+                  </div>
+                ) : anamnesisDoc.fields.firmaAcudiente ? (
+                  <div style={{ fontSize: 13.5, color: T.ink }}>Firmado en persona por: <b>{anamnesisDoc.fields.firmaAcudiente}</b> ({anamnesisDoc.fields.fechaFirma})</div>
+                ) : (
+                  <div style={{ fontSize: 13.5, color: T.inkFaint }}>Aún no se ha registrado la firma del acudiente.</div>
+                )}
+                {canEdit && !anamnesisDoc.fields.firmaAcudienteImg && (
+                  <div style={{ marginTop: 10 }}>
+                    <Btn variant="ghost" size="sm" onClick={generateSignLink}>Generar link para firma</Btn>
+                    {signLink && (
+                      <div style={{ marginTop: 10, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                        <input readOnly value={signLink} onFocus={(e) => e.target.select()}
+                          style={{ flex: 1, minWidth: 200, padding: "7px 10px", borderRadius: 8, border: `1px solid ${T.border}`, fontSize: 12.5, fontFamily: "monospace", color: T.ink, background: "#fff" }}
+                        />
+                        <Btn variant="subtle" size="sm" onClick={copySignLink}>{linkCopied ? "¡Copiado!" : "Copiar"}</Btn>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </Card>
           )}
           {existingDocs.filter(d => !d.fields?.isForm).map((d, i) => {
@@ -3009,6 +3101,335 @@ function AnamnesisTab({ child, documents, users, currentUser, onAddDocument, onU
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+/* ============================================================
+   ADD PATIENT WIZARD (datos → anamnesis → especialistas)
+============================================================ */
+const CHILD_AVATAR_COLORS = [T.brand, T.brandBright, T.amber, T.pink];
+
+function slugifyName(s) {
+  return (s || "")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase().replace(/[^a-z0-9]+/g, "").slice(0, 14) || "paciente";
+}
+
+function AddPatientWizard({ users, currentUser, onClose, onCreate }) {
+  const [step, setStep] = useState(1);
+
+  // Step 1 — datos básicos
+  const [nombre, setNombre] = useState("");
+  const [apellido, setApellido] = useState("");
+  const [birthDate, setBirthDate] = useState("");
+  const [admissionDate, setAdmissionDate] = useState(TODAY);
+  const [acompanante, setAcompanante] = useState("");
+  const [telefono, setTelefono] = useState("");
+  const [correo, setCorreo] = useState("");
+
+  // Step 2 — anamnesis breve (los mismos campos clínicos que la ficha de Anamnesis)
+  const [form, setForm] = useState({
+    motivoConsulta: "", antecedentes: "", saludActual: "", terapiasPrevias: "",
+    composicionFamiliar: "", hermanos: "", dinamicaFamiliar: "",
+    fortalezas: "", dificultades: "", estadoEmocional: "",
+    rendimientoAcademico: "", areasDificultad: "", observaciones: "",
+  });
+  const setField = (name) => (v) => setForm((f) => ({ ...f, [name]: v }));
+
+  // Step 3 — especialistas
+  const [assignedSpecialists, setAssignedSpecialists] = useState([]);
+  const specialists = users.filter((u) => u.role === "specialist" || u.role === "clinical_director");
+  const toggleSpecialist = (id) => {
+    setAssignedSpecialists((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
+  };
+
+  const nombreCompleto = `${nombre} ${apellido}`.trim();
+  const step1Valid = nombre.trim() && apellido.trim();
+
+  const F = ({ label, value, onChange, multiline, rows = 3, placeholder, type }) => (
+    <div style={{ marginBottom: 14 }}>
+      {label && <div style={{ fontSize: 12, fontWeight: 700, color: T.inkFaint, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 5 }}>{label}</div>}
+      {multiline ? (
+        <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={rows} placeholder={placeholder}
+          style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${T.border}`, fontSize: 13.5, fontFamily: "Inter, sans-serif", outline: "none", resize: "vertical", boxSizing: "border-box", lineHeight: 1.6 }}
+        />
+      ) : (
+        <input type={type || "text"} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
+          style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${T.border}`, fontSize: 13.5, fontFamily: "Inter, sans-serif", outline: "none", boxSizing: "border-box" }}
+        />
+      )}
+    </div>
+  );
+
+  const Section = ({ title, children }) => (
+    <div style={{ marginBottom: 20 }}>
+      <div style={{ fontFamily: "Fraunces, serif", fontSize: 15, fontWeight: 500, color: T.brand, borderBottom: `1.5px solid ${T.brand}30`, paddingBottom: 6, marginBottom: 12 }}>{title}</div>
+      {children}
+    </div>
+  );
+
+  const finish = () => {
+    const newId = `c-${slugifyName(nombre + apellido)}-${Date.now().toString(36).slice(-5)}`;
+    const specialtiesSet = Array.from(new Set(
+      assignedSpecialists.map((id) => users.find((u) => u.id === id)?.specialty).filter(Boolean)
+    ));
+    const child = {
+      id: newId, name: nombre.trim(), lastName: apellido.trim(),
+      birthDate: birthDate || null, admissionDate: admissionDate || TODAY,
+      specialties: specialtiesSet, assignedSpecialists,
+      avatarBg: CHILD_AVATAR_COLORS[Math.floor(Math.random() * CHILD_AVATAR_COLORS.length)],
+      nextSession: null, nextSessionTime: null,
+      parentContact: { name: acompanante, phone: telefono, email: correo },
+      packageStart: null, packageNum: 1,
+    };
+    const fullFields = {
+      isForm: true, nombre: nombreCompleto, fechaNacimiento: birthDate, edad: "",
+      gradoColegio: "", acompanante, telefono, correo, ...form,
+      relacionPares: "", relacionMaestros: "", situacionPadres: "",
+      consentimiento: false, firmaAcudiente: "", firmaProfesional: "", fechaFirma: TODAY,
+    };
+    const notes = Object.entries(fullFields).filter(([k, v]) => v && k !== "consentimiento" && k !== "isForm")
+      .map(([k, v]) => `${k}: ${v}`).join("\n");
+    const anamnesisDoc = {
+      id: `d-anamnesis-${newId}`, childId: newId, type: "anamnesis",
+      title: `Anamnesis — ${nombreCompleto}`, date: TODAY, authorId: currentUser.id, notes,
+      fields: fullFields,
+    };
+    onCreate(child, anamnesisDoc);
+  };
+
+  return (
+    <Modal onClose={onClose} width={640}>
+      <ModalHeader
+        title="Agregar paciente"
+        subtitle={`Paso ${step} de 3 — ${step === 1 ? "Datos del paciente" : step === 2 ? "Anamnesis" : "Asignar especialistas"}`}
+        onClose={onClose}
+      />
+      <div style={{ padding: 24, maxHeight: "60vh", overflowY: "auto" }}>
+
+        {step === 1 && (
+          <div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              <F label="Nombre" value={nombre} onChange={setNombre} placeholder="Nombre" />
+              <F label="Apellido" value={apellido} onChange={setApellido} placeholder="Apellido" />
+              <F label="Fecha de nacimiento" value={birthDate} onChange={setBirthDate} type="date" />
+              <F label="Fecha de admisión" value={admissionDate} onChange={setAdmissionDate} type="date" />
+            </div>
+            <F label="Persona acompañante (nombre y parentesco)" value={acompanante} onChange={setAcompanante} placeholder="Ej: María Pérez, madre" />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              <F label="Teléfono de contacto" value={telefono} onChange={setTelefono} />
+              <F label="Correo" value={correo} onChange={setCorreo} />
+            </div>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div>
+            <div style={{ fontSize: 13.5, color: T.inkSoft, marginBottom: 16 }}>
+              Ficha de anamnesis breve para <b>{nombreCompleto || "el paciente"}</b>. Puedes completar el resto más adelante desde la ficha del paciente.
+            </div>
+            <Section title="Motivo de consulta">
+              <F value={form.motivoConsulta} onChange={setField("motivoConsulta")} multiline rows={3} />
+            </Section>
+            <Section title="Antecedentes relevantes">
+              <F label="Embarazo, parto y desarrollo temprano" value={form.antecedentes} onChange={setField("antecedentes")} multiline rows={2} />
+              <F label="Salud actual (enfermedades, alergias, medicamentos)" value={form.saludActual} onChange={setField("saludActual")} multiline rows={2} />
+              <F label="Evaluaciones o terapias previas" value={form.terapiasPrevias} onChange={setField("terapiasPrevias")} multiline rows={2} />
+            </Section>
+            <Section title="Información familiar">
+              <F label="Composición familiar (con quién vive)" value={form.composicionFamiliar} onChange={setField("composicionFamiliar")} multiline rows={2} />
+              <F label="Hermanos (nombres y edades)" value={form.hermanos} onChange={setField("hermanos")} />
+              <F label="Dinámica familiar relevante" value={form.dinamicaFamiliar} onChange={setField("dinamicaFamiliar")} multiline rows={2} />
+            </Section>
+            <Section title="Desarrollo y funcionamiento actual">
+              <F label="Fortalezas" value={form.fortalezas} onChange={setField("fortalezas")} multiline rows={2} />
+              <F label="Dificultades observadas" value={form.dificultades} onChange={setField("dificultades")} multiline rows={2} />
+              <F label="Estado emocional" value={form.estadoEmocional} onChange={setField("estadoEmocional")} multiline rows={2} />
+            </Section>
+            <Section title="Escolaridad">
+              <F label="Rendimiento académico general" value={form.rendimientoAcademico} onChange={setField("rendimientoAcademico")} multiline rows={2} />
+              <F label="Áreas con mayor dificultad" value={form.areasDificultad} onChange={setField("areasDificultad")} />
+            </Section>
+            <Section title="Observaciones adicionales">
+              <F value={form.observaciones} onChange={setField("observaciones")} multiline rows={2} />
+            </Section>
+            <div style={{ fontSize: 12.5, color: T.inkFaint, background: T.surfaceSunk, borderRadius: 10, padding: 12 }}>
+              El consentimiento informado y la firma del acudiente se completan después, desde la pestaña de Anamnesis del paciente — ahí puedes generar un link para que el acudiente firme desde su celular, aunque no esté presente.
+            </div>
+          </div>
+        )}
+
+        {step === 3 && (
+          <div>
+            <div style={{ fontSize: 13.5, color: T.inkSoft, marginBottom: 14 }}>
+              ¿Qué especialistas atenderán a <b>{nombreCompleto || "el paciente"}</b>?
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {specialists.map((u) => (
+                <Chip key={u.id} label={`${u.name} · ${u.specialty}`} selected={assignedSpecialists.includes(u.id)} onClick={() => toggleSpecialist(u.id)} />
+              ))}
+            </div>
+            {specialists.length === 0 && (
+              <div style={{ fontSize: 13.5, color: T.inkFaint }}>No hay especialistas registrados todavía.</div>
+            )}
+          </div>
+        )}
+
+      </div>
+
+      <div style={{ display: "flex", gap: 10, justifyContent: "space-between", padding: "16px 24px", borderTop: `1px solid ${T.border}` }}>
+        <Btn variant="ghost" onClick={step === 1 ? onClose : () => setStep((s) => s - 1)}>
+          {step === 1 ? "Cancelar" : "Atrás"}
+        </Btn>
+        {step < 3 ? (
+          <Btn variant="primary" disabled={step === 1 && !step1Valid} onClick={() => setStep((s) => s + 1)}>Siguiente</Btn>
+        ) : (
+          <Btn variant="primary" onClick={finish}>Guardar paciente</Btn>
+        )}
+      </div>
+    </Modal>
+  );
+}
+
+/* ============================================================
+   FIRMA DIGITAL — signature pad + public (no login) consent page
+============================================================ */
+function SignaturePad({ onChange, width = 500, height = 160 }) {
+  const canvasRef = useRef(null);
+  const drawingRef = useRef(false);
+
+  const getPos = (e) => {
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return {
+      x: (clientX - rect.left) * (canvas.width / rect.width),
+      y: (clientY - rect.top) * (canvas.height / rect.height),
+    };
+  };
+
+  const start = (e) => {
+    e.preventDefault();
+    drawingRef.current = true;
+    const ctx = canvasRef.current.getContext("2d");
+    const { x, y } = getPos(e);
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+  };
+  const move = (e) => {
+    if (!drawingRef.current) return;
+    e.preventDefault();
+    const ctx = canvasRef.current.getContext("2d");
+    const { x, y } = getPos(e);
+    ctx.lineTo(x, y);
+    ctx.strokeStyle = "#152F36";
+    ctx.lineWidth = 2.4;
+    ctx.lineCap = "round";
+    ctx.stroke();
+    if (onChange) onChange(canvasRef.current.toDataURL("image/png"));
+  };
+  const end = () => { drawingRef.current = false; };
+  const clear = () => {
+    const canvas = canvasRef.current;
+    canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+    if (onChange) onChange(null);
+  };
+
+  return (
+    <div>
+      <canvas
+        ref={canvasRef} width={width} height={height}
+        style={{ width: "100%", maxWidth: width, height, border: `1.5px dashed ${T.border}`, borderRadius: 10, touchAction: "none", background: "#fff", display: "block" }}
+        onMouseDown={start} onMouseMove={move} onMouseUp={end} onMouseLeave={end}
+        onTouchStart={start} onTouchMove={move} onTouchEnd={end}
+      />
+      <button onClick={clear} type="button" style={{ marginTop: 8, background: "none", border: `1px solid ${T.border}`, borderRadius: 8, padding: "5px 12px", fontSize: 12.5, color: T.inkSoft, cursor: "pointer", fontFamily: "Inter, sans-serif" }}>
+        Borrar firma
+      </button>
+    </div>
+  );
+}
+
+function FirmaConsentimientoPublic({ token }) {
+  const [status, setStatus] = useState("loading"); // loading | ready | notfound | saving | done | error
+  const [doc, setDoc] = useState(null);
+  const [signatureData, setSignatureData] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const found = await db.getDocumentByConsentToken(token);
+        if (cancelled) return;
+        if (!found) { setStatus("notfound"); return; }
+        setDoc(found);
+        setStatus("ready");
+      } catch (e) {
+        console.error("Load consent doc:", e);
+        if (!cancelled) setStatus("error");
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [token]);
+
+  const handleSave = async () => {
+    if (!signatureData || !doc) return;
+    setStatus("saving");
+    try {
+      await db.saveConsentSignature(doc.id, doc.fields, signatureData);
+      setStatus("done");
+    } catch (e) {
+      console.error("Save signature:", e);
+      setStatus("error");
+    }
+  };
+
+  const childName = doc?.fields?.consentChildName || doc?.fields?.nombre || "";
+
+  return (
+    <div style={{ minHeight: "100vh", background: "#FFFBF2", fontFamily: "Inter, sans-serif", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <style>{FONTS}</style>
+      <div style={{ background: "#fff", borderRadius: 20, maxWidth: 560, width: "100%", padding: "28px 26px", boxShadow: "0 20px 60px rgba(21,47,54,0.15)", boxSizing: "border-box" }}>
+        <div style={{ fontFamily: "Fraunces, serif", fontSize: 24, fontWeight: 500, color: "#175FAF", marginBottom: 4 }}>AIRA Learning Hub</div>
+        <div style={{ fontSize: 13.5, color: T.inkSoft, marginBottom: 20 }}>Consentimiento informado</div>
+
+        {status === "loading" && <div style={{ fontSize: 14, color: T.inkSoft }}>Cargando…</div>}
+
+        {status === "notfound" && (
+          <div style={{ fontSize: 14, color: T.ink, lineHeight: 1.6 }}>
+            Este link ya no está disponible — puede que ya haya sido usado o que no sea válido. Si necesitas firmar, pide un nuevo link al centro.
+          </div>
+        )}
+
+        {status === "error" && (
+          <div style={{ fontSize: 14, color: T.ink, lineHeight: 1.6 }}>
+            Ocurrió un problema al cargar. Intenta de nuevo en unos minutos o pide un nuevo link al centro.
+          </div>
+        )}
+
+        {status === "done" && (
+          <div style={{ fontSize: 14, color: T.ink, lineHeight: 1.6 }}>✅ ¡Gracias! Tu firma quedó registrada correctamente.</div>
+        )}
+
+        {(status === "ready" || status === "saving") && doc && (
+          <div>
+            <div style={{ fontSize: 13.5, color: T.inkSoft, lineHeight: 1.6, marginBottom: 18 }}>
+              Yo, en calidad de representante legal de <b>{childName}</b>, autorizo la evaluación y acompañamiento psicopedagógico/psicosocial en AIRA Learning Hub.
+            </div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: T.inkFaint, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 8 }}>
+              Firma del acudiente (dibuja con el dedo o el mouse)
+            </div>
+            <SignaturePad onChange={setSignatureData} />
+            <div style={{ marginTop: 18, display: "flex", justifyContent: "flex-end" }}>
+              <Btn variant="primary" disabled={!signatureData || status === "saving"} onClick={handleSave}>
+                {status === "saving" ? "Guardando…" : "Guardar firma"}
+              </Btn>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -4174,6 +4595,7 @@ function MobileStyles() {
 export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const consentToken = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("firmar") : null;
 
   // Listen to Supabase auth state
   useEffect(() => {
@@ -4477,6 +4899,20 @@ export default function App() {
     try { await db.insertSchool(school); } catch(e) { console.error("Add school:", e); }
   }
 
+  async function handleAddChild(child, anamnesisDoc) {
+    setChildren((prev) => [...prev, child]);
+    try { await db.insertChild(child); } catch(e) { console.error("Add child:", e); }
+    if (anamnesisDoc) {
+      setDocuments((prev) => [...prev, anamnesisDoc]);
+      try { await db.insertDocument(anamnesisDoc); } catch(e) { console.error("Add anamnesis doc:", e); }
+    }
+  }
+
+  // Public link for a parent to sign the informed-consent form — no login needed.
+  if (consentToken) {
+    return <FirmaConsentimientoPublic token={consentToken} />;
+  }
+
   if (authLoading) {
     return (
       <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:"#FFFBF2" }}>
@@ -4550,6 +4986,8 @@ export default function App() {
           activityLog={activityLog} onMarkSeen={() => setActivityLog(prev => prev.map(a => ({...a, seen:true})))}
           onOpenChild={(id) => { setSelectedChildId(id); setView("child"); }}
           onConnectGcal={handleConnectGcal}
+          currentUser={currentUser}
+          onAddChild={handleAddChild}
         />
       )}
 

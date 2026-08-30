@@ -153,6 +153,15 @@ export const db = {
     })
     if (error) throw error
   },
+  async updateSession(s) {
+    const { error } = await supabase.from('sessions').update({
+      child_id: s.childId, specialist_id: s.specialistId,
+      specialty: s.specialty, date: s.date, duration: s.duration,
+      objectives_worked: s.objectivesWorked, activities: s.activities,
+      observation: s.observation, next_steps: s.nextSteps,
+    }).eq('id', s.id)
+    if (error) throw error
+  },
   async getDocuments() {
     const { data, error } = await supabase.from('documents').select('*').order('date', { ascending: false })
     if (error) throw error
@@ -163,6 +172,13 @@ export const db = {
       id: d.id, child_id: d.childId, type: d.type, title: d.title,
       date: d.date, author_id: d.authorId, notes: d.notes, fields: d.fields || {},
     })
+    if (error) throw error
+  },
+  async updateDocument(d) {
+    const { error } = await supabase.from('documents').update({
+      child_id: d.childId, type: d.type, title: d.title,
+      date: d.date, author_id: d.authorId, notes: d.notes, fields: d.fields || {},
+    }).eq('id', d.id)
     if (error) throw error
   },
   async getMeetings() {
@@ -216,6 +232,28 @@ export const db = {
       school: r.school, logros: r.logros, dificultades: r.dificultades,
       solicitudes: r.solicitudes, objetivo_status: r.objetivoStatus || {},
     })
+    if (error) throw error
+  },
+  // Public (no login) consent-signature flow: a specialist generates a one-time
+  // link with a random token stored inside the anamnesis document's fields;
+  // the parent opens that link (no account needed) and signs there.
+  async getDocumentByConsentToken(token) {
+    const { data, error } = await supabase
+      .from('documents')
+      .select('*')
+      .filter('fields->>consentToken', 'eq', token)
+      .maybeSingle()
+    if (error) throw error
+    return data ? dbDocumentToApp(data) : null
+  },
+  async saveConsentSignature(documentId, currentFields, signatureDataUrl) {
+    const updatedFields = {
+      ...currentFields,
+      firmaAcudienteImg: signatureDataUrl,
+      fechaFirmaAcudiente: new Date().toISOString(),
+      consentToken: null,
+    }
+    const { error } = await supabase.from('documents').update({ fields: updatedFields }).eq('id', documentId)
     if (error) throw error
   },
 }
