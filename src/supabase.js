@@ -246,14 +246,14 @@ export const db = {
     if (error) throw error
     return data ? dbDocumentToApp(data) : null
   },
-  async saveConsentSignature(documentId, currentFields, signatureDataUrl) {
-    const updatedFields = {
-      ...currentFields,
-      firmaAcudienteImg: signatureDataUrl,
-      fechaFirmaAcudiente: new Date().toISOString(),
-      consentToken: null,
-    }
-    const { error } = await supabase.from('documents').update({ fields: updatedFields }).eq('id', documentId)
+  async saveConsentSignature(token, signatureDataUrl) {
+    // Runs through a security-definer RPC (not a direct table update): once the
+    // token is cleared, the row is no longer visible under the public RLS
+    // policy, and Postgres blocks a direct UPDATE from writing a row it can no
+    // longer see back to the caller. The RPC does the lookup+update internally
+    // with elevated privileges, sidestepping that restriction safely.
+    const { data, error } = await supabase.rpc('sign_consent', { p_token: token, p_signature_data: signatureDataUrl })
     if (error) throw error
+    if (data === false) throw new Error('Token inválido o ya usado')
   },
 }
