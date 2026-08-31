@@ -3378,7 +3378,7 @@ function FirmaConsentimientoPublic({ token }) {
     if (!signatureData || !doc) return;
     setStatus("saving");
     try {
-      await db.saveConsentSignature(doc.id, doc.fields, signatureData);
+      await db.saveConsentSignature(token, signatureData);
       setStatus("done");
     } catch (e) {
       console.error("Save signature:", e);
