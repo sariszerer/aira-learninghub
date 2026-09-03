@@ -19,6 +19,9 @@
 - El módulo nuevo sigue el estilo del repo: sin TypeScript, ES modules, comillas dobles en JSX y simples en JS plano.
 - No se introduce lenguaje visual nuevo: se reutilizan `T`, `Btn`, `Card`, `Chip`, `Modal`.
 
+- **Los números de línea son pistas, no direcciones.** Cada edición en `App.jsx` desplaza
+  las siguientes. Localizar siempre por el fragmento citado en "Antes:", nunca por el número.
+
 ## Estructura de archivos
 
 | Archivo | Responsabilidad |
@@ -287,9 +290,10 @@ git commit -m "feat: catálogo de permisos y can() con soporte own/any"
 
 - [ ] **Step 1: Escribir las pruebas que fallan**
 
-Agregar al final de `src/permissions.test.js`:
+Agregar a `src/permissions.test.js`. Los imports van **al inicio del archivo**, junto a los existentes, no al pie del bloque nuevo:
 
 ```js
+// (subir esta línea al bloque de imports del inicio)
 import { visibleChildren, canSeeChild } from './permissions.js'
 
 describe('visibleChildren', () => {
@@ -396,9 +400,10 @@ Es la tarea de mayor riesgo del plan: si la matriz se equivoca, alguien pierde a
 
 - [ ] **Step 1: Escribir las pruebas que fallan**
 
-Agregar a `src/permissions.test.js`:
+Agregar a `src/permissions.test.js`. Consolidar en el bloque de imports del inicio, no al pie:
 
 ```js
+// (subir esta línea al bloque de imports del inicio)
 import { ROLES, buildUser, PERMISSIONS as CAT } from './permissions.js'
 
 describe('ROLES — matriz semilla', () => {
@@ -674,7 +679,7 @@ Los cuatro sitios donde vive `admin || clinical_director || currentUser.id === <
 Junto a los imports existentes al inicio de `src/App.jsx`:
 
 ```js
-import { can, visibleChildren, ROLES } from "./permissions.js";
+import { can } from "./permissions.js";
 ```
 
 - [ ] **Step 2: Reemplazar el check de sesiones en HistorialTab (línea 2569)**
@@ -926,17 +931,12 @@ role === "admin"             ->  home === "admin"
 
 El resto de cada rama (componente y props) no cambia.
 
-- [ ] **Step 6: Verificar que no quedan comparaciones de rol**
-
-Run: `grep -n 'role === "' src/App.jsx`
-Expected: sin resultados fuera de `seedUsers` y `seedTutors` (datos semilla, correcto).
-
-- [ ] **Step 7: Verificar build y pruebas**
+- [ ] **Step 6: Verificar build y pruebas**
 
 Run: `npx vite build && npm test`
 Expected: build correcto, 34 pruebas pasando.
 
-- [ ] **Step 8: Verificación manual con los 4 roles**
+- [ ] **Step 7: Verificación manual con los 4 roles**
 
 Levantar `npm run dev` y entrar con una cuenta de cada rol. Confirmar, por rol:
 
@@ -949,7 +949,7 @@ Levantar `npm run dev` y entrar con una cuenta de cada rol. Confirmar, por rol:
 
 La última fila es el cambio de comportamiento aprobado.
 
-- [ ] **Step 9: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
 git add src/App.jsx
@@ -958,9 +958,110 @@ git commit -m "refactor: alcance y atributos de rol desde el módulo de permisos
 
 ---
 
+---
+
+### Task 9: Sitios restantes y verificación final
+
+Cuatro sitios con literales de rol que el resto del plan no cubre. Se detectaron en
+el escaneo previo a la ejecución; sin esta tarea la verificación de "no quedan
+comparaciones de rol" no puede pasar.
+
+**Files:**
+- Modify: `src/App.jsx` — eliminar `LoginScreen`; `TopBar` (etiqueta de rol);
+  `SessionWizard` (filtro de objetivos); las dos guardas de carga desde Supabase
+
+**Interfaces:**
+- Consumes: `can` (Tarea 2), atributo `home` de `buildUser` (Tarea 4)
+- Produces: ninguna interfaz nueva
+
+- [ ] **Step 1: Confirmar que `LoginScreen` es código muerto**
+
+Run: `grep -n "LoginScreen" src/App.jsx`
+Expected: una sola línea, la de su definición (`function LoginScreen(`). Si aparece
+renderizado en algún sitio, **detenerse y reportar** — el resto de esta tarea asume
+que no se usa.
+
+- [ ] **Step 2: Eliminar `LoginScreen`**
+
+Borrar la función `LoginScreen` completa (desde `function LoginScreen({ users, tutors, onLogin }) {`
+hasta su llave de cierre, unas 80 líneas). La app autentica con `<Login />` de
+`Login.jsx`; este componente quedó de una versión anterior y contiene lógica con
+forma de autorización que nadie ejecuta. En un refactor de permisos eso es un riesgo:
+si alguien lo revive, reintroduce literales de rol que ya nadie audita.
+
+- [ ] **Step 3: Etiqueta de rol en TopBar**
+
+Antes:
+```js
+<div style={{ fontSize: 11.5, color: T.inkFaint }}>{user.role === "admin" || user.role === "clinical_director" ? user.title || user.specialty : user.role === "shadow" ? `Tutor AIRA · ${user.school}` : user.specialty}</div>
+```
+Después:
+```js
+<div style={{ fontSize: 11.5, color: T.inkFaint }}>{user.home === "admin" || user.home === "clinico" ? user.title || user.specialty : user.home === "tutor" ? `Tutor AIRA · ${user.school}` : user.specialty}</div>
+```
+
+- [ ] **Step 4: Filtro de objetivos en SessionWizard**
+
+Este tiene forma de autorización y se le escapó a la Tarea 6.
+
+Antes:
+```js
+    (currentUser.role === "admin" || currentUser.role === "clinical_director" || o.specialistId === currentUser.id)
+```
+Después:
+```js
+    can(currentUser, "objective:edit", o)
+```
+
+- [ ] **Step 5: Guardas de carga desde Supabase (dos sitios idénticos)**
+
+Los tutores sombra trabajan sobre datos semilla y no cargan de la base.
+
+Antes (en los dos sitios):
+```js
+    if (currentUser && currentUser.role !== "shadow") {
+```
+Después:
+```js
+    if (currentUser && currentUser.home !== "tutor") {
+```
+
+- [ ] **Step 6: Verificar que no quedan comparaciones de rol**
+
+Run: `grep -n 'role === "' src/App.jsx`
+Expected: solo líneas dentro de `seedUsers` y `seedTutors` (datos semilla, correcto).
+No debe quedar ninguna en lógica de decisión.
+
+Run: `grep -n 'role !== "' src/App.jsx`
+Expected: sin resultados.
+
+- [ ] **Step 7: Verificar que el id incrustado desapareció de la autorización**
+
+Run: `grep -n 'u-admin' src/App.jsx`
+Expected: solo apariciones dentro de `seedUsers`. Ninguna en un condicional.
+
+- [ ] **Step 8: Verificar build y pruebas**
+
+Run: `npx vite build && npm test`
+Expected: build correcto, 34 pruebas pasando.
+
+- [ ] **Step 9: Verificación manual del login**
+
+Levantar `npm run dev` y confirmar que la pantalla de inicio de sesión carga y
+permite entrar. Es la comprobación de que borrar `LoginScreen` no rompió nada.
+
+- [ ] **Step 10: Commit**
+
+```bash
+git add src/App.jsx
+git commit -m "refactor: elimina LoginScreen muerto y los literales de rol restantes"
+```
+
+
 ## Definición de terminado
 
-- `grep -n 'role === "' src/App.jsx` no devuelve nada fuera de datos semilla.
+- `grep -n 'role === "' src/App.jsx` no devuelve nada fuera de datos semilla (Tarea 9).
+- `grep -n 'role !== "' src/App.jsx` no devuelve nada (Tarea 9).
 - `grep -n 'u-admin' src/App.jsx` no devuelve nada en contexto de autorización.
 - `npm test` pasa con 34 pruebas.
 - `npx vite build` compila.
