@@ -2852,7 +2852,7 @@ function AnamnesisTab({ child, documents, users, currentUser, onAddDocument, onU
   });
 
   const anamnesisDoc = documents.find(d => d.childId === child.id && d.type === "anamnesis" && d.fields?.isForm);
-  const canEdit = currentUser && (currentUser.role === "admin" || currentUser.role === "clinical_director" || currentUser.role === "specialist");
+  const canEdit = can(currentUser, "anamnesis:edit");
   const [signLink, setSignLink] = useState(null);
   const [linkCopied, setLinkCopied] = useState(false);
 
@@ -3573,8 +3573,8 @@ function InterdisciplinaryTab({ child, meetings, users, onAddMeeting, currentUse
   const [pautasDate, setPautasDate] = useState(TODAY);
   const childMeetings = meetings.filter((m) => m.childId === child.id).sort((a, b) => b.date.localeCompare(a.date));
 
-  // Pautas de Crianza sessions — only visible to admin, clinical_director, and u-admin specialist
-  const canSeePautas = currentUser && (currentUser.role === "admin" || currentUser.role === "clinical_director" || currentUser.id === "u-admin");
+  // Pautas de Crianza sessions — visible a quien tenga el permiso guidelines:view
+  const canSeePautas = can(currentUser, "guidelines:view");
   const pautasSessions = (documents || []).filter(d => d.childId === child.id && d.type === "pautas_crianza").sort((a, b) => b.date.localeCompare(a.date));
 
   const savePautas = () => {
@@ -3747,7 +3747,7 @@ function SesionesTab({ child, sessions, objectives, users, currentUser, onUpdate
 
 function PlanTrabajoTab({ child, documents, users, currentUser, onAddDocument, onUpdateDocument }) {
   const [adding, setAdding] = useState(false);
-  const canAdd = currentUser && (currentUser.role === "admin" || currentUser.role === "clinical_director" || currentUser.role === "specialist");
+  const canAdd = can(currentUser, "workplan:create");
   const planDocs = documents.filter(d => d.childId === child.id && d.type === "plan_trabajo");
 
   return (
@@ -3848,10 +3848,10 @@ function ChildProfile({ child, users, sessions, objectives, documents, meetings,
           </div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8, flexShrink: 0 }}>
-          {(currentUser.role === "specialist" || currentUser.role === "clinical_director") && child.assignedSpecialists.includes(currentUser.id) && (
+          {can(currentUser, "session:create") && child.assignedSpecialists.includes(currentUser.id) && (
             <Btn variant="amber" size="lg" icon={Plus} onClick={onOpenSessionForm}>Registrar sesión</Btn>
           )}
-          {(currentUser.role === "admin" || currentUser.role === "clinical_director") && (
+          {can(currentUser, "patient:edit") && (
             <button onClick={() => setEditingProfile(true)} style={{
               display: "flex", alignItems: "center", gap: 6, background: "none",
               border: `1px solid ${T.border}`, borderRadius: 10, padding: "7px 14px",
@@ -5010,7 +5010,7 @@ export default function App() {
         onBack={isChildRoute ? goHome : null}
         backLabel={currentUser.role === "admin" ? "Panel administrativo" : currentUser.role === "clinical_director" ? "Panel clínico" : "Mis pacientes"}
         onLogout={async () => { await auth.signOut(); setCurrentUser(null); goHome(); }}
-        showGabinete={(currentUser.role === "admin" || currentUser.role === "clinical_director")}
+        showGabinete={can(currentUser, "gabinete:view")}
         onGabinete={() => navigate("/gabinete")}
         gabineteActive={isGabinete}
         onSave={null}
@@ -5057,7 +5057,7 @@ export default function App() {
         } />
 
         <Route path="/gabinete" element={
-          (currentUser.role === "admin" || currentUser.role === "clinical_director") ? (
+          can(currentUser, "gabinete:view") ? (
             <GabinetePanel
               schools={schools} users={users} gabineteSessions={gabineteSessions}
               onAddSession={handleAddGabineteSession}
