@@ -11,7 +11,7 @@ function DriveSaveBar({ status, onSave }) {
   return (
     <div style={{ background: conf.bg, color: conf.color, fontSize: 12.5, fontWeight: 600, textAlign: "center", padding: "6px 20px", borderBottom: `1px solid ${conf.color}22`, display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
       {conf.text}
-      {status === "error" && <button onClick={onSave} style={{ background: conf.color, color: "#fff", border: "none", borderRadius: 6, padding: "2px 10px", fontSize: 12, cursor: "pointer", fontFamily: "Inter, sans-serif" }}>Reintentar</button>}
+      {status === "error" && <button onClick={onSave} style={{ background: conf.color, color: "#fff", border: "none", borderRadius: 6, padding: "2px 10px", fontSize: 12, cursor: "pointer", fontFamily: T.font }}>Reintentar</button>}
     </div>
   );
 }

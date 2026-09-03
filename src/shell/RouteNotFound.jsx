@@ -10,7 +10,7 @@ function RouteNotFound() {
   const onHome = () => navigate("/");
   return (
     <div style={{ padding: "80px 20px", textAlign: "center", maxWidth: 420, margin: "0 auto" }}>
-      <div style={{ fontFamily: "Fraunces, serif", fontSize: 24, fontWeight: 500, color: T.ink, marginBottom: 10 }}>
+      <div style={{ fontFamily: T.font, fontSize: 24, fontWeight: 500, color: T.ink, marginBottom: 10 }}>
         Paciente no encontrado
       </div>
       <div style={{ fontSize: 14, color: T.inkFaint, marginBottom: 24 }}>

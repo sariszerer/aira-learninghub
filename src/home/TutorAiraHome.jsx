@@ -47,7 +47,7 @@ function TutorAiraHome({ user, onOpenChild }) {
   return (
     <div style={{ maxWidth: 680, margin: "0 auto", padding: "36px 20px 60px" }}>
       <div style={{ marginBottom: 28 }}>
-        <div style={{ fontFamily: "Fraunces, serif", fontSize: 30, fontWeight: 500, color: T.ink }}>
+        <div style={{ fontFamily: T.font, fontSize: 21, fontWeight: 700, color: T.ink }}>
           Hola, {user.name.split(" ")[0]}
         </div>
         <div style={{ fontSize: 13.5, color: T.inkSoft, marginTop: 4 }}>
@@ -63,7 +63,7 @@ function TutorAiraHome({ user, onOpenChild }) {
             {child.name[0]}
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: "Fraunces, serif", fontSize: 18, fontWeight: 600, color: T.ink }}>{child.name} {child.lastName}</div>
+            <div style={{ fontFamily: T.font, fontSize: 18, fontWeight: 600, color: T.ink }}>{child.name} {child.lastName}</div>
             <div style={{ fontSize: 13, color: T.inkSoft, marginTop: 2 }}>{child.specialties.join(" · ")}</div>
           </div>
           <div style={{ fontSize: 12.5, color: T.brand, fontWeight: 600 }}>Ver expediente →</div>
@@ -84,7 +84,7 @@ function TutorAiraHome({ user, onOpenChild }) {
           </div>
           <button onClick={() => setForm(emptyForm())} style={{
             background: T.amberDeep, color: "#fff", border: "none", borderRadius: 10, padding: "9px 16px",
-            fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif", whiteSpace: "nowrap",
+            fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: T.font, whiteSpace: "nowrap",
           }}>Llenar ahora</button>
         </div>
       )}
@@ -98,7 +98,7 @@ function TutorAiraHome({ user, onOpenChild }) {
       {/* Report form */}
       {form && (
         <Card style={{ marginBottom: 22 }}>
-          <div style={{ fontFamily: "Fraunces, serif", fontSize: 20, fontWeight: 500, color: T.ink, marginBottom: 20 }}>
+          <div style={{ fontFamily: T.font, fontSize: 20, fontWeight: 500, color: T.ink, marginBottom: 20 }}>
             Reporte quincenal — {fmtDate(TODAY)}
           </div>
 
@@ -113,7 +113,7 @@ function TutorAiraHome({ user, onOpenChild }) {
                       <button key={s.val} onClick={() => setForm({ ...form, objetivoStatus: { ...form.objetivoStatus, [o.id]: s.val } })}
                         style={{
                           padding: "5px 10px", borderRadius: 20, fontSize: 11.5, border: "none", cursor: "pointer",
-                          fontFamily: "Inter, sans-serif", fontWeight: 600,
+                          fontFamily: T.font, fontWeight: 600,
                           background: form.objetivoStatus[o.id] === s.val ? T.brand : T.bg,
                           color: form.objetivoStatus[o.id] === s.val ? "#fff" : T.inkSoft,
                         }}>{s.label}</button>
@@ -138,7 +138,7 @@ function TutorAiraHome({ user, onOpenChild }) {
                 rows={3}
                 style={{
                   width: "100%", padding: "12px 14px", borderRadius: 12, border: `1px solid ${T.border}`,
-                  fontSize: 14, fontFamily: "Inter, sans-serif", resize: "vertical", boxSizing: "border-box",
+                  fontSize: 14, fontFamily: T.font, resize: "vertical", boxSizing: "border-box",
                   outline: "none", color: T.ink, background: "#fff",
                 }}
               />
@@ -146,10 +146,10 @@ function TutorAiraHome({ user, onOpenChild }) {
           ))}
 
           <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-            <button onClick={() => setForm(null)} style={{ padding: "10px 18px", borderRadius: 10, border: `1px solid ${T.border}`, background: "#fff", color: T.inkSoft, fontSize: 14, fontFamily: "Inter, sans-serif", cursor: "pointer" }}>Cancelar</button>
+            <button onClick={() => setForm(null)} style={{ padding: "10px 18px", borderRadius: 10, border: `1px solid ${T.border}`, background: "#fff", color: T.inkSoft, fontSize: 14, fontFamily: T.font, cursor: "pointer" }}>Cancelar</button>
             <button onClick={handleSubmit} disabled={!form.logros.trim()} style={{
               padding: "10px 22px", borderRadius: 10, border: "none", background: T.brand, color: "#fff",
-              fontSize: 14, fontWeight: 600, fontFamily: "Inter, sans-serif", cursor: "pointer",
+              fontSize: 14, fontWeight: 600, fontFamily: T.font, cursor: "pointer",
               opacity: !form.logros.trim() ? 0.5 : 1,
             }}>Enviar reporte</button>
           </div>
@@ -161,7 +161,7 @@ function TutorAiraHome({ user, onOpenChild }) {
         <div style={{ marginBottom: 22 }}>
           <button onClick={() => setForm(emptyForm())} style={{
             background: T.brand, color: "#fff", border: "none", borderRadius: 12, padding: "11px 20px",
-            fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif",
+            fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: T.font,
           }}>+ Nuevo reporte quincenal</button>
         </div>
       )}

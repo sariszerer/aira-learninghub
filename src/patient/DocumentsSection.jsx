@@ -64,11 +64,11 @@ function DocumentsSection({ type, documents, users, onAdd, onUpdateDocument, cur
                 {isEditing ? (
                   <div style={{ marginTop: 10 }}>
                     <textarea value={editNotes} onChange={e => setEditNotes(e.target.value)} rows={8}
-                      style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1.5px solid ${T.brand}`, fontSize: 13.5, fontFamily: "Inter, sans-serif", outline: "none", resize: "vertical", boxSizing: "border-box", lineHeight: 1.6, whiteSpace: "pre-wrap" }}
+                      style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1.5px solid ${T.brand}`, fontSize: 13.5, fontFamily: T.font, outline: "none", resize: "vertical", boxSizing: "border-box", lineHeight: 1.6, whiteSpace: "pre-wrap" }}
                     />
                     <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                      <button onClick={() => saveEdit(d)} style={{ padding: "7px 16px", borderRadius: 8, border: "none", background: T.brand, color: "#fff", fontSize: 13, fontWeight: 600, fontFamily: "Inter, sans-serif", cursor: "pointer" }}>Guardar</button>
-                      <button onClick={() => setEditingId(null)} style={{ padding: "7px 12px", borderRadius: 8, border: `1px solid ${T.border}`, background: "#fff", color: T.inkSoft, fontSize: 13, fontFamily: "Inter, sans-serif", cursor: "pointer" }}>Cancelar</button>
+                      <button onClick={() => saveEdit(d)} style={{ padding: "7px 16px", borderRadius: 8, border: "none", background: T.brand, color: "#fff", fontSize: 13, fontWeight: 600, fontFamily: T.font, cursor: "pointer" }}>Guardar</button>
+                      <button onClick={() => setEditingId(null)} style={{ padding: "7px 12px", borderRadius: 8, border: `1px solid ${T.border}`, background: "#fff", color: T.inkSoft, fontSize: 13, fontFamily: T.font, cursor: "pointer" }}>Cancelar</button>
                     </div>
                   </div>
                 ) : isExpanded && d.notes ? (

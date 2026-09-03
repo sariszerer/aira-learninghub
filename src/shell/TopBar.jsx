@@ -18,7 +18,7 @@ function TopBar({ user, onBack, backLabel, onLogout, onHome, showGabinete, onGab
           {onBack && (
             <button onClick={onBack} style={{
               display: "flex", alignItems: "center", gap: 5, background: "none", border: "none",
-              color: T.inkSoft, fontSize: 13.5, fontWeight: 500, cursor: "pointer", fontFamily: "Fraunces, serif", fontStyle: "italic",
+              color: T.inkSoft, fontSize: 13.5, fontWeight: 500, cursor: "pointer", fontFamily: T.font, fontStyle: "italic",
             }}>
               <ChevronLeft size={15} /> {backLabel || "Volver"}
             </button>
@@ -29,7 +29,7 @@ function TopBar({ user, onBack, backLabel, onLogout, onHome, showGabinete, onGab
               border: `1.5px solid ${gabineteActive ? T.brand : T.border}`,
               background: gabineteActive ? T.brand : "transparent",
               color: gabineteActive ? "#fff" : T.inkSoft,
-              fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif",
+              fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: T.font,
             }}>
               🏫 Gabinete externo
             </button>
@@ -45,7 +45,7 @@ function TopBar({ user, onBack, backLabel, onLogout, onHome, showGabinete, onGab
             <button onClick={onSave} title="Guardar en Drive" style={{
               display: "flex", alignItems: "center", gap: 5, padding: "6px 12px", borderRadius: 10,
               border: `1px solid ${T.border}`, background: "#fff", color: T.inkSoft,
-              fontSize: 12.5, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif",
+              fontSize: 12.5, fontWeight: 600, cursor: "pointer", fontFamily: T.font,
             }}>
               💾 Guardar
             </button>

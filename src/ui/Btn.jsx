@@ -4,7 +4,7 @@ import { T } from "../theme.js";
 function Btn({ children, onClick, variant = "primary", size = "md", icon: Icon, disabled, full }) {
   const base = {
     display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8,
-    fontFamily: "Inter, sans-serif", fontWeight: 600, cursor: disabled ? "default" : "pointer",
+    fontFamily: T.font, fontWeight: 600, cursor: disabled ? "default" : "pointer",
     border: "none", borderRadius: 12, transition: "all .15s ease",
     opacity: disabled ? 0.45 : 1, width: full ? "100%" : "auto",
   };

@@ -17,7 +17,7 @@ function ChildCard({ child, users, sessions, onOpen }) {
           <Avatar name={child.name + " " + child.lastName} bg={child.avatarBg} size={58} />
         </div>
         <div style={{ marginTop: -34, paddingLeft: 68 }}>
-          <div style={{ fontFamily: "Fraunces, serif", fontSize: 19, fontWeight: 600, color: T.ink, marginTop: 6 }}>
+          <div style={{ fontFamily: T.font, fontSize: 19, fontWeight: 600, color: T.ink, marginTop: 6 }}>
             {child.name} {child.lastName}
           </div>
           <div style={{ fontSize: 13, color: T.inkSoft, marginTop: 2 }}>
@@ -29,7 +29,7 @@ function ChildCard({ child, users, sessions, onOpen }) {
             <Calendar size={13} />
             {child.nextSession ? fmtDate(child.nextSession) : "Sin sesión programada"}
           </div>
-          <span style={{ display: "flex", alignItems: "center", gap: 4, color: T.brand, fontSize: 13, fontFamily: "Fraunces, serif", fontStyle: "italic", fontWeight: 500 }}>
+          <span style={{ display: "flex", alignItems: "center", gap: 4, color: T.brand, fontSize: 13, fontFamily: T.font, fontStyle: "italic", fontWeight: 500 }}>
             Ver perfil <ArrowRight size={13} />
           </span>
         </div>

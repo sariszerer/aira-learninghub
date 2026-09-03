@@ -1,42 +1,68 @@
 // Tokens de diseno de AIRA Learning Hub.
-// Paleta: estudio al amanecer. Verde azulado profundo para la estructura,
-// amarillo calido como unico punto de energia, y salvia y coral reservados
-// al sistema de semaforo de estado, para que el estado se lea igual en todas
-// partes.
+//
+// Lenguaje visual: panel de gestion moderno. Violeta como color de marca, cian
+// como acento, y todo sobre un gris muy claro con tarjetas blancas de borde
+// suave. Sin serif: una sola familia sans en toda la aplicacion.
+//
+// Los NOMBRES de los tokens se conservan del tema anterior a proposito: asi el
+// cambio de paleta se propaga a los 75 archivos sin tocar ni uno.
 
 import { useEffect } from "react";
 
 export const T = {
-  bg: "#FFFBF2",
+  // superficies
+  bg: "#F7F8FA",
   surface: "#FFFFFF",
-  surfaceSunk: "#F5F0E2",
-  ink: "#20302E",
-  inkSoft: "#63716D",
-  inkFaint: "#9CA79E",
-  border: "#EDE6D4",
-  borderSoft: "#F3EEDF",
-  brand: "#175FAF",
-  brandBright: "#2378D6",
-  brandDeep: "#0F4A8A",
-  brandTint: "#E9F2FC",
-  amber: "#F5C93E",
-  amberTint: "#FDF2D2",
-  amberDeep: "#8A6410",
-  pink: "#DCAAFA",
-  pinkTint: "#F6EBFC",
-  pinkDeep: "#8A3FC0",
-  logrado: "#4C8F6A",
-  logradoTint: "#E4F1E8",
-  proceso: "#DFA53B",
-  procesoTint: "#FBF1DC",
-  apoyo: "#D5715C",
-  apoyoTint: "#FAE7E1",
-  radius: 22,
-  shadow: "0 2px 10px rgba(32,48,46,0.05)",
+  surfaceSunk: "#F1F3F7",
+
+  // texto
+  ink: "#111827",
+  inkSoft: "#6B7280",
+  inkFaint: "#9CA3AF",
+
+  // bordes
+  border: "#E5E7EB",
+  borderSoft: "#F1F3F7",
+
+  // marca: violeta
+  brand: "#7C3AED",
+  brandBright: "#8B5CF6",
+  brandDeep: "#6D28D9",
+  brandTint: "#F3EEFF",
+
+  // acento: cian (ocupa el lugar del ambar del tema anterior)
+  amber: "#06B6D4",
+  amberTint: "#E0F7FB",
+  amberDeep: "#0E7490",
+
+  // terciario: violeta claro
+  pink: "#A78BFA",
+  pinkTint: "#EDE9FE",
+  pinkDeep: "#6D28D9",
+
+  // semaforo de estado
+  logrado: "#10B981",
+  logradoTint: "#D1FAE5",
+  proceso: "#F59E0B",
+  procesoTint: "#FEF3C7",
+  apoyo: "#EF4444",
+  apoyoTint: "#FEE2E2",
+
+  // forma
+  radius: 14,
+  radiusSm: 10,
+  shadow: "0 1px 2px rgba(16,24,40,0.04), 0 1px 3px rgba(16,24,40,0.06)",
+  shadowLift: "0 4px 12px rgba(16,24,40,0.08)",
+
+  // tipografia: una sola familia. fontDisplay existe para los sitios que antes
+  // usaban serif; hoy apunta a la misma sans con otro peso de uso.
+  font: "Inter, system-ui, -apple-system, Segoe UI, sans-serif",
+  fontDisplay: "Inter, system-ui, -apple-system, Segoe UI, sans-serif",
 };
 
+
 export const FONTS = `
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 `;
 
 export const STATUS = {
@@ -50,7 +76,7 @@ export const inputStyle = {
   borderRadius: 8,
   border: "1px solid #ddd",
   fontSize: 14,
-  fontFamily: "Inter, sans-serif",
+  fontFamily: T.font,
   outline: "none",
   color: "#333",
   background: "#fff",

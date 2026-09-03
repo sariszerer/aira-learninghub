@@ -28,7 +28,7 @@ function EditProfileModal({ child, onClose }) {
   return (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
           <div style={{ background: "#fff", borderRadius: 20, padding: "32px", maxWidth: 520, width: "100%", maxHeight: "90vh", overflowY: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.25)" }}>
-            <div style={{ fontFamily: "Fraunces, serif", fontSize: 22, fontWeight: 500, color: T.ink, marginBottom: 24 }}>
+            <div style={{ fontFamily: T.font, fontSize: 22, fontWeight: 500, color: T.ink, marginBottom: 24 }}>
               Editar perfil
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 16px" }}>
@@ -39,7 +39,7 @@ function EditProfileModal({ child, onClose }) {
                 <div key={key} style={{ marginBottom: 16 }}>
                   <div style={{ fontSize: 11.5, fontWeight: 600, color: T.inkSoft, marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</div>
                   <input value={editForm[key]} onChange={(e) => setEditForm({ ...editForm, [key]: e.target.value })}
-                    style={{ width: "100%", padding: "9px 12px", borderRadius: 10, border: `1.5px solid ${T.border}`, fontSize: 14, fontFamily: "Inter, sans-serif", outline: "none", boxSizing: "border-box" }}
+                    style={{ width: "100%", padding: "9px 12px", borderRadius: 10, border: `1.5px solid ${T.border}`, fontSize: 14, fontFamily: T.font, outline: "none", boxSizing: "border-box" }}
                     onFocus={(e) => e.target.style.borderColor = T.brand}
                     onBlur={(e) => e.target.style.borderColor = T.border}
                   />
@@ -54,7 +54,7 @@ function EditProfileModal({ child, onClose }) {
                 <div key={key} style={{ marginBottom: 16 }}>
                   <div style={{ fontSize: 11.5, fontWeight: 600, color: T.inkSoft, marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</div>
                   <input type={type} value={editForm[key]} onChange={(e) => setEditForm({ ...editForm, [key]: e.target.value })}
-                    style={{ width: "100%", padding: "9px 12px", borderRadius: 10, border: `1.5px solid ${T.border}`, fontSize: 14, fontFamily: "Inter, sans-serif", outline: "none", boxSizing: "border-box" }}
+                    style={{ width: "100%", padding: "9px 12px", borderRadius: 10, border: `1.5px solid ${T.border}`, fontSize: 14, fontFamily: T.font, outline: "none", boxSizing: "border-box" }}
                     onFocus={(e) => e.target.style.borderColor = T.brand}
                     onBlur={(e) => e.target.style.borderColor = T.border}
                   />
@@ -64,7 +64,7 @@ function EditProfileModal({ child, onClose }) {
             <div style={{ marginBottom: 16 }}>
               <div style={{ fontSize: 11.5, fontWeight: 600, color: T.inkSoft, marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.05em" }}>Nombre del padre/madre</div>
               <input value={editForm.parentName} onChange={(e) => setEditForm({ ...editForm, parentName: e.target.value })}
-                style={{ width: "100%", padding: "9px 12px", borderRadius: 10, border: `1.5px solid ${T.border}`, fontSize: 14, fontFamily: "Inter, sans-serif", outline: "none", boxSizing: "border-box" }}
+                style={{ width: "100%", padding: "9px 12px", borderRadius: 10, border: `1.5px solid ${T.border}`, fontSize: 14, fontFamily: T.font, outline: "none", boxSizing: "border-box" }}
                 onFocus={(e) => e.target.style.borderColor = T.brand}
                 onBlur={(e) => e.target.style.borderColor = T.border}
               />
@@ -77,7 +77,7 @@ function EditProfileModal({ child, onClose }) {
                 <div key={key}>
                   <div style={{ fontSize: 11.5, fontWeight: 600, color: T.inkSoft, marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</div>
                   <input value={editForm[key]} onChange={(e) => setEditForm({ ...editForm, [key]: e.target.value })}
-                    style={{ width: "100%", padding: "9px 12px", borderRadius: 10, border: `1.5px solid ${T.border}`, fontSize: 14, fontFamily: "Inter, sans-serif", outline: "none", boxSizing: "border-box" }}
+                    style={{ width: "100%", padding: "9px 12px", borderRadius: 10, border: `1.5px solid ${T.border}`, fontSize: 14, fontFamily: T.font, outline: "none", boxSizing: "border-box" }}
                     onFocus={(e) => e.target.style.borderColor = T.brand}
                     onBlur={(e) => e.target.style.borderColor = T.border}
                   />
@@ -85,10 +85,10 @@ function EditProfileModal({ child, onClose }) {
               ))}
             </div>
             <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-              <button onClick={() => setEditingProfile(false)} style={{ padding: "10px 18px", borderRadius: 10, border: `1px solid ${T.border}`, background: "#fff", color: T.inkSoft, fontSize: 14, fontFamily: "Inter, sans-serif", cursor: "pointer" }}>
+              <button onClick={() => setEditingProfile(false)} style={{ padding: "10px 18px", borderRadius: 10, border: `1px solid ${T.border}`, background: "#fff", color: T.inkSoft, fontSize: 14, fontFamily: T.font, cursor: "pointer" }}>
                 Cancelar
               </button>
-              <button onClick={handleSaveProfile} disabled={!editForm.name.trim() || !editForm.lastName.trim()} style={{ padding: "10px 22px", borderRadius: 10, border: "none", background: T.brand, color: "#fff", fontSize: 14, fontWeight: 600, fontFamily: "Inter, sans-serif", cursor: "pointer", opacity: (!editForm.name.trim() || !editForm.lastName.trim()) ? 0.5 : 1 }}>
+              <button onClick={handleSaveProfile} disabled={!editForm.name.trim() || !editForm.lastName.trim()} style={{ padding: "10px 22px", borderRadius: 10, border: "none", background: T.brand, color: "#fff", fontSize: 14, fontWeight: 600, fontFamily: T.font, cursor: "pointer", opacity: (!editForm.name.trim() || !editForm.lastName.trim()) ? 0.5 : 1 }}>
                 Guardar cambios
               </button>
             </div>

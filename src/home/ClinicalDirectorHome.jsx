@@ -60,7 +60,7 @@ function ClinicalDirectorHome({ user, onOpenChild, onCalendarDateChange, onConne
 
       {/* Header */}
       <div style={{ marginBottom: 28 }}>
-        <div style={{ fontFamily: "Fraunces, serif", fontSize: 32, fontWeight: 500, color: T.ink, letterSpacing: "-0.01em" }}>
+        <div style={{ fontFamily: T.font, fontSize: 21, fontWeight: 700, color: T.ink, letterSpacing: "-0.01em" }}>
           Hola, {user.name.split(" ")[0]}
         </div>
         <div style={{ color: T.inkSoft, fontSize: 14, marginTop: 5, display: "flex", alignItems: "center", gap: 8 }}>
@@ -94,7 +94,7 @@ function ClinicalDirectorHome({ user, onOpenChild, onCalendarDateChange, onConne
               onMouseEnter={it.tab ? (e) => { e.currentTarget.style.background = it.warn ? `${T.amber}20` : T.surfaceSunk; } : undefined}
               onMouseLeave={it.tab ? (e) => { e.currentTarget.style.background = it.warn ? `${T.amber}10` : "transparent"; } : undefined}
             >
-              <div style={{ fontFamily: "Fraunces, serif", fontSize: 28, fontWeight: 500, color: it.warn ? T.amberDeep : T.ink, lineHeight: 1 }}>{it.value}</div>
+              <div style={{ fontFamily: T.font, fontSize: 17, fontWeight: 700, color: it.warn ? T.amberDeep : T.ink, lineHeight: 1 }}>{it.value}</div>
               <div style={{ fontSize: 12, color: it.warn ? T.amberDeep : T.inkSoft, marginTop: 5, fontWeight: it.warn ? 600 : 400 }}>{it.label}</div>
               {it.sub && <div style={{ fontSize: 11, color: T.inkFaint, marginTop: 2 }}>{it.sub}</div>}
               {it.tab && it.value > 0 && <div style={{ fontSize: 10.5, color: T.brand, marginTop: 4, fontWeight: 600 }}>Ver alertas →</div>}
@@ -124,7 +124,7 @@ function ClinicalDirectorHome({ user, onOpenChild, onCalendarDateChange, onConne
                 placeholder="Buscar paciente..."
                 style={{
                   width: "100%", padding: "10px 14px 10px 38px", borderRadius: 12,
-                  border: `1px solid ${T.border}`, fontSize: 14, fontFamily: "Inter, sans-serif",
+                  border: `1px solid ${T.border}`, fontSize: 14, fontFamily: T.font,
                   background: "#fff", outline: "none", boxSizing: "border-box",
                 }}
               />
@@ -133,7 +133,7 @@ function ClinicalDirectorHome({ user, onOpenChild, onCalendarDateChange, onConne
               value={filterSpecialty} onChange={(e) => setFilterSpecialty(e.target.value)}
               style={{
                 padding: "10px 14px", borderRadius: 12, border: `1px solid ${T.border}`,
-                fontSize: 13.5, fontFamily: "Inter, sans-serif", background: "#fff",
+                fontSize: 13.5, fontFamily: T.font, background: "#fff",
                 color: T.ink, outline: "none", cursor: "pointer",
               }}
             >
@@ -192,7 +192,7 @@ function ClinicalDirectorHome({ user, onOpenChild, onCalendarDateChange, onConne
                 <button key={t.key} onClick={() => setAlertTab(t.key)}
                   style={{
                     padding: "4px 10px", borderRadius: 20, fontSize: 11.5, fontWeight: 600,
-                    border: "none", cursor: "pointer", fontFamily: "Inter, sans-serif",
+                    border: "none", cursor: "pointer", fontFamily: T.font,
                     background: alertTab === t.key ? T.amberDeep : T.bg,
                     color: alertTab === t.key ? "#fff" : T.inkSoft,
                     outline: "none",

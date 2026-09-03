@@ -37,7 +37,7 @@ function GabinetePanel({ onAddSession }) {
     <div style={{ marginBottom: 14 }}>
       <div style={{ fontSize: 12, fontWeight: 600, color: T.inkSoft, marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</div>
       <input type={type} value={value} onChange={(e) => onChange(e.target.value)}
-        style={{ width: "100%", padding: "9px 12px", borderRadius: 10, border: `1px solid ${T.border}`, fontSize: 14, fontFamily: "Inter, sans-serif", boxSizing: "border-box", outline: "none" }} />
+        style={{ width: "100%", padding: "9px 12px", borderRadius: 10, border: `1px solid ${T.border}`, fontSize: 14, fontFamily: T.font, boxSizing: "border-box", outline: "none" }} />
     </div>
   );
 
@@ -45,19 +45,19 @@ function GabinetePanel({ onAddSession }) {
     <div style={{ maxWidth: 1060, margin: "0 auto", padding: "36px 20px 60px" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28, flexWrap: "wrap", gap: 12 }}>
         <div>
-          <div style={{ fontFamily: "Fraunces, serif", fontSize: 28, fontWeight: 500, color: T.ink }}>Gabinete Externo</div>
+          <div style={{ fontFamily: T.font, fontSize: 17, fontWeight: 700, color: T.ink }}>Gabinete Externo</div>
           <div style={{ fontSize: 13.5, color: T.inkSoft, marginTop: 4 }}>{schools.length} escuela{schools.length !== 1 ? "s" : ""} con contrato activo</div>
         </div>
         <button onClick={() => setAddingSchool(true)} style={{
           background: T.brand, color: "#fff", border: "none", borderRadius: 12, padding: "11px 20px",
-          fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif",
+          fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: T.font,
         }}>+ Agregar escuela</button>
       </div>
 
       {/* Add school modal */}
       {addingSchool && (
         <Card style={{ marginBottom: 24, borderLeft: `4px solid ${T.brand}` }}>
-          <div style={{ fontFamily: "Fraunces, serif", fontSize: 18, color: T.ink, marginBottom: 18 }}>Nueva escuela</div>
+          <div style={{ fontFamily: T.font, fontSize: 18, color: T.ink, marginBottom: 18 }}>Nueva escuela</div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 20px" }}>
             <Field2 label="Nombre del colegio" value={newSchool.name} onChange={(v) => setNewSchool({ ...newSchool, name: v })} />
             <Field2 label="Contacto" value={newSchool.contact} onChange={(v) => setNewSchool({ ...newSchool, contact: v })} />
@@ -74,7 +74,7 @@ function GabinetePanel({ onAddSession }) {
                 const sel = newSchool.assignedSpecialists.includes(sp.id);
                 return (
                   <button key={sp.id} onClick={() => setNewSchool({ ...newSchool, assignedSpecialists: sel ? newSchool.assignedSpecialists.filter((x) => x !== sp.id) : [...newSchool.assignedSpecialists, sp.id] })}
-                    style={{ padding: "6px 14px", borderRadius: 20, fontSize: 13, border: "none", cursor: "pointer", fontFamily: "Inter, sans-serif", fontWeight: 600, background: sel ? T.brand : T.bg, color: sel ? "#fff" : T.inkSoft }}>
+                    style={{ padding: "6px 14px", borderRadius: 20, fontSize: 13, border: "none", cursor: "pointer", fontFamily: T.font, fontWeight: 600, background: sel ? T.brand : T.bg, color: sel ? "#fff" : T.inkSoft }}>
                     {sp.name.split(" ")[0]}
                   </button>
                 );
@@ -84,11 +84,11 @@ function GabinetePanel({ onAddSession }) {
           <div style={{ marginBottom: 14 }}>
             <div style={{ fontSize: 12, fontWeight: 600, color: T.inkSoft, marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.05em" }}>Notas del contrato</div>
             <textarea value={newSchool.notes} onChange={(e) => setNewSchool({ ...newSchool, notes: e.target.value })} rows={2}
-              style={{ width: "100%", padding: "9px 12px", borderRadius: 10, border: `1px solid ${T.border}`, fontSize: 14, fontFamily: "Inter, sans-serif", resize: "vertical", boxSizing: "border-box", outline: "none" }} />
+              style={{ width: "100%", padding: "9px 12px", borderRadius: 10, border: `1px solid ${T.border}`, fontSize: 14, fontFamily: T.font, resize: "vertical", boxSizing: "border-box", outline: "none" }} />
           </div>
           <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-            <button onClick={() => setAddingSchool(false)} style={{ padding: "9px 16px", borderRadius: 10, border: `1px solid ${T.border}`, background: "#fff", color: T.inkSoft, fontSize: 13.5, fontFamily: "Inter, sans-serif", cursor: "pointer" }}>Cancelar</button>
-            <button onClick={handleSaveSchool} disabled={!newSchool.name.trim()} style={{ padding: "9px 18px", borderRadius: 10, border: "none", background: T.brand, color: "#fff", fontSize: 13.5, fontWeight: 600, fontFamily: "Inter, sans-serif", cursor: "pointer", opacity: !newSchool.name.trim() ? 0.5 : 1 }}>Guardar escuela</button>
+            <button onClick={() => setAddingSchool(false)} style={{ padding: "9px 16px", borderRadius: 10, border: `1px solid ${T.border}`, background: "#fff", color: T.inkSoft, fontSize: 13.5, fontFamily: T.font, cursor: "pointer" }}>Cancelar</button>
+            <button onClick={handleSaveSchool} disabled={!newSchool.name.trim()} style={{ padding: "9px 18px", borderRadius: 10, border: "none", background: T.brand, color: "#fff", fontSize: 13.5, fontWeight: 600, fontFamily: T.font, cursor: "pointer", opacity: !newSchool.name.trim() ? 0.5 : 1 }}>Guardar escuela</button>
           </div>
         </Card>
       )}
@@ -124,7 +124,7 @@ function GabinetePanel({ onAddSession }) {
               <Card style={{ marginBottom: 18 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 10, marginBottom: 16 }}>
                   <div>
-                    <div style={{ fontFamily: "Fraunces, serif", fontSize: 22, fontWeight: 500, color: T.ink }}>{school.name}</div>
+                    <div style={{ fontFamily: T.font, fontSize: 22, fontWeight: 500, color: T.ink }}>{school.name}</div>
                     <div style={{ fontSize: 13, color: T.inkSoft, marginTop: 3 }}>{school.contact}</div>
                   </div>
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -167,23 +167,23 @@ function GabinetePanel({ onAddSession }) {
                 <Eyebrow>Sesiones de gabinete</Eyebrow>
                 <button onClick={() => setSessionForm(emptySession())} style={{
                   background: T.brand, color: "#fff", border: "none", borderRadius: 10, padding: "8px 16px",
-                  fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif",
+                  fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: T.font,
                 }}>+ Registrar sesión</button>
               </div>
 
               {sessionForm && (
                 <Card style={{ marginBottom: 16, borderLeft: `3px solid ${T.brand}` }}>
-                  <div style={{ fontFamily: "Fraunces, serif", fontSize: 16, color: T.ink, marginBottom: 16 }}>Nueva sesión — {school.name}</div>
+                  <div style={{ fontFamily: T.font, fontSize: 16, color: T.ink, marginBottom: 16 }}>Nueva sesión — {school.name}</div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 16px" }}>
                     <div style={{ marginBottom: 12 }}>
                       <div style={{ fontSize: 11.5, fontWeight: 600, color: T.inkSoft, marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.05em" }}>Fecha</div>
                       <input type="date" value={sessionForm.date} onChange={(e) => setSessionForm({ ...sessionForm, date: e.target.value })}
-                        style={{ width: "100%", padding: "9px 12px", borderRadius: 10, border: `1px solid ${T.border}`, fontSize: 14, fontFamily: "Inter, sans-serif", boxSizing: "border-box", outline: "none" }} />
+                        style={{ width: "100%", padding: "9px 12px", borderRadius: 10, border: `1px solid ${T.border}`, fontSize: 14, fontFamily: T.font, boxSizing: "border-box", outline: "none" }} />
                     </div>
                     <div style={{ marginBottom: 12 }}>
                       <div style={{ fontSize: 11.5, fontWeight: 600, color: T.inkSoft, marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.05em" }}>Especialista</div>
                       <select value={sessionForm.specialistId} onChange={(e) => setSessionForm({ ...sessionForm, specialistId: e.target.value })}
-                        style={{ width: "100%", padding: "9px 12px", borderRadius: 10, border: `1px solid ${T.border}`, fontSize: 14, fontFamily: "Inter, sans-serif", boxSizing: "border-box", outline: "none" }}>
+                        style={{ width: "100%", padding: "9px 12px", borderRadius: 10, border: `1px solid ${T.border}`, fontSize: 14, fontFamily: T.font, boxSizing: "border-box", outline: "none" }}>
                         <option value="">Seleccionar...</option>
                         {allSpecialists.map((sp) => <option key={sp.id} value={sp.id}>{sp.name}</option>)}
                       </select>
@@ -192,21 +192,21 @@ function GabinetePanel({ onAddSession }) {
                   <div style={{ marginBottom: 12 }}>
                     <div style={{ fontSize: 11.5, fontWeight: 600, color: T.inkSoft, marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.05em" }}>Participantes / grupo</div>
                     <input value={sessionForm.participants} onChange={(e) => setSessionForm({ ...sessionForm, participants: e.target.value })} placeholder="Ej: Grupo 3ro primaria, 12 niños"
-                      style={{ width: "100%", padding: "9px 12px", borderRadius: 10, border: `1px solid ${T.border}`, fontSize: 14, fontFamily: "Inter, sans-serif", boxSizing: "border-box", outline: "none" }} />
+                      style={{ width: "100%", padding: "9px 12px", borderRadius: 10, border: `1px solid ${T.border}`, fontSize: 14, fontFamily: T.font, boxSizing: "border-box", outline: "none" }} />
                   </div>
                   <div style={{ marginBottom: 12 }}>
                     <div style={{ fontSize: 11.5, fontWeight: 600, color: T.inkSoft, marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.05em" }}>Área trabajada</div>
                     <input value={sessionForm.area} onChange={(e) => setSessionForm({ ...sessionForm, area: e.target.value })} placeholder="Ej: Regulación emocional, Habilidades sociales..."
-                      style={{ width: "100%", padding: "9px 12px", borderRadius: 10, border: `1px solid ${T.border}`, fontSize: 14, fontFamily: "Inter, sans-serif", boxSizing: "border-box", outline: "none" }} />
+                      style={{ width: "100%", padding: "9px 12px", borderRadius: 10, border: `1px solid ${T.border}`, fontSize: 14, fontFamily: T.font, boxSizing: "border-box", outline: "none" }} />
                   </div>
                   <div style={{ marginBottom: 16 }}>
                     <div style={{ fontSize: 11.5, fontWeight: 600, color: T.inkSoft, marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.05em" }}>Observaciones</div>
                     <textarea value={sessionForm.notes} onChange={(e) => setSessionForm({ ...sessionForm, notes: e.target.value })} rows={3} placeholder="Notas, resultados, próximos pasos..."
-                      style={{ width: "100%", padding: "9px 12px", borderRadius: 10, border: `1px solid ${T.border}`, fontSize: 14, fontFamily: "Inter, sans-serif", resize: "vertical", boxSizing: "border-box", outline: "none" }} />
+                      style={{ width: "100%", padding: "9px 12px", borderRadius: 10, border: `1px solid ${T.border}`, fontSize: 14, fontFamily: T.font, resize: "vertical", boxSizing: "border-box", outline: "none" }} />
                   </div>
                   <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-                    <button onClick={() => setSessionForm(null)} style={{ padding: "9px 16px", borderRadius: 10, border: `1px solid ${T.border}`, background: "#fff", color: T.inkSoft, fontSize: 13.5, fontFamily: "Inter, sans-serif", cursor: "pointer" }}>Cancelar</button>
-                    <button onClick={handleSaveSession} disabled={!sessionForm.date || !sessionForm.specialistId} style={{ padding: "9px 18px", borderRadius: 10, border: "none", background: T.brand, color: "#fff", fontSize: 13.5, fontWeight: 600, fontFamily: "Inter, sans-serif", cursor: "pointer", opacity: (!sessionForm.date || !sessionForm.specialistId) ? 0.5 : 1 }}>Guardar sesión</button>
+                    <button onClick={() => setSessionForm(null)} style={{ padding: "9px 16px", borderRadius: 10, border: `1px solid ${T.border}`, background: "#fff", color: T.inkSoft, fontSize: 13.5, fontFamily: T.font, cursor: "pointer" }}>Cancelar</button>
+                    <button onClick={handleSaveSession} disabled={!sessionForm.date || !sessionForm.specialistId} style={{ padding: "9px 18px", borderRadius: 10, border: "none", background: T.brand, color: "#fff", fontSize: 13.5, fontWeight: 600, fontFamily: T.font, cursor: "pointer", opacity: (!sessionForm.date || !sessionForm.specialistId) ? 0.5 : 1 }}>Guardar sesión</button>
                   </div>
                 </Card>
               )}

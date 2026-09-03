@@ -34,10 +34,10 @@ function AddDocumentModal({ type, onClose, onSave }) {
       <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 14 }}>
         {/* Mode toggle */}
         <div style={{ display: "flex", gap: 8, marginBottom: 4 }}>
-          <button onClick={() => setMode("text")} style={{ flex: 1, padding: "8px", borderRadius: 8, border: `1.5px solid ${mode === "text" ? T.brand : T.border}`, background: mode === "text" ? `${T.brand}10` : "#fff", color: mode === "text" ? T.brand : T.inkSoft, fontSize: 13, fontWeight: mode === "text" ? 600 : 400, fontFamily: "Inter, sans-serif", cursor: "pointer" }}>
+          <button onClick={() => setMode("text")} style={{ flex: 1, padding: "8px", borderRadius: 8, border: `1.5px solid ${mode === "text" ? T.brand : T.border}`, background: mode === "text" ? `${T.brand}10` : "#fff", color: mode === "text" ? T.brand : T.inkSoft, fontSize: 13, fontWeight: mode === "text" ? 600 : 400, fontFamily: T.font, cursor: "pointer" }}>
             ✏️ Texto / Notas
           </button>
-          <button onClick={() => setMode("pdf")} style={{ flex: 1, padding: "8px", borderRadius: 8, border: `1.5px solid ${mode === "pdf" ? T.brand : T.border}`, background: mode === "pdf" ? `${T.brand}10` : "#fff", color: mode === "pdf" ? T.brand : T.inkSoft, fontSize: 13, fontWeight: mode === "pdf" ? 600 : 400, fontFamily: "Inter, sans-serif", cursor: "pointer" }}>
+          <button onClick={() => setMode("pdf")} style={{ flex: 1, padding: "8px", borderRadius: 8, border: `1.5px solid ${mode === "pdf" ? T.brand : T.border}`, background: mode === "pdf" ? `${T.brand}10` : "#fff", color: mode === "pdf" ? T.brand : T.inkSoft, fontSize: 13, fontWeight: mode === "pdf" ? 600 : 400, fontFamily: T.font, cursor: "pointer" }}>
             📄 Subir PDF
           </button>
         </div>

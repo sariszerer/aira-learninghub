@@ -78,12 +78,12 @@ function AnamnesisTab({ child, documents, users, currentUser, onAddDocument, onU
       <div style={{ fontSize: 12, fontWeight: 700, color: T.inkFaint, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 5 }}>{label}</div>
       {multiline ? (
         <textarea value={form[name]} onChange={e => setForm(f => ({...f, [name]: e.target.value}))} rows={rows}
-          style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${T.border}`, fontSize: 13.5, fontFamily: "Inter, sans-serif", outline: "none", resize: "vertical", boxSizing: "border-box", lineHeight: 1.6 }}
+          style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${T.border}`, fontSize: 13.5, fontFamily: T.font, outline: "none", resize: "vertical", boxSizing: "border-box", lineHeight: 1.6 }}
           onFocus={e => e.target.style.borderColor = T.brand} onBlur={e => e.target.style.borderColor = T.border}
         />
       ) : (
         <input value={form[name]} onChange={e => setForm(f => ({...f, [name]: e.target.value}))}
-          style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${T.border}`, fontSize: 13.5, fontFamily: "Inter, sans-serif", outline: "none", boxSizing: "border-box" }}
+          style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${T.border}`, fontSize: 13.5, fontFamily: T.font, outline: "none", boxSizing: "border-box" }}
           onFocus={e => e.target.style.borderColor = T.brand} onBlur={e => e.target.style.borderColor = T.border}
         />
       )}
@@ -92,7 +92,7 @@ function AnamnesisTab({ child, documents, users, currentUser, onAddDocument, onU
 
   const Section = ({ title, children }) => (
     <div style={{ marginBottom: 24 }}>
-      <div style={{ fontFamily: "Fraunces, serif", fontSize: 16, fontWeight: 500, color: T.brand, borderBottom: `1.5px solid ${T.brand}30`, paddingBottom: 6, marginBottom: 14 }}>{title}</div>
+      <div style={{ fontFamily: T.font, fontSize: 16, fontWeight: 500, color: T.brand, borderBottom: `1.5px solid ${T.brand}30`, paddingBottom: 6, marginBottom: 14 }}>{title}</div>
       {children}
     </div>
   );
@@ -137,7 +137,7 @@ function AnamnesisTab({ child, documents, users, currentUser, onAddDocument, onU
 
       {showForm ? (
         <Card style={{ padding: "20px 24px" }}>
-          <div style={{ fontFamily: "Fraunces, serif", fontSize: 20, fontWeight: 500, color: T.ink, marginBottom: 24 }}>
+          <div style={{ fontFamily: T.font, fontSize: 20, fontWeight: 500, color: T.ink, marginBottom: 24 }}>
             Anamnesis Breve — {child.name} {child.lastName}
           </div>
 
@@ -223,7 +223,7 @@ function AnamnesisTab({ child, documents, users, currentUser, onAddDocument, onU
         <div>
           {anamnesisDoc?.fields?.isForm && (
             <Card style={{ padding: "20px 24px" }}>
-              <div style={{ fontFamily: "Fraunces, serif", fontSize: 18, fontWeight: 500, color: T.ink, marginBottom: 16 }}>
+              <div style={{ fontFamily: T.font, fontSize: 18, fontWeight: 500, color: T.ink, marginBottom: 16 }}>
                 Anamnesis — {child.name} {child.lastName}
               </div>
               {[

@@ -12,7 +12,7 @@ function Chip({ label, selected, onClick, tone = "brand" }) {
       style={{
         display: "inline-flex", alignItems: "center", gap: 7,
         padding: "9px 15px", borderRadius: 11, fontSize: 14, fontWeight: 600,
-        fontFamily: "Inter, sans-serif", cursor: "pointer",
+        fontFamily: T.font, cursor: "pointer",
         border: `1.5px solid ${selected ? activeColors.border : T.border}`,
         background: selected ? activeColors.bg : "#fff",
         color: selected ? activeColors.fg : T.inkSoft,

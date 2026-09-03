@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ChevronRight, Plus, Clock, AlertTriangle } from "lucide-react";
+import { ChevronRight, Plus, Clock, AlertTriangle, TrendingUp, Users, User, Calendar } from "lucide-react";
 import { T, TODAY } from "../theme.js";
 import { sessionsSinceLastParentReport } from "../lib/reports.js";
 import { ROLES } from "../permissions.js";
@@ -39,6 +39,22 @@ function AdminDashboard({ onOpenChild, onCalendarDateChange, onConnectGcal }) {
     .filter((c) => c.nextSession === today)
     .sort((a, b) => (a.nextSessionTime || "").localeCompare(b.nextSessionTime || ""));
 
+  // Sesiones del mes en curso frente al anterior. Es la unica cifra del panel
+  // con tendencia: las otras tres son conteos puntuales y un porcentaje ahi
+  // seria inventado.
+  const { sesionesMes, deltaMes } = React.useMemo(() => {
+    const hoy = new Date(TODAY);
+    const clave = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const esteMes = clave(hoy);
+    const anterior = clave(new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1));
+    const cuenta = (k) => sessions.filter((s) => (s.date || "").slice(0, 7) === k).length;
+    const actual = cuenta(esteMes);
+    const previo = cuenta(anterior);
+    const delta = previo === 0 ? null : Math.round(((actual - previo) / previo) * 100);
+    return { sesionesMes: actual, deltaMes: delta };
+  }, [sessions]);
+
+
   const childrenReadyForParentReport = children.filter((c) => {
     const sinceLast = sessionsSinceLastParentReport(c.id, sessions, parentReports);
     return sinceLast.length >= 8;
@@ -47,7 +63,7 @@ function AdminDashboard({ onOpenChild, onCalendarDateChange, onConnectGcal }) {
   return (
     <div style={{ maxWidth: 980, margin: "0 auto", padding: "36px 20px 60px" }}>
       <div style={{ marginBottom: 28 }}>
-        <div style={{ fontFamily: "Fraunces, serif", fontSize: 32, fontWeight: 500, color: T.ink, letterSpacing: "-0.01em" }}>
+        <div style={{ fontFamily: T.font, fontSize: 21, fontWeight: 700, color: T.ink, letterSpacing: "-0.01em" }}>
           Panel administrativo
         </div>
         <div style={{ color: T.inkSoft, fontSize: 14.5, marginTop: 5 }}>
@@ -56,10 +72,13 @@ function AdminDashboard({ onOpenChild, onCalendarDateChange, onConnectGcal }) {
       </div>
 
       <StatStrip items={[
-        { label: "Pacientes activos", value: children.length },
-        { label: "Especialistas", value: specialists.length },
-        { label: "Sesiones hoy", value: scheduledToday.length },
-        { label: "Sesiones registradas", value: sessions.length },
+        { label: "Pacientes activos", value: children.length, icon: Users, tone: "brand" },
+        { label: "Especialistas", value: specialists.length, icon: User, tone: "cyan" },
+        { label: "Sesiones hoy", value: scheduledToday.length, icon: Calendar, tone: "violet" },
+        {
+          label: "Sesiones este mes", value: sesionesMes, icon: TrendingUp, tone: "ok",
+          delta: deltaMes, deltaLabel: "vs. mes anterior",
+        },
       ]} />
 
       <CalendarAgenda
@@ -69,25 +88,64 @@ function AdminDashboard({ onOpenChild, onCalendarDateChange, onConnectGcal }) {
       />
 
       {sessions.length > 0 && (childrenNoRecentSession.length > 0 || childrenReadyForParentReport.length > 0) && (
-        <Card style={{ padding: 18, marginBottom: 28, borderColor: T.apoyoTint, background: T.apoyoTint }}>
-          <button onClick={() => setAlertsOpen(a => !a)} style={{ display: "flex", alignItems: "center", gap: 8, color: T.apoyo, fontWeight: 700, fontSize: 13.5, marginBottom: alertsOpen ? 10 : 0, background: "none", border: "none", cursor: "pointer", padding: 0, width: "100%", textAlign: "left" }}>
-            <AlertTriangle size={16} />
-            Alertas
-            <span style={{ fontSize: 12, background: T.apoyo, color: "#fff", borderRadius: 10, padding: "1px 7px", marginLeft: 2 }}>{childrenNoRecentSession.length + childrenReadyForParentReport.length}</span>
-            <span style={{ marginLeft: "auto", fontSize: 12, color: T.apoyo }}>{alertsOpen ? "▲ Minimizar" : "▼ Ver"}</span>
+        <Card style={{ padding: 0, marginBottom: 24, overflow: "hidden" }}>
+          <button
+            onClick={() => setAlertsOpen((a) => !a)}
+            style={{
+              width: "100%", display: "flex", alignItems: "center", gap: 9,
+              padding: "14px 18px", background: "none", border: "none",
+              cursor: "pointer", fontFamily: T.font, textAlign: "left",
+            }}
+          >
+            <div style={{
+              width: 26, height: 26, borderRadius: 7, background: T.apoyoTint,
+              display: "grid", placeItems: "center", flexShrink: 0,
+            }}>
+              <AlertTriangle size={14} color={T.apoyo} strokeWidth={2.2} />
+            </div>
+            <span style={{ fontSize: 14, fontWeight: 600, color: T.ink }}>Requieren atención</span>
+            <span style={{
+              fontSize: 11.5, fontWeight: 600, background: T.apoyoTint, color: T.apoyo,
+              borderRadius: 999, padding: "2px 8px",
+            }}>
+              {childrenNoRecentSession.length + childrenReadyForParentReport.length}
+            </span>
+            <span style={{ marginLeft: "auto", fontSize: 12, color: T.inkFaint }}>
+              {alertsOpen ? "Ocultar" : "Ver"}
+            </span>
           </button>
+
           {alertsOpen && (
-            <div style={{ fontSize: 14, color: T.ink }}>
-              {childrenNoRecentSession.map((c) => (
-                <div key={c.id} style={{ padding: "6px 0" }}>
-                  <b>{c.name} {c.lastName}</b> no tiene sesiones registradas en los últimos 7 días.
-                </div>
-              ))}
-              {childrenReadyForParentReport.map((c) => (
-                <div key={c.id} style={{ padding: "6px 0" }}>
-                  <b>{c.name} {c.lastName}</b> acumuló 8 sesiones desde el último reporte a padres — listo para generar uno nuevo.
-                </div>
-              ))}
+            <div style={{
+              borderTop: `1px solid ${T.borderSoft}`,
+              maxHeight: 260, overflowY: "auto",
+            }}>
+              {[
+                { lista: childrenNoRecentSession, texto: "Sin sesiones en 7 días", tono: T.apoyo, fondo: T.apoyoTint },
+                { lista: childrenReadyForParentReport, texto: "Listo para reporte a padres", tono: T.proceso, fondo: T.procesoTint },
+              ].map(({ lista, texto, tono, fondo }) => lista.map((c) => (
+                <button
+                  key={texto + c.id}
+                  onClick={() => onOpenChild(c.id)}
+                  style={{
+                    width: "100%", display: "flex", alignItems: "center", gap: 10,
+                    padding: "9px 18px", background: "none", border: "none",
+                    borderBottom: `1px solid ${T.borderSoft}`, cursor: "pointer",
+                    fontFamily: T.font, textAlign: "left",
+                  }}
+                >
+                  <Avatar name={`${c.name} ${c.lastName}`} bg={c.avatarBg} size={26} />
+                  <span style={{ fontSize: 13.5, color: T.ink, flex: 1 }}>
+                    {c.name} {c.lastName}
+                  </span>
+                  <span style={{
+                    fontSize: 11, fontWeight: 600, color: tono, background: fondo,
+                    borderRadius: 999, padding: "2px 9px", whiteSpace: "nowrap",
+                  }}>
+                    {texto}
+                  </span>
+                </button>
+              )))}
             </div>
           )}
         </Card>
@@ -135,7 +193,7 @@ function AdminDashboard({ onOpenChild, onCalendarDateChange, onConnectGcal }) {
             <input
               type="text" placeholder="Buscar paciente..."
               value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-              style={{ width: "100%", padding: "9px 12px 9px 34px", borderRadius: 10, border: `1px solid ${T.border}`, fontSize: 14, fontFamily: "Inter, sans-serif", outline: "none", boxSizing: "border-box", color: T.ink, background: "#fff" }}
+              style={{ width: "100%", padding: "9px 12px 9px 34px", borderRadius: 10, border: `1px solid ${T.border}`, fontSize: 14, fontFamily: T.font, outline: "none", boxSizing: "border-box", color: T.ink, background: "#fff" }}
               onFocus={(e) => e.target.style.borderColor = T.brand}
               onBlur={(e) => e.target.style.borderColor = T.border}
             />

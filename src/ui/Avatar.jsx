@@ -9,7 +9,7 @@ function Avatar({ name, bg, size = 44 }) {
     <div style={{
       width: size, height: size, borderRadius: "50%", background: bg || T.brand,
       color: fg, display: "flex", alignItems: "center", justifyContent: "center",
-      fontFamily: "Fraunces, serif", fontWeight: 600, fontSize: size * 0.4, flexShrink: 0,
+      fontFamily: T.font, fontWeight: 600, fontSize: size * 0.4, flexShrink: 0,
     }}>
       {initials}
     </div>

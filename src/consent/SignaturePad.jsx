@@ -51,7 +51,7 @@ function SignaturePad({ onChange, width = 500, height = 160 }) {
         onMouseDown={start} onMouseMove={move} onMouseUp={end} onMouseLeave={end}
         onTouchStart={start} onTouchMove={move} onTouchEnd={end}
       />
-      <button onClick={clear} type="button" style={{ marginTop: 8, background: "none", border: `1px solid ${T.border}`, borderRadius: 8, padding: "5px 12px", fontSize: 12.5, color: T.inkSoft, cursor: "pointer", fontFamily: "Inter, sans-serif" }}>
+      <button onClick={clear} type="button" style={{ marginTop: 8, background: "none", border: `1px solid ${T.border}`, borderRadius: 8, padding: "5px 12px", fontSize: 12.5, color: T.inkSoft, cursor: "pointer", fontFamily: T.font }}>
         Borrar firma
       </button>
     </div>

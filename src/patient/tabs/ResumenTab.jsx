@@ -49,13 +49,13 @@ function ResumenTab({ child, objectives, sessions, users, onRenewPackage, onClos
                     const color = AREA_COLORS[area] || T.inkSoft;
                     return (
                       <div key={area} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                        <div style={{ fontFamily: "Fraunces, serif", fontSize: 26, fontWeight: 500, color }}>{count}</div>
+                        <div style={{ fontFamily: T.font, fontSize: 26, fontWeight: 500, color }}>{count}</div>
                         <div style={{ fontSize: 11.5, color, fontWeight: 600 }}>{area}</div>
                       </div>
                     );
                   })}
                   <div style={{ display: "flex", flexDirection: "column", gap: 2, paddingLeft: 20, borderLeft: `1px solid ${T.border}` }}>
-                    <div style={{ fontFamily: "Fraunces, serif", fontSize: 26, fontWeight: 500, color: T.inkSoft }}>{totalSessions}</div>
+                    <div style={{ fontFamily: T.font, fontSize: 26, fontWeight: 500, color: T.inkSoft }}>{totalSessions}</div>
                     <div style={{ fontSize: 11.5, color: T.inkSoft, fontWeight: 600 }}>Total</div>
                   </div>
                 </div>
@@ -63,7 +63,7 @@ function ResumenTab({ child, objectives, sessions, users, onRenewPackage, onClos
               {onCloseProcess && (
                 <button onClick={() => setShowCloseProcess(true)} style={{
                   background: "none", border: `1px solid ${T.apoyo}`, borderRadius: 10, color: T.apoyo,
-                  padding: "8px 16px", fontSize: 13, cursor: "pointer", fontFamily: "Inter, sans-serif", fontWeight: 600, flexShrink: 0,
+                  padding: "8px 16px", fontSize: 13, cursor: "pointer", fontFamily: T.font, fontWeight: 600, flexShrink: 0,
                 }}>
                   Cerrar proceso
                 </button>
@@ -77,7 +77,7 @@ function ResumenTab({ child, objectives, sessions, users, onRenewPackage, onClos
       {showCloseProcess && (
         <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.45)", zIndex:200, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
           <div style={{ background:"#fff", borderRadius:20, padding:"32px", maxWidth:520, width:"100%", boxShadow:"0 20px 60px rgba(0,0,0,0.25)" }}>
-            <div style={{ fontFamily:"Fraunces, serif", fontSize:22, fontWeight:500, color:T.ink, marginBottom:6 }}>
+            <div style={{ fontFamily:T.fontDisplay, fontSize:22, fontWeight:500, color:T.ink, marginBottom:6 }}>
               Objetivos Alcanzados 🎓
             </div>
             <div style={{ fontSize:13.5, color:T.inkSoft, marginBottom:20 }}>
@@ -103,14 +103,14 @@ function ResumenTab({ child, objectives, sessions, users, onRenewPackage, onClos
                 onChange={(e) => setCloseNote(e.target.value)}
                 placeholder="Describe los logros alcanzados, recomendaciones y motivo de cierre del proceso..."
                 rows={4}
-                style={{ width:"100%", padding:"10px 12px", borderRadius:10, border:`1.5px solid ${T.border}`, fontSize:13.5, fontFamily:"Inter, sans-serif", outline:"none", resize:"vertical", boxSizing:"border-box" }}
+                style={{ width:"100%", padding:"10px 12px", borderRadius:10, border:`1.5px solid ${T.border}`, fontSize:13.5, fontFamily:T.font, outline:"none", resize:"vertical", boxSizing:"border-box" }}
                 onFocus={(e) => e.target.style.borderColor = T.brand}
                 onBlur={(e) => e.target.style.borderColor = T.border}
               />
             </div>
 
             <div style={{ display:"flex", gap:10, justifyContent:"flex-end" }}>
-              <button onClick={() => { setShowCloseProcess(false); setCloseNote(""); }} style={{ padding:"10px 18px", borderRadius:10, border:`1px solid ${T.border}`, background:"#fff", color:T.inkSoft, fontSize:14, fontFamily:"Inter, sans-serif", cursor:"pointer" }}>
+              <button onClick={() => { setShowCloseProcess(false); setCloseNote(""); }} style={{ padding:"10px 18px", borderRadius:10, border:`1px solid ${T.border}`, background:"#fff", color:T.inkSoft, fontSize:14, fontFamily:T.font, cursor:"pointer" }}>
                 Cancelar
               </button>
               <button
@@ -119,7 +119,7 @@ function ResumenTab({ child, objectives, sessions, users, onRenewPackage, onClos
                   setShowCloseProcess(false);
                   setCloseNote("");
                 }}
-                style={{ padding:"10px 22px", borderRadius:10, border:"none", background:"#4CAF50", color:"#fff", fontSize:14, fontWeight:600, fontFamily:"Inter, sans-serif", cursor:"pointer" }}
+                style={{ padding:"10px 22px", borderRadius:10, border:"none", background:"#4CAF50", color:"#fff", fontSize:14, fontWeight:600, fontFamily:T.font, cursor:"pointer" }}
               >
                 Generar Reporte de Logros
               </button>

@@ -11,7 +11,7 @@ function DailyReport({ session, child, specialist, objectives, printable }) {
   })).filter((w) => w.objective);
 
   return (
-    <div style={{ fontFamily: "Inter, sans-serif" }}>
+    <div style={{ fontFamily: T.font }}>
       {!printable && (
         <div style={{
           fontSize: 11.5, fontWeight: 700, color: T.amberDeep, background: T.amberTint,

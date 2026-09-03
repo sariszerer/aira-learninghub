@@ -52,16 +52,16 @@ function InterdisciplinaryTab({ child, meetings, users, onAddMeeting, currentUse
             <Card style={{ padding: 16, marginBottom: 12 }}>
               <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
                 <input type="date" value={pautasDate} onChange={e => setPautasDate(e.target.value)}
-                  style={{ padding: "6px 10px", borderRadius: 8, border: `1px solid ${T.border}`, fontSize: 13, fontFamily: "Inter, sans-serif" }} />
+                  style={{ padding: "6px 10px", borderRadius: 8, border: `1px solid ${T.border}`, fontSize: 13, fontFamily: T.font }} />
               </div>
               <textarea value={pautasNote} onChange={e => setPautasNote(e.target.value)}
                 placeholder="Resumen de la sesión con padres, temas trabajados, acuerdos..."
                 rows={4}
-                style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${T.border}`, fontSize: 13.5, fontFamily: "Inter, sans-serif", outline: "none", resize: "vertical", boxSizing: "border-box", marginBottom: 10 }}
+                style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${T.border}`, fontSize: 13.5, fontFamily: T.font, outline: "none", resize: "vertical", boxSizing: "border-box", marginBottom: 10 }}
               />
               <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                <button onClick={() => setAddingPautas(false)} style={{ padding: "7px 14px", borderRadius: 8, border: `1px solid ${T.border}`, background: "#fff", color: T.inkSoft, fontSize: 13, fontFamily: "Inter, sans-serif", cursor: "pointer" }}>Cancelar</button>
-                <button onClick={savePautas} style={{ padding: "7px 16px", borderRadius: 8, border: "none", background: T.brand, color: "#fff", fontSize: 13, fontWeight: 600, fontFamily: "Inter, sans-serif", cursor: "pointer" }}>Guardar</button>
+                <button onClick={() => setAddingPautas(false)} style={{ padding: "7px 14px", borderRadius: 8, border: `1px solid ${T.border}`, background: "#fff", color: T.inkSoft, fontSize: 13, fontFamily: T.font, cursor: "pointer" }}>Cancelar</button>
+                <button onClick={savePautas} style={{ padding: "7px 16px", borderRadius: 8, border: "none", background: T.brand, color: "#fff", fontSize: 13, fontWeight: 600, fontFamily: T.font, cursor: "pointer" }}>Guardar</button>
               </div>
             </Card>
           )}

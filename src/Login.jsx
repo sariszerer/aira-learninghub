@@ -1,5 +1,6 @@
 import React, { useState } from "react"
 import { auth } from "./supabase.js"
+import { T } from "./theme.js";
 
 const LOGO = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 40'%3E%3Ctext y='30' font-size='28' font-family='serif' fill='%23175FAF'%3EAIRA%3C/text%3E%3C/svg%3E"
 
@@ -30,14 +31,14 @@ export default function Login({ onLogin }) {
   return (
     <div style={{
       minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
-      background: "#FFFBF2", fontFamily: "Inter, sans-serif", padding: "20px",
+      background: "#FFFBF2", fontFamily: T.font, padding: "20px",
     }}>
       <div style={{ width: "100%", maxWidth: 400 }}>
 
         {/* Logo */}
         <div style={{ textAlign: "center", marginBottom: 40 }}>
           <div style={{
-            fontFamily: "Fraunces, serif", fontSize: 42, fontWeight: 500,
+            fontFamily: T.font, fontSize: 42, fontWeight: 500,
             color: "#175FAF", letterSpacing: "-0.02em", lineHeight: 1,
           }}>AIRA</div>
           <div style={{ fontSize: 13, color: "#8A9BAD", marginTop: 6, letterSpacing: "0.08em", textTransform: "uppercase" }}>
@@ -50,7 +51,7 @@ export default function Login({ onLogin }) {
           background: "#fff", borderRadius: 20, border: "1px solid #E8E4DA",
           padding: "36px 32px", boxShadow: "0 4px 24px rgba(21,47,54,0.07)",
         }}>
-          <div style={{ fontFamily: "Fraunces, serif", fontSize: 22, fontWeight: 500, color: "#1A2B3C", marginBottom: 6 }}>
+          <div style={{ fontFamily: T.font, fontSize: 22, fontWeight: 500, color: "#1A2B3C", marginBottom: 6 }}>
             Bienvenida
           </div>
           <div style={{ fontSize: 13.5, color: "#8A9BAD", marginBottom: 28 }}>
@@ -72,7 +73,7 @@ export default function Login({ onLogin }) {
                 style={{
                   width: "100%", padding: "11px 14px", borderRadius: 12,
                   border: error ? "1.5px solid #E57373" : "1.5px solid #E8E4DA",
-                  fontSize: 14.5, fontFamily: "Inter, sans-serif", outline: "none",
+                  fontSize: 14.5, fontFamily: T.font, outline: "none",
                   color: "#1A2B3C", background: "#FAFAF8", boxSizing: "border-box",
                   transition: "border-color 0.15s",
                 }}
@@ -95,7 +96,7 @@ export default function Login({ onLogin }) {
                   style={{
                     width: "100%", padding: "11px 44px 11px 14px", borderRadius: 12,
                     border: error ? "1.5px solid #E57373" : "1.5px solid #E8E4DA",
-                    fontSize: 14.5, fontFamily: "Inter, sans-serif", outline: "none",
+                    fontSize: 14.5, fontFamily: T.font, outline: "none",
                     color: "#1A2B3C", background: "#FAFAF8", boxSizing: "border-box",
                     transition: "border-color 0.15s",
                   }}
@@ -133,7 +134,7 @@ export default function Login({ onLogin }) {
               style={{
                 width: "100%", padding: "13px", borderRadius: 12, border: "none",
                 background: loading ? "#8FA8C8" : "#175FAF", color: "#fff",
-                fontSize: 15, fontWeight: 600, fontFamily: "Inter, sans-serif",
+                fontSize: 15, fontWeight: 600, fontFamily: T.font,
                 cursor: loading ? "not-allowed" : "pointer", transition: "background 0.15s",
               }}
             >

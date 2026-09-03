@@ -1,5 +1,6 @@
 import React from "react";
 import { STATUS } from "../theme.js";
+import { T } from "../theme.js";
 
 function StatusPill({ status, size = "sm" }) {
   const s = STATUS[status];
@@ -10,7 +11,7 @@ function StatusPill({ status, size = "sm" }) {
     <span style={{
       display: "inline-flex", alignItems: "center", gap: 6,
       background: s.tint, color: s.color, borderRadius: 999,
-      padding: pad, fontSize: font, fontWeight: 600, fontFamily: "Inter, sans-serif",
+      padding: pad, fontSize: font, fontWeight: 600, fontFamily: T.font,
       whiteSpace: "nowrap",
     }}>
       <span style={{ width: 7, height: 7, borderRadius: 999, background: s.color, display: "inline-block" }} />

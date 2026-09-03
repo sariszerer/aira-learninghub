@@ -41,10 +41,10 @@ function FirmaConsentimientoPublic({ token }) {
   const childName = doc?.fields?.consentChildName || doc?.fields?.nombre || "";
 
   return (
-    <div style={{ minHeight: "100vh", background: "#FFFBF2", fontFamily: "Inter, sans-serif", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+    <div style={{ minHeight: "100vh", background: "#FFFBF2", fontFamily: T.font, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
       <style>{FONTS}</style>
       <div style={{ background: "#fff", borderRadius: 20, maxWidth: 560, width: "100%", padding: "28px 26px", boxShadow: "0 20px 60px rgba(21,47,54,0.15)", boxSizing: "border-box" }}>
-        <div style={{ fontFamily: "Fraunces, serif", fontSize: 24, fontWeight: 500, color: "#175FAF", marginBottom: 4 }}>AIRA Learning Hub</div>
+        <div style={{ fontFamily: T.font, fontSize: 24, fontWeight: 500, color: "#175FAF", marginBottom: 4 }}>AIRA Learning Hub</div>
         <div style={{ fontSize: 13.5, color: T.inkSoft, marginBottom: 20 }}>Consentimiento informado</div>
 
         {status === "loading" && <div style={{ fontSize: 14, color: T.inkSoft }}>Cargando…</div>}

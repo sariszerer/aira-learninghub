@@ -10,7 +10,7 @@ function MeetingCard({ meeting, users }) {
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 10 }}>
         <div>
           <div style={{ fontSize: 12, fontWeight: 700, color: T.amberDeep, letterSpacing: "0.04em" }}>{fmtDateShort(meeting.date)}</div>
-          <div style={{ fontFamily: "Fraunces, serif", fontSize: 16.5, fontWeight: 600, color: T.ink, marginTop: 4 }}>{meeting.type}</div>
+          <div style={{ fontFamily: T.font, fontSize: 16.5, fontWeight: 600, color: T.ink, marginTop: 4 }}>{meeting.type}</div>
         </div>
         <span style={{ fontSize: 11.5, fontWeight: 600, color: T.brand, background: T.brandTint, padding: "3px 10px", borderRadius: 999, whiteSpace: "nowrap" }}>
           Registrada por {author?.name.split(" ")[0] || "—"}

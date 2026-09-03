@@ -51,7 +51,7 @@ function EditSessionModal({ session, objectives, users, onClose, onSave }) {
           <div style={{ fontSize: 12, fontWeight: 700, color: T.inkFaint, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>Observaciones clínicas</div>
           <textarea value={observation} onChange={e => setObservation(e.target.value)} rows={5}
             placeholder="Observaciones de la sesión, evolución del paciente..."
-            style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1.5px solid ${T.border}`, fontSize: 13.5, fontFamily: "Inter, sans-serif", outline: "none", resize: "vertical", boxSizing: "border-box", lineHeight: 1.6 }}
+            style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1.5px solid ${T.border}`, fontSize: 13.5, fontFamily: T.font, outline: "none", resize: "vertical", boxSizing: "border-box", lineHeight: 1.6 }}
             onFocus={e => e.target.style.borderColor = T.brand}
             onBlur={e => e.target.style.borderColor = T.border}
           />
@@ -60,7 +60,7 @@ function EditSessionModal({ session, objectives, users, onClose, onSave }) {
           <div style={{ fontSize: 12, fontWeight: 700, color: T.inkFaint, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>Recomendaciones para casa / escuela</div>
           <textarea value={nextSteps} onChange={e => setNextSteps(e.target.value)} rows={3}
             placeholder="Recomendaciones para el hogar o para el equipo escolar..."
-            style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1.5px solid ${T.border}`, fontSize: 13.5, fontFamily: "Inter, sans-serif", outline: "none", resize: "vertical", boxSizing: "border-box", lineHeight: 1.6 }}
+            style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1.5px solid ${T.border}`, fontSize: 13.5, fontFamily: T.font, outline: "none", resize: "vertical", boxSizing: "border-box", lineHeight: 1.6 }}
             onFocus={e => e.target.style.borderColor = T.brand}
             onBlur={e => e.target.style.borderColor = T.border}
           />

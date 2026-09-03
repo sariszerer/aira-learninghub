@@ -27,7 +27,7 @@ function ActivityFeed({ activityLog, users, onMarkSeen }) {
           )}
         </div>
         {unseen > 0 && (
-          <button onClick={onMarkSeen} style={{ background:"none", border:"none", fontSize:12, color:T.brand, cursor:"pointer", fontFamily:"Inter, sans-serif", fontWeight:600 }}>
+          <button onClick={onMarkSeen} style={{ background:"none", border:"none", fontSize:12, color:T.brand, cursor:"pointer", fontFamily:T.font, fontWeight:600 }}>
             Marcar todo como visto
           </button>
         )}

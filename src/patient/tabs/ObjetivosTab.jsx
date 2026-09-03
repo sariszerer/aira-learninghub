@@ -41,7 +41,7 @@ function ObjectivesList({ objectives, compact, onUpdate, onAdd, onDelete, defaul
               {editing === o.id ? (
                 <input autoFocus value={editName} onChange={(e) => setEditName(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") saveEdit(o); if (e.key === "Escape") setEditing(null); }}
-                  style={{ width: "100%", padding: "4px 8px", borderRadius: 7, border: `1.5px solid ${T.brand}`, fontSize: 14, fontFamily: "Inter, sans-serif", outline: "none", boxSizing: "border-box" }}
+                  style={{ width: "100%", padding: "4px 8px", borderRadius: 7, border: `1.5px solid ${T.brand}`, fontSize: 14, fontFamily: T.font, outline: "none", boxSizing: "border-box" }}
                 />
               ) : (
                 <>
@@ -73,8 +73,8 @@ function ObjectivesList({ objectives, compact, onUpdate, onAdd, onDelete, defaul
               <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
                 {editing === o.id ? (
                   <>
-                    <button onClick={() => saveEdit(o)} style={{ background: T.brand, color: "#fff", border: "none", borderRadius: 7, padding: "3px 8px", fontSize: 11.5, cursor: "pointer", fontFamily: "Inter, sans-serif" }}>✓</button>
-                    <button onClick={() => setEditing(null)} style={{ background: T.bg, color: T.inkSoft, border: `1px solid ${T.border}`, borderRadius: 7, padding: "3px 8px", fontSize: 11.5, cursor: "pointer", fontFamily: "Inter, sans-serif" }}>✕</button>
+                    <button onClick={() => saveEdit(o)} style={{ background: T.brand, color: "#fff", border: "none", borderRadius: 7, padding: "3px 8px", fontSize: 11.5, cursor: "pointer", fontFamily: T.font }}>✓</button>
+                    <button onClick={() => setEditing(null)} style={{ background: T.bg, color: T.inkSoft, border: `1px solid ${T.border}`, borderRadius: 7, padding: "3px 8px", fontSize: 11.5, cursor: "pointer", fontFamily: T.font }}>✕</button>
                   </>
                 ) : (
                   <>
@@ -100,23 +100,23 @@ function ObjectivesList({ objectives, compact, onUpdate, onAdd, onDelete, defaul
                 <input autoFocus value={newName} onChange={(e) => setNewName(e.target.value)}
                   placeholder="Ej: Regulación emocional"
                   onKeyDown={(e) => { if (e.key === "Enter") handleAdd(); if (e.key === "Escape") setAdding(false); }}
-                  style={{ width: "100%", padding: "7px 10px", borderRadius: 8, border: `1.5px solid ${T.brand}`, fontSize: 13.5, fontFamily: "Inter, sans-serif", outline: "none", boxSizing: "border-box" }}
+                  style={{ width: "100%", padding: "7px 10px", borderRadius: 8, border: `1.5px solid ${T.brand}`, fontSize: 13.5, fontFamily: T.font, outline: "none", boxSizing: "border-box" }}
                 />
               </div>
               <div style={{ flex: 1, minWidth: 120 }}>
                 <div style={{ fontSize: 11, color: T.inkSoft, marginBottom: 3 }}>Área</div>
                 <input value={newArea} onChange={(e) => setNewArea(e.target.value)}
                   placeholder="Ej: Psicología"
-                  style={{ width: "100%", padding: "7px 10px", borderRadius: 8, border: `1px solid ${T.border}`, fontSize: 13.5, fontFamily: "Inter, sans-serif", outline: "none", boxSizing: "border-box" }}
+                  style={{ width: "100%", padding: "7px 10px", borderRadius: 8, border: `1px solid ${T.border}`, fontSize: 13.5, fontFamily: T.font, outline: "none", boxSizing: "border-box" }}
                 />
               </div>
               <div style={{ display: "flex", gap: 6 }}>
-                <button onClick={handleAdd} disabled={!newName.trim()} style={{ background: T.brand, color: "#fff", border: "none", borderRadius: 8, padding: "7px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif", opacity: !newName.trim() ? 0.5 : 1 }}>Agregar</button>
-                <button onClick={() => { setAdding(false); setNewName(""); setNewArea(""); }} style={{ background: T.bg, color: T.inkSoft, border: `1px solid ${T.border}`, borderRadius: 8, padding: "7px 10px", fontSize: 13, cursor: "pointer", fontFamily: "Inter, sans-serif" }}>Cancelar</button>
+                <button onClick={handleAdd} disabled={!newName.trim()} style={{ background: T.brand, color: "#fff", border: "none", borderRadius: 8, padding: "7px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: T.font, opacity: !newName.trim() ? 0.5 : 1 }}>Agregar</button>
+                <button onClick={() => { setAdding(false); setNewName(""); setNewArea(""); }} style={{ background: T.bg, color: T.inkSoft, border: `1px solid ${T.border}`, borderRadius: 8, padding: "7px 10px", fontSize: 13, cursor: "pointer", fontFamily: T.font }}>Cancelar</button>
               </div>
             </div>
           ) : (
-            <button onClick={() => setAdding(true)} style={{ background: "none", border: `1.5px dashed ${T.border}`, borderRadius: 10, padding: "8px 16px", fontSize: 13, color: T.inkSoft, cursor: "pointer", fontFamily: "Inter, sans-serif", width: "100%", textAlign: "center" }}>
+            <button onClick={() => setAdding(true)} style={{ background: "none", border: `1.5px dashed ${T.border}`, borderRadius: 10, padding: "8px 16px", fontSize: 13, color: T.inkSoft, cursor: "pointer", fontFamily: T.font, width: "100%", textAlign: "center" }}>
               + Agregar objetivo
             </button>
           )}
@@ -195,7 +195,7 @@ function ObjetivosTab({ child }) {
                     <div style={{ fontSize: 13, fontWeight: 700, color, marginBottom: 2 }}>{area}</div>
                     <div style={{ fontSize: 12, color: T.inkSoft, marginBottom: 10 }}>{spec ? spec.name : "—"}</div>
                     <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 6 }}>
-                      <span style={{ fontFamily: "Fraunces, serif", fontSize: 22, fontWeight: 500, color }}>{logrados}</span>
+                      <span style={{ fontFamily: T.font, fontSize: 22, fontWeight: 500, color }}>{logrados}</span>
                       <span style={{ fontSize: 13, color: T.inkSoft }}>/ {objs.length} logrados</span>
                     </div>
                     <div style={{ height: 4, background: T.borderSoft, borderRadius: 2, overflow: "hidden" }}>
@@ -214,7 +214,7 @@ function ObjetivosTab({ child }) {
                           <div style={{ display: "flex", gap: 4, marginTop: 5, marginLeft: 22 }}>
                             {["logrado","proceso","apoyo"].map(st => (
                               <button key={st} onClick={() => { if(onUpdateObjective) onUpdateObjective({...o, status: st}); }}
-                                style={{ fontSize: 11, padding: "2px 8px", borderRadius: 6, cursor: "pointer", fontFamily: "Inter, sans-serif",
+                                style={{ fontSize: 11, padding: "2px 8px", borderRadius: 6, cursor: "pointer", fontFamily: T.font,
                                   border: o.status === st ? "none" : `0.5px solid ${T.border}`,
                                   background: o.status === st ? (st === "logrado" ? "#E8F5E9" : st === "apoyo" ? "#FFEBEE" : "#FFF8E1") : "#fff",
                                   color: o.status === st ? (st === "logrado" ? "#2E7D32" : st === "apoyo" ? "#C62828" : "#F57F17") : T.inkSoft,

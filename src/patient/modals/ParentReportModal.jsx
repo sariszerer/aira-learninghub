@@ -43,7 +43,7 @@ function ParentReportModal({ child, sessions, objectives, parentReports, onClose
         ) : (
           <div style={{
             background: T.surfaceSunk, borderRadius: 14, padding: 18, fontSize: 13.5,
-            color: T.ink, lineHeight: 1.7, whiteSpace: "pre-wrap", fontFamily: "Inter, sans-serif",
+            color: T.ink, lineHeight: 1.7, whiteSpace: "pre-wrap", fontFamily: T.font,
           }}>
             {reportText}
           </div>

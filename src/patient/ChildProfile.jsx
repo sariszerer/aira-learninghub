@@ -74,7 +74,7 @@ function ChildProfile({ child, onOpenSessionForm, onViewReport, onGenerateFull, 
       <div style={{ display: "flex", gap: 20, alignItems: "flex-start", marginBottom: 30 }}>
         <Avatar name={child.name + " " + child.lastName} bg={child.avatarBg} size={72} />
         <div style={{ flex: 1 }}>
-          <div style={{ fontFamily: "Fraunces, serif", fontSize: 31, fontWeight: 500, color: T.ink, letterSpacing: "-0.01em" }}>
+          <div style={{ fontFamily: T.font, fontSize: 21, fontWeight: 700, color: T.ink, letterSpacing: "-0.01em" }}>
             {child.name} {child.lastName}
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "3px 14px", marginTop: 7, fontSize: 13.5, color: T.inkSoft }}>
@@ -102,7 +102,7 @@ function ChildProfile({ child, onOpenSessionForm, onViewReport, onGenerateFull, 
             <button onClick={() => setEditingProfile(true)} style={{
               display: "flex", alignItems: "center", gap: 6, background: "none",
               border: `1px solid ${T.border}`, borderRadius: 10, padding: "7px 14px",
-              fontSize: 13, color: T.inkSoft, cursor: "pointer", fontFamily: "Inter, sans-serif",
+              fontSize: 13, color: T.inkSoft, cursor: "pointer", fontFamily: T.font,
             }}>
               ✎ Editar perfil
             </button>
@@ -116,7 +116,7 @@ function ChildProfile({ child, onOpenSessionForm, onViewReport, onGenerateFull, 
         {tabs.map((t) => (
           <button key={t.id} onClick={() => setTab(t.id)} style={{
             background: "none", border: "none", cursor: "pointer", padding: "8px 2px",
-            marginRight: 26, fontSize: 15.5, fontFamily: "Fraunces, serif",
+            marginRight: 26, fontSize: 15.5, fontFamily: T.font,
             fontWeight: tab === t.id ? 600 : 500,
             fontStyle: tab === t.id ? "normal" : "italic",
             color: tab === t.id ? T.ink : T.inkFaint,

@@ -9,7 +9,7 @@ function ModalHeader({ title, subtitle, onClose }) {
       padding: "20px 24px", borderBottom: `1px solid ${T.border}`,
     }}>
       <div>
-        <div style={{ fontFamily: "Fraunces, serif", fontSize: 19, fontWeight: 600, color: T.ink }}>{title}</div>
+        <div style={{ fontFamily: T.font, fontSize: 19, fontWeight: 600, color: T.ink }}>{title}</div>
         {subtitle && <div style={{ fontSize: 13, color: T.inkSoft, marginTop: 3 }}>{subtitle}</div>}
       </div>
       <button onClick={onClose} style={{

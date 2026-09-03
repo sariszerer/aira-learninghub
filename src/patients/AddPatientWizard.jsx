@@ -40,11 +40,11 @@ function AddPatientWizard({ users, currentUser, onClose, onCreate }) {
       {label && <div style={{ fontSize: 12, fontWeight: 700, color: T.inkFaint, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 5 }}>{label}</div>}
       {multiline ? (
         <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={rows} placeholder={placeholder}
-          style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${T.border}`, fontSize: 13.5, fontFamily: "Inter, sans-serif", outline: "none", resize: "vertical", boxSizing: "border-box", lineHeight: 1.6 }}
+          style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${T.border}`, fontSize: 13.5, fontFamily: T.font, outline: "none", resize: "vertical", boxSizing: "border-box", lineHeight: 1.6 }}
         />
       ) : (
         <input type={type || "text"} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
-          style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${T.border}`, fontSize: 13.5, fontFamily: "Inter, sans-serif", outline: "none", boxSizing: "border-box" }}
+          style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${T.border}`, fontSize: 13.5, fontFamily: T.font, outline: "none", boxSizing: "border-box" }}
         />
       )}
     </div>
@@ -52,7 +52,7 @@ function AddPatientWizard({ users, currentUser, onClose, onCreate }) {
 
   const Section = ({ title, children }) => (
     <div style={{ marginBottom: 20 }}>
-      <div style={{ fontFamily: "Fraunces, serif", fontSize: 15, fontWeight: 500, color: T.brand, borderBottom: `1.5px solid ${T.brand}30`, paddingBottom: 6, marginBottom: 12 }}>{title}</div>
+      <div style={{ fontFamily: T.font, fontSize: 15, fontWeight: 500, color: T.brand, borderBottom: `1.5px solid ${T.brand}30`, paddingBottom: 6, marginBottom: 12 }}>{title}</div>
       {children}
     </div>
   );

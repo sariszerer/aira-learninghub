@@ -27,7 +27,7 @@ function SesionesTab({ child, sessions, objectives, users, currentUser, onUpdate
       )}
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
         <button onClick={() => setFilterSpec(null)}
-          style={{ padding: "5px 12px", borderRadius: 20, border: `1.5px solid ${filterSpec === null ? T.ink : T.border}`, background: filterSpec === null ? T.ink : "#fff", color: filterSpec === null ? "#fff" : T.inkSoft, fontSize: 12, fontWeight: 500, fontFamily: "Inter, sans-serif", cursor: "pointer" }}>
+          style={{ padding: "5px 12px", borderRadius: 20, border: `1.5px solid ${filterSpec === null ? T.ink : T.border}`, background: filterSpec === null ? T.ink : "#fff", color: filterSpec === null ? "#fff" : T.inkSoft, fontSize: 12, fontWeight: 500, fontFamily: T.font, cursor: "pointer" }}>
           Todas ({childSessions.length})
         </button>
         {specs.map(sp => {
@@ -38,7 +38,7 @@ function SesionesTab({ child, sessions, objectives, users, currentUser, onUpdate
           const active = filterSpec === sp;
           return (
             <button key={sp} onClick={() => setFilterSpec(active ? null : sp)}
-              style={{ padding: "5px 12px", borderRadius: 20, border: `1.5px solid ${active ? color : T.border}`, background: active ? color : "#fff", color: active ? "#fff" : color, fontSize: 12, fontWeight: 500, fontFamily: "Inter, sans-serif", cursor: "pointer" }}>
+              style={{ padding: "5px 12px", borderRadius: 20, border: `1.5px solid ${active ? color : T.border}`, background: active ? color : "#fff", color: active ? "#fff" : color, fontSize: 12, fontWeight: 500, fontFamily: T.font, cursor: "pointer" }}>
               {sp} ({count})
             </button>
           );
@@ -67,7 +67,7 @@ function SesionesTab({ child, sessions, objectives, users, currentUser, onUpdate
                 </div>
                 {canEdit(s) && (
                   <button onClick={() => setEditingSession(s)}
-                    style={{ fontSize: 12, padding: "4px 10px", borderRadius: 6, border: `0.5px solid ${T.border}`, background: "#fff", color: T.inkSoft, cursor: "pointer", fontFamily: "Inter, sans-serif", flexShrink: 0 }}>
+                    style={{ fontSize: 12, padding: "4px 10px", borderRadius: 6, border: `0.5px solid ${T.border}`, background: "#fff", color: T.inkSoft, cursor: "pointer", fontFamily: T.font, flexShrink: 0 }}>
                     Editar
                   </button>
                 )}

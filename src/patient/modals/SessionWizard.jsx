@@ -3,6 +3,7 @@ import { inputStyle, TODAY } from "../../theme.js";
 import { can } from "../../permissions.js";
 import { Btn, Modal, ModalHeader } from "../../ui/index.js";
 import { useAuthStore } from "../../store/authStore.js";
+import { T } from "../../theme.js";
 
 function SessionWizard({ child, objectives, onClose, onSave }) {
   const currentUser = useAuthStore((s) => s.currentUser);
@@ -60,7 +61,7 @@ function SessionWizard({ child, objectives, onClose, onSave }) {
                 <button key={d} onClick={() => setDuration(d)} style={{
                   flex: 1, padding: "8px 4px", borderRadius: 8, border: `1.5px solid ${duration === d ? color : "#ddd"}`,
                   background: duration === d ? `${color}15` : "#fff", color: duration === d ? color : "#888",
-                  fontSize: 12, fontWeight: duration === d ? 700 : 400, fontFamily: "Inter, sans-serif", cursor: "pointer"
+                  fontSize: 12, fontWeight: duration === d ? 700 : 400, fontFamily: T.font, cursor: "pointer"
                 }}>{d}m</button>
               ))}
             </div>
@@ -79,7 +80,7 @@ function SessionWizard({ child, objectives, onClose, onSave }) {
                     display: "flex", alignItems: "center", gap: 10, padding: "10px 12px",
                     borderRadius: 8, border: `1.5px solid ${selected ? color : "#ddd"}`,
                     background: selected ? `${color}10` : "#fff", cursor: "pointer", textAlign: "left",
-                    fontFamily: "Inter, sans-serif"
+                    fontFamily: T.font
                   }}>
                     <div style={{
                       width: 18, height: 18, borderRadius: 4, border: `2px solid ${selected ? color : "#ccc"}`,

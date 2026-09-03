@@ -42,7 +42,7 @@ function CalendarAgenda({ events, loading, error, date, onDateChange, children, 
         <Eyebrow>Agenda del día — Google Calendar</Eyebrow>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <input type="date" value={date} onChange={(e) => onDateChange(e.target.value)}
-            style={{ padding: "5px 10px", borderRadius: 9, border: `1px solid ${T.border}`, fontSize: 13, fontFamily: "Inter, sans-serif", color: T.ink, background: "#fff", outline: "none" }}
+            style={{ padding: "5px 10px", borderRadius: 9, border: `1px solid ${T.border}`, fontSize: 13, fontFamily: T.font, color: T.ink, background: "#fff", outline: "none" }}
           />
           {loading && (
             <span style={{ fontSize: 12, color: T.inkSoft, display: "flex", alignItems: "center", gap: 5 }}>
@@ -56,10 +56,19 @@ function CalendarAgenda({ events, loading, error, date, onDateChange, children, 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
       {error === "conectar" ? (
-        <div style={{ padding: "20px 0", textAlign: "center" }}>
-          <div style={{ fontSize: 13.5, color: T.inkSoft, marginBottom: 14 }}>Conecta Google Calendar para ver la agenda de AIRA</div>
-          <button onClick={onConnectGcal} style={{ background: T.brand, color: "#fff", border: "none", borderRadius: 12, padding: "10px 22px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif", display: "inline-flex", alignItems: "center", gap: 8 }}>
-            📅 Conectar Google Calendar
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 12,
+          padding: "14px 0",
+        }}>
+          <span style={{ fontSize: 13, color: T.inkSoft }}>
+            Conecta Google Calendar para ver la agenda
+          </span>
+          <button onClick={onConnectGcal} style={{
+            background: T.brand, color: "#fff", border: "none", borderRadius: T.radiusSm,
+            padding: "7px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer",
+            fontFamily: T.font,
+          }}>
+            Conectar
           </button>
         </div>
       ) : error ? (
@@ -124,7 +133,7 @@ function CalendarAgenda({ events, loading, error, date, onDateChange, children, 
                       color: isLinking ? "#fff" : T.inkSoft,
                       border: `1px solid ${isLinking ? T.brand : T.border}`,
                       borderRadius: 8, padding: "4px 10px", fontSize: 11.5,
-                      fontFamily: "Inter, sans-serif", cursor: "pointer", fontWeight: 600,
+                      fontFamily: T.font, cursor: "pointer", fontWeight: 600,
                       whiteSpace: "nowrap", flexShrink: 0,
                     }}
                   >
@@ -146,7 +155,7 @@ function CalendarAgenda({ events, loading, error, date, onDateChange, children, 
                       style={{
                         width: "100%", padding: "7px 10px", borderRadius: 8,
                         border: `1px solid ${T.border}`, fontSize: 13.5,
-                        fontFamily: "Inter, sans-serif", outline: "none", marginBottom: 8, boxSizing: "border-box",
+                        fontFamily: T.font, outline: "none", marginBottom: 8, boxSizing: "border-box",
                       }}
                     />
                     <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>

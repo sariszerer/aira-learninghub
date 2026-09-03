@@ -7,9 +7,10 @@ import { T, FONTS, MobileStyles } from "./theme.js";
 import { useAuthStore } from "./store/authStore.js";
 import { useDataStore } from "./store/dataStore.js";
 import { useCalendarStore } from "./store/calendarStore.js";
-import { TopBar, DriveSaveBar } from "./shell/index.js";
+import Sidebar, { ANCHO_SIDEBAR } from "./shell/Sidebar.jsx";
 import { SpecialistHome, ClinicalDirectorHome, TutorAiraHome, AdminDashboard } from "./home/index.js";
 import PatientRoute from "./patient/PatientRoute.jsx";
+import PatientsList from "./patients/PatientsList.jsx";
 import GabinetePanel from "./gabinete/GabinetePanel.jsx";
 import FirmaConsentimientoPublic from "./consent/FirmaConsentimientoPublic.jsx";
 
@@ -34,8 +35,6 @@ export default function App() {
   // La navegacion vive en la URL: / · /gabinete · /paciente/:childId?tab=slug
   const navigate = useNavigate();
   const location = useLocation();
-  const isGabinete = location.pathname === "/gabinete";
-  const isChildRoute = location.pathname.startsWith("/paciente/");
   const goHome = useCallback(() => navigate("/"), [navigate]);
   const openChild = useCallback((id) => navigate(`/paciente/${encodeURIComponent(id)}`), [navigate]);
 
@@ -93,8 +92,8 @@ export default function App() {
 
   if (authLoading) {
     return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#FFFBF2" }}>
-        <div style={{ fontFamily: "Fraunces, serif", fontSize: 36, fontWeight: 500, color: "#175FAF", letterSpacing: "-0.02em" }}>AIRA</div>
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: T.bg }}>
+        <div style={{ fontFamily: T.font, fontSize: 21, fontWeight: 700, color: T.brand, letterSpacing: "-0.02em" }}>AIRA</div>
       </div>
     );
   }
@@ -109,28 +108,14 @@ export default function App() {
     );
   }
 
-  const backLabel = currentUser.home === "admin" ? "Panel administrativo"
-    : currentUser.home === "clinico" ? "Panel clínico"
-    : "Mis pacientes";
-
   return (
-    <div style={{ minHeight: "100vh", background: T.bg, fontFamily: "Inter, sans-serif", color: T.ink }}>
+    <div style={{ minHeight: "100vh", background: T.bg, fontFamily: T.font, color: T.ink }}>
       <style>{FONTS}</style>
       <MobileStyles />
 
-      <DriveSaveBar status="idle" onSave={() => {}} />
-      <TopBar
-        user={currentUser}
-        onHome={goHome}
-        onBack={isChildRoute ? goHome : null}
-        backLabel={backLabel}
-        onLogout={async () => { await auth.signOut(); setCurrentUser(null); goHome(); }}
-        showGabinete={can(currentUser, "gabinete:view")}
-        onGabinete={() => navigate("/gabinete")}
-        gabineteActive={isGabinete}
-        onSave={null}
-      />
+      <Sidebar />
 
+      <main style={{ marginLeft: ANCHO_SIDEBAR, minHeight: "100vh" }}>
       <Routes>
         <Route path="/" element={
           currentUser.home === "tutor" ? (
@@ -152,8 +137,11 @@ export default function App() {
 
         <Route path="/paciente/:childId" element={<PatientRoute />} />
 
+        <Route path="/pacientes" element={<PatientsList onOpenChild={openChild} />} />
+
         <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+        </Routes>
+      </main>
     </div>
   );
 }

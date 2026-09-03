@@ -49,6 +49,9 @@ export function dbChildToApp(c) {
     id: c.id, name: c.name, lastName: c.last_name, birthDate: c.birth_date,
     admissionDate: c.admission_date, specialties: c.specialties || [],
     assignedSpecialists: c.assigned_specialists || [], avatarBg: c.avatar_bg,
+    // La columna existe desde siempre y nunca se mapeaba: la app trataba a los
+    // 44 pacientes como si no tuvieran estado.
+    status: c.status,
     nextSession: c.next_session, nextSessionTime: c.next_session_time,
     parentContact: c.parent_contact || {}, packageStart: c.package_start,
     packageNum: c.package_num || 1,

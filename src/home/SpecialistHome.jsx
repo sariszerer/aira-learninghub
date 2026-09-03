@@ -29,7 +29,7 @@ function SpecialistHome({ user, onOpenChild, onCalendarDateChange }) {
   return (
     <div style={{ maxWidth: 980, margin: "0 auto", padding: "36px 20px 60px" }}>
       <div style={{ marginBottom: 26 }}>
-        <div style={{ fontFamily: "Fraunces, serif", fontSize: 32, fontWeight: 500, color: T.ink, letterSpacing: "-0.01em" }}>
+        <div style={{ fontFamily: T.font, fontSize: 21, fontWeight: 700, color: T.ink, letterSpacing: "-0.01em" }}>
           Hola, {user.name.split(" ")[0]}
         </div>
         <div style={{ color: T.inkSoft, fontSize: 14.5, marginTop: 5 }}>
@@ -52,7 +52,7 @@ function SpecialistHome({ user, onOpenChild, onCalendarDateChange }) {
           placeholder="Buscar por nombre..."
           style={{
             width: "100%", padding: "11px 14px 11px 40px", borderRadius: 13,
-            border: `1px solid ${T.border}`, fontSize: 14.5, fontFamily: "Inter, sans-serif",
+            border: `1px solid ${T.border}`, fontSize: 14.5, fontFamily: T.font,
             background: "#fff", outline: "none", boxSizing: "border-box",
           }}
         />
