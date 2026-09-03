@@ -72,3 +72,20 @@ export function can(user, action, resource) {
   if (p.has(`${action}:own`) && isOwner(user, action, resource)) return true
   return false
 }
+
+// El alcance es independiente de los permisos: responde "qué pacientes", no
+// "qué acciones". Un scope desconocido no ve nada — falla cerrado, igual que can().
+export function visibleChildren(user, children) {
+  if (!user || !Array.isArray(children)) return []
+  switch (user.scope) {
+    case 'todos':     return children
+    case 'asignados': return children.filter(c => c.assignedSpecialists?.includes(user.id))
+    case 'un_nino':   return children.filter(c => c.id === user.assignedChildId)
+    default:          return []
+  }
+}
+
+export function canSeeChild(user, child) {
+  if (!child) return false
+  return visibleChildren(user, [child]).length === 1
+}
