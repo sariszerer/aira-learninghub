@@ -229,6 +229,12 @@ export const useDataStore = create((set, get) => ({
     set((s) => ({ meetings: [...s.meetings, { id: `mtg-${Date.now()}`, childId, createdBy: currentUser.id, ...meeting }] }))
   },
 
+  // La tabla parent_reports no la consume supabase.js todavia: el reporte se
+  // genera y se guarda solo en memoria, igual que antes del refactor.
+  addParentReport: (report) => {
+    set((s) => ({ parentReports: [...s.parentReports, { id: `pr-${Date.now()}`, ...report }] }))
+  },
+
   addTutorReport: async (report) => {
     set((s) => ({ tutorReports: [...s.tutorReports, report] }))
     try { await db.insertTutorReport(report) } catch (e) { console.error('Add tutor report:', e) }

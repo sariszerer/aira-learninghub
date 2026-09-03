@@ -2,8 +2,10 @@ import React, { useState } from "react";
 import { inputStyle, TODAY } from "../../theme.js";
 import { can } from "../../permissions.js";
 import { Btn, Modal, ModalHeader } from "../../ui/index.js";
+import { useAuthStore } from "../../store/authStore.js";
 
-function SessionWizard({ child, currentUser, objectives, onClose, onSave }) {
+function SessionWizard({ child, objectives, onClose, onSave }) {
+  const currentUser = useAuthStore((s) => s.currentUser);
   const [date, setDate] = useState(TODAY);
   const [duration, setDuration] = useState(45);
   const [selectedObjIds, setSelectedObjIds] = useState([]);

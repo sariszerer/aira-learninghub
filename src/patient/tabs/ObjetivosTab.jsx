@@ -1,6 +1,9 @@
 import React, { useState } from "react";
-import { T } from "../../theme.js";
-import { StatusPill, StatusRing } from "../../ui/index.js";
+import { T, TODAY } from "../../theme.js";
+import { StatusPill, StatusRing, Card } from "../../ui/index.js";
+import { useDataStore } from "../../store/dataStore.js";
+import { useAuthStore } from "../../store/authStore.js";
+import { can } from "../../permissions.js";
 
 function ObjectivesList({ objectives, compact, onUpdate, onAdd, onDelete, defaultArea }) {
   const [editing, setEditing] = useState(null); // obj id being edited
@@ -123,4 +126,170 @@ function ObjectivesList({ objectives, compact, onUpdate, onAdd, onDelete, defaul
   );
 }
 
-export default ObjectivesList;
+// Vista de objetivos agrupados por especialista y area. Estaba en linea dentro
+// de ChildProfile como una IIFE de 155 lineas; aqui es un componente con nombre.
+function ObjetivosTab({ child }) {
+  const objectives = useDataStore((s) => s.objectives);
+  const sessions = useDataStore((s) => s.sessions);
+  const users = useDataStore((s) => s.users);
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const onUpdateObjective = useDataStore((s) => s.updateObjective);
+  const onAddObjective = useDataStore((s) => s.addObjective);
+  const onDeleteObjective = useDataStore((s) => s.deleteObjective);
+      const childObjs = objectives.filter((o) => o.childId === child.id);
+      const groups = {};
+      childObjs.forEach((o) => {
+        const specId = o.specialistId || "sin-especialista";
+        const area = o.area || "General";
+        const key = `${specId}__${area}`;
+        if (!groups[key]) groups[key] = { specId, area, objs: [] };
+        groups[key].objs.push(o);
+      });
+      const groupList = Object.values(groups).sort((a, b) => a.area.localeCompare(b.area));
+      const canEdit = (specId) => can(currentUser, "objective:edit", { specialistId: specId });
+      const AREA_COLORS = {
+        "Terapia Ocupacional": "#175FAF",
+        "Fonoaudiologia": "#7A9E7E",
+        "Fonoaudiología": "#7A9E7E",
+        "Funciones Ejecutivas": "#C79A6B",
+        "Psicologia": "#A6779A",
+        "Psicología": "#A6779A",
+        "Psicologia Clinica": "#A6779A",
+        "Psicología Clínica": "#A6779A",
+        "Desarrollo (DVLP)": "#B8860B",
+        "Kids Club": "#82A166",
+        "General": T.inkSoft,
+      };
+      const AREA_BG = {
+        "Terapia Ocupacional": "#E6F1FB",
+        "Fonoaudiologia": "#F0F5F0",
+        "Funciones Ejecutivas": "#FAF0E6",
+        "Psicologia": "#F5EEF8",
+        "Psicologia Clinica": "#F5EEF8",
+        "Desarrollo (DVLP)": "#FEFDE7",
+        "Kids Club": "#EEF5EE",
+        "General": T.surfaceSunk,
+      };
+
+      // Show specialists who have sessions with this child but no objectives
+      const specsFromSessions = [...new Set(
+        sessions.filter(s => s.childId === child.id).map(s => s.specialistId).filter(Boolean)
+      )];
+      const specsWithNoObjs = specsFromSessions.filter(sid => !Object.keys(groups).some(k => k.startsWith(sid)));
+
+      return (
+        <div>
+          {/* Column grid */}
+          <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(groupList.length + specsWithNoObjs.length, 3)}, 1fr)`, gap: 12, marginBottom: 16 }}>
+            {groupList.map(({ specId, area, objs }) => {
+              const spec = users.find(u => u.id === specId);
+              const canEditThis = canEdit(specId);
+              const logrados = objs.filter(o => o.status === "logrado").length;
+              const color = AREA_COLORS[area] || T.inkSoft;
+              const bg = AREA_BG[area] || T.surfaceSunk;
+              const pct = objs.length > 0 ? (logrados / objs.length) * 100 : 0;
+              return (
+                <div key={`${specId}__${area}`} style={{ background: "#fff", border: `0.5px solid ${T.border}`, borderTop: `3px solid ${color}`, borderRadius: "0 0 12px 12px" }}>
+                  {/* Column header */}
+                  <div style={{ padding: "12px 14px 10px" }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color, marginBottom: 2 }}>{area}</div>
+                    <div style={{ fontSize: 12, color: T.inkSoft, marginBottom: 10 }}>{spec ? spec.name : "—"}</div>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 6 }}>
+                      <span style={{ fontFamily: "Fraunces, serif", fontSize: 22, fontWeight: 500, color }}>{logrados}</span>
+                      <span style={{ fontSize: 13, color: T.inkSoft }}>/ {objs.length} logrados</span>
+                    </div>
+                    <div style={{ height: 4, background: T.borderSoft, borderRadius: 2, overflow: "hidden" }}>
+                      <div style={{ height: "100%", width: `${pct}%`, background: color, borderRadius: 2, transition: "width 0.3s" }} />
+                    </div>
+                  </div>
+                  {/* Objectives */}
+                  <div style={{ borderTop: `0.5px solid ${T.border}`, padding: "6px 14px 10px" }}>
+                    {objs.map((o) => (
+                      <div key={o.id} style={{ padding: "7px 0", borderBottom: `0.5px solid ${T.borderSoft}` }}>
+                        <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+                          <span style={{ fontSize: 14, flexShrink: 0, marginTop: 1 }}>{o.status === "logrado" ? "✅" : o.status === "apoyo" ? "🔴" : "🟡"}</span>
+                          <span style={{ fontSize: 12.5, color: o.status === "logrado" ? "#2E7D32" : T.ink, lineHeight: 1.4, flex: 1 }}>{o.name}</span>
+                        </div>
+                        {canEditThis && (
+                          <div style={{ display: "flex", gap: 4, marginTop: 5, marginLeft: 22 }}>
+                            {["logrado","proceso","apoyo"].map(st => (
+                              <button key={st} onClick={() => { if(onUpdateObjective) onUpdateObjective({...o, status: st}); }}
+                                style={{ fontSize: 11, padding: "2px 8px", borderRadius: 6, cursor: "pointer", fontFamily: "Inter, sans-serif",
+                                  border: o.status === st ? "none" : `0.5px solid ${T.border}`,
+                                  background: o.status === st ? (st === "logrado" ? "#E8F5E9" : st === "apoyo" ? "#FFEBEE" : "#FFF8E1") : "#fff",
+                                  color: o.status === st ? (st === "logrado" ? "#2E7D32" : st === "apoyo" ? "#C62828" : "#F57F17") : T.inkSoft,
+                                  fontWeight: o.status === st ? 600 : 400,
+                                }}>
+                                {st === "logrado" ? "✅ Logrado" : st === "proceso" ? "🟡 En proceso" : "🔴 Apoyo"}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    {canEditThis && (
+                      <ObjectivesList
+                        objectives={[]}
+                        onUpdate={onUpdateObjective}
+                        onAdd={(data) => onAddObjective({ ...data, childId: child.id, specialistId: specId, area, createdDate: TODAY, status: "proceso" })}
+                        onDelete={onDeleteObjective}
+                      />
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+            {/* Specialists with no objectives yet */}
+            {specsWithNoObjs.map(sid => {
+              const spec = users.find(u => u.id === sid);
+              if (!spec) return null;
+              const area = spec.specialty || "General";
+              const color = AREA_COLORS[area] || T.inkSoft;
+              const canEditThis = canEdit(sid);
+              return (
+                <div key={`empty-${sid}`} style={{ background: "#fff", border: `0.5px solid ${T.border}`, borderTop: `3px solid ${color}40`, borderRadius: "0 0 12px 12px" }}>
+                  <div style={{ padding: "12px 14px 10px" }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: `${color}90`, marginBottom: 2 }}>{area}</div>
+                    <div style={{ fontSize: 12, color: T.inkSoft, marginBottom: 10 }}>{spec.name}</div>
+                    <div style={{ fontSize: 12, color: T.inkFaint, fontStyle: "italic", padding: "8px 0" }}>Sin objetivos definidos.</div>
+                  </div>
+            {canEditThis && (
+                    <div style={{ borderTop: `0.5px solid ${T.border}`, padding: "6px 14px 10px" }}>
+                      <ObjectivesList
+                        objectives={[]}
+                        defaultArea={area}
+                        onAdd={(data) => onAddObjective({ ...data, childId: child.id, specialistId: sid, area: data.area || area, createdDate: TODAY, status: "proceso" })}
+                      />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          {/* Full edit view below columns — only for can-edit specialists */}
+          {groupList.filter(({ specId }) => canEdit(specId)).map(({ specId, area, objs }) => {
+            const color = AREA_COLORS[area] || T.inkSoft;
+            const spec = users.find(u => u.id === specId);
+            return (
+              <details key={`edit-${specId}__${area}`} style={{ marginBottom: 10 }}>
+                <summary style={{ fontSize: 12.5, color, cursor: "pointer", padding: "6px 0", listStyle: "none", display: "flex", alignItems: "center", gap: 6 }}>
+                  <i className="ti ti-edit" style={{ fontSize: 14 }} />
+                  Editar objetivos de {area} ({spec?.name})
+                </summary>
+                <Card style={{ padding: "6px 18px 14px", marginTop: 6 }}>
+                  <ObjectivesList
+                    objectives={objs}
+                    onUpdate={onUpdateObjective}
+                    onAdd={(data) => onAddObjective({ ...data, childId: child.id, specialistId: specId, area, createdDate: TODAY, status: "proceso" })}
+                    onDelete={onDeleteObjective}
+                  />
+                </Card>
+              </details>
+            );
+          })}
+        </div>
+      );
+}
+
+export default ObjetivosTab;
+export { ObjectivesList };
