@@ -6,8 +6,17 @@ import { Eyebrow } from "../ui/index.js";
 import TodaySchedule from "./TodaySchedule.jsx";
 import CalendarAgenda from "./CalendarAgenda.jsx";
 import ChildCard from "./ChildCard.jsx";
+import { useDataStore } from "../store/dataStore.js";
+import { useCalendarStore } from "../store/calendarStore.js";
 
-function SpecialistHome({ user, children, users, sessions, onOpenChild, calendarEvents, calendarLoading, calendarError, calendarDate, onCalendarDateChange }) {
+function SpecialistHome({ user, onOpenChild, onCalendarDateChange }) {
+  const children = useDataStore((s) => s.children);
+  const users = useDataStore((s) => s.users);
+  const sessions = useDataStore((s) => s.sessions);
+  const calendarEvents = useCalendarStore((s) => s.events);
+  const calendarLoading = useCalendarStore((s) => s.loading);
+  const calendarError = useCalendarStore((s) => s.error);
+  const calendarDate = useCalendarStore((s) => s.date);
   const [query, setQuery] = useState("");
   const myChildren = visibleChildren(user, children);
   const filtered = myChildren.filter((c) =>

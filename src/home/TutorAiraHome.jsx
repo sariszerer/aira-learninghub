@@ -2,8 +2,14 @@ import React, { useState } from "react";
 import { T, TODAY } from "../theme.js";
 import { fmtDate } from "../lib/format.js";
 import { Eyebrow, Card } from "../ui/index.js";
+import { useDataStore } from "../store/dataStore.js";
 
-function TutorAiraHome({ user, children, users, objectives, tutorReports, onOpenChild, onAddTutorReport }) {
+function TutorAiraHome({ user, onOpenChild }) {
+  const children = useDataStore((s) => s.children);
+  const users = useDataStore((s) => s.users);
+  const objectives = useDataStore((s) => s.objectives);
+  const tutorReports = useDataStore((s) => s.tutorReports);
+  const onAddTutorReport = useDataStore((s) => s.addTutorReport);
   const child = children.find((c) => c.id === user.assignedChildId);
   const myReports = tutorReports.filter((r) => r.shadowId === user.id).sort((a, b) => b.date.localeCompare(a.date));
   const lastReport = myReports[0];
