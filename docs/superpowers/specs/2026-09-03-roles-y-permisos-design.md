@@ -41,7 +41,7 @@ control sin control real.
 
 | Grupo | Claves |
 |---|---|
-| Pacientes | `patient:view` `patient:create` `patient:edit` `patient:close` `patient:renew_package` |
+| Pacientes | `patient:view` `patient:create` `patient:edit` `patient:close` `patient:renew_package`¹ |
 | Sesiones | `session:view` `session:create` `session:edit:own` `session:edit:any` |
 | Objetivos | `objective:view` `objective:create` `objective:edit:own` `objective:edit:any` `objective:delete` |
 | Documentos | `document:view` `document:create` `document:edit:own` `document:edit:any` |
@@ -53,6 +53,10 @@ control sin control real.
 | Administración | `user:manage` `role:manage` |
 
 `guidelines:view` reemplaza el `currentUser.id === "u-admin"` incrustado.
+
+¹ `patient:renew_package` no tiene punto de uso en la interfaz todavía: `onRenewPackage`
+está cableado hasta `ResumenTab` pero nunca se invoca y no hay botón. El permiso se
+define para cuando exista; hoy no lo ejerce nadie.
 
 El par `:own` / `:any` traduce el patrón existente: un especialista edita **su**
 sesión, dirección clínica edita **cualquiera**.
@@ -70,8 +74,16 @@ Estos cuatro no son deducibles para un rol nuevo. Hoy están implícitos en el
 nombre del rol; al hacerlos datos, un rol creado desde la app puede declararlos.
 
 Los 4 roles actuales (`admin`, `clinical_director`, `specialist`, `shadow`) se
-siembran como filas con `es_sistema = true`. **La migración no cambia el
-comportamiento de nadie.**
+siembran como filas con `es_sistema = true`. La migración no cambia el comportamiento
+de nadie, **salvo el rol `shadow`**: pierde ocho capacidades que hoy tiene por ausencia
+de check y no por diseño — `patient:close`, `patient:renew_package`, `report:generate`,
+`report:parent:generate`, `document:create`, `document:edit:own`, `workplan:create` y
+`meeting:create`. Todas provienen de que un tutor sombra puede abrir la ficha completa
+desde `TutorAiraHome` y varios botones dentro de ella no tienen condición de rol.
+Queda con las 8 lecturas más `tutorreport:view` y `tutorreport:create`.
+
+`tutorreport:view` no es lectura universal: solo `clinical_director` y `shadow` lo
+tienen. `admin` y `specialist` hoy ni siquiera reciben los datos.
 
 ## Datos
 

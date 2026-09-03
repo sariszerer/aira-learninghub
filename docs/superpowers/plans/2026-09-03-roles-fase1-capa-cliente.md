@@ -13,7 +13,16 @@
 ## Global Constraints
 
 - **No se toca la base de datos en esta fase.** Ni esquema, ni políticas, ni datos. La matriz de roles vive en código y se migra a tablas en la Fase 2.
-- **Comportamiento idéntico al actual, con una excepción aprobada:** el rol `shadow` pierde `patient:close`, `patient:renew_package`, `report:generate` y `report:parent:generate`. Hoy los tiene por ausencia de check, no por diseño.
+- **Comportamiento idéntico al actual, con una excepción aprobada y ampliada:** el rol
+  `shadow` pierde `patient:close`, `patient:renew_package`, `report:generate`,
+  `report:parent:generate`, `document:create`, `document:edit:own`, `workplan:create` y
+  `meeting:create`. Las cuatro primeras se aprobaron al planificar; las otras cuatro
+  aparecieron al verificar la matriz contra `App.jsx` y son la misma clase de accidente
+  (botones sin condición en `DocumentsSection` e `InterdisciplinaryTab`, más un bypass
+  del `canAdd` de `PlanTrabajoTab`). `shadow` queda con las 8 lecturas más
+  `tutorreport:view` y `tutorreport:create`.
+- **`tutorreport:view` no es una lectura universal.** Solo `clinical_director` y `shadow`
+  lo tienen; hoy `AdminDashboard` y `SpecialistHome` ni siquiera reciben `tutorReports`.
 - **`can()` falla cerrado.** Sin `user.permissions` cargado devuelve `false`.
 - Nombres de permisos en inglés (`session:edit:own`), texto de interfaz en español.
 - El módulo nuevo sigue el estilo del repo: sin TypeScript, ES modules, comillas dobles en JSX y simples en JS plano.
@@ -807,7 +816,11 @@ Después:
 ```js
 {can(currentUser, "session:create") && child.assignedSpecialists.includes(currentUser.id) && (
 ```
-(La condición de asignación se conserva: es alcance sobre este niño concreto, no permiso.)
+**Esta condición NO es opcional.** `clinical_director` tiene `scope: 'todos'`, así que
+`can(currentUser,"session:create")` es cierto para cualquier expediente. Lo que hoy la
+limita a los niños donde figura asignada es exactamente este conjunto. Si se elimina, la
+dirección clínica gana la capacidad de registrar sesiones en los 44 pacientes. Es alcance
+sobre este niño concreto, no permiso, y por eso no vive en la matriz.
 
 - [ ] **Step 5: Botón "Editar perfil" (línea 3853)**
 
