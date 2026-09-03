@@ -607,7 +607,7 @@ export function buildUser(dbUser) {
 - [ ] **Step 4: Correr las pruebas para verificar que pasan**
 
 Run: `npm test`
-Expected: PASS, 35 pruebas.
+Expected: PASS, 37 pruebas.
 
 - [ ] **Step 5: Commit**
 
@@ -652,7 +652,7 @@ Expected: build correcto, sin errores de importación.
 - [ ] **Step 3: Verificar que las pruebas siguen pasando**
 
 Run: `npm test`
-Expected: PASS, 35 pruebas.
+Expected: PASS, 37 pruebas.
 
 - [ ] **Step 4: Commit**
 
@@ -1063,7 +1063,7 @@ git commit -m "refactor: elimina LoginScreen muerto y los literales de rol resta
 - `grep -n 'role === "' src/App.jsx` no devuelve nada fuera de datos semilla (Tarea 9).
 - `grep -n 'role !== "' src/App.jsx` no devuelve nada (Tarea 9).
 - `grep -n 'u-admin' src/App.jsx` no devuelve nada en contexto de autorización.
-- `npm test` pasa con 35 pruebas.
+- `npm test` pasa con 37 pruebas.
 - `npx vite build` compila.
 - Verificación manual de la Tarea 8 completada con los 4 roles.
 
