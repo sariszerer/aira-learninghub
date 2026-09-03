@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import { Routes, Route, Navigate, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { db, auth, getAppUser } from "./supabase.js";
 import { signInToGoogle, fetchCalendarEvents as gcalFetch, getStoredToken, clearToken } from "./googleCalendar.js";
 import Login from "./Login.jsx";
@@ -3765,8 +3766,33 @@ function PlanTrabajoTab({ child, documents, users, currentUser, onAddDocument, o
   );
 }
 
+// Tab ids double as the ?tab= URL slug, so they are module-level: the router needs
+// to validate an incoming ?tab= value before ChildProfile renders.
+const CHILD_TABS = [
+  { id: "resumen", label: "Resumen" },
+  { id: "sesiones", label: "Sesiones" },
+  { id: "objetivos", label: "Objetivos" },
+  { id: "plan", label: "Plan de Trabajo" },
+  { id: "anamnesis", label: "Anamnesis" },
+  { id: "reportes", label: "Reportes" },
+  { id: "interdisciplinario", label: "Interdisciplinario" },
+];
+const DEFAULT_CHILD_TAB = "resumen";
+
 function ChildProfile({ child, users, sessions, objectives, documents, meetings, parentReports, currentUser, onOpenSessionForm, onViewReport, onGenerateFull, onGenerateEvolution, onGenerateParentReport, onAddDocument, onAddMeeting, onUpdateObjective, onAddObjective, onDeleteObjective, onRenewPackage, onUpdateChild, onCloseProcess, onUpdateSession, onUpdateDocument }) {
-  const [tab, setTab] = useState("resumen");
+  // Active tab lives in the URL (?tab=sesiones) so profile views are shareable.
+  // An unknown or missing slug falls back to Resumen instead of rendering nothing.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const tab = CHILD_TABS.some((t) => t.id === tabParam) ? tabParam : DEFAULT_CHILD_TAB;
+  const setTab = (id) => {
+    const next = new URLSearchParams(searchParams);
+    // Resumen is the default view, so it stays out of the URL.
+    if (id === DEFAULT_CHILD_TAB) next.delete("tab");
+    else next.set("tab", id);
+    // replace: Back returns to the patient list rather than walking back through tabs.
+    setSearchParams(next, { replace: true });
+  };
   const [editingProfile, setEditingProfile] = useState(false);
   const [editForm, setEditForm] = useState({
     name: child.name, lastName: child.lastName,
@@ -3793,15 +3819,7 @@ function ChildProfile({ child, users, sessions, objectives, documents, meetings,
   const specialists = specialistIdsFromSessions.length > 0
     ? specialistIdsFromSessions.map(id => users.find(u => u.id === id)).filter(Boolean)
     : child.assignedSpecialists.map((id) => users.find((u) => u.id === id)).filter(Boolean);
-  const tabs = [
-    { id: "resumen", label: "Resumen" },
-    { id: "sesiones", label: "Sesiones" },
-    { id: "objetivos", label: "Objetivos" },
-    { id: "plan", label: "Plan de Trabajo" },
-    { id: "anamnesis", label: "Anamnesis" },
-    { id: "reportes", label: "Reportes" },
-    { id: "interdisciplinario", label: "Interdisciplinario" },
-  ];
+  const tabs = CHILD_TABS;
 
   return (
     <div className="aira-profile" style={{ maxWidth: 860, margin: "0 auto", padding: "32px 20px 60px" }}>
@@ -4569,6 +4587,31 @@ function ParentReportModal({ child, sessions, objectives, parentReports, onClose
 /* ============================================================
    ROOT APP
 ============================================================ */
+// Shown while a cold deep link to /paciente/:id waits for the first Supabase load.
+function RouteLoading() {
+  return (
+    <div style={{ padding: "80px 20px", textAlign: "center", fontSize: 14, color: T.inkFaint }}>
+      Cargando…
+    </div>
+  );
+}
+
+// Reached when /paciente/:id names a patient this user cannot see — either the id is
+// wrong, or it belongs to someone outside their caseload. Both look the same on purpose.
+function RouteNotFound({ onHome }) {
+  return (
+    <div style={{ padding: "80px 20px", textAlign: "center", maxWidth: 420, margin: "0 auto" }}>
+      <div style={{ fontFamily: "Fraunces, serif", fontSize: 24, fontWeight: 500, color: T.ink, marginBottom: 10 }}>
+        Paciente no encontrado
+      </div>
+      <div style={{ fontSize: 14, color: T.inkFaint, marginBottom: 24 }}>
+        El enlace no corresponde a un paciente de tu lista.
+      </div>
+      <Btn onClick={onHome}>Volver al inicio</Btn>
+    </div>
+  );
+}
+
 function MobileStyles() {
   useEffect(() => {
     const style = document.createElement('style');
@@ -4601,6 +4644,17 @@ export default function App() {
   const [authLoading, setAuthLoading] = useState(true);
   const consentToken = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("firmar") : null;
 
+  // Navigation lives in the URL: / (home) · /gabinete · /paciente/:childId?tab=slug
+  // Declared before the auth effect below, which navigates home on sign-out.
+  const navigate = useNavigate();
+  const location = useLocation();
+  const childRouteMatch = location.pathname.match(/^\/paciente\/([^/?#]+)/);
+  const selectedChildId = childRouteMatch ? decodeURIComponent(childRouteMatch[1]) : null;
+  const isGabinete = location.pathname === "/gabinete";
+  const isChildRoute = selectedChildId !== null;
+  const goHome = useCallback(() => navigate("/"), [navigate]);
+  const openChild = useCallback((id) => navigate(`/paciente/${encodeURIComponent(id)}`), [navigate]);
+
   // Listen to Supabase auth state
   useEffect(() => {
     // Add timeout in case Supabase doesn't respond
@@ -4622,14 +4676,11 @@ export default function App() {
         if (appUser) setCurrentUser(appUser)
       } else if (event === "SIGNED_OUT") {
         setCurrentUser(null)
-        setView("home")
-        setSelectedChildId(null)
+        goHome()
       }
     })
     return () => subscription.unsubscribe()
-  }, []);
-  const [view, setView] = useState("home"); // home | child | gabinete
-  const [selectedChildId, setSelectedChildId] = useState(null);
+  }, [goHome]);
 
   const [children, setChildren] = useState(seedChildren);
   const [users] = useState(seedUsers);
@@ -4653,21 +4704,29 @@ export default function App() {
 
   // ── Loading state ────────────────────────────────────────────────────────
   const [appLoading, setAppLoading] = useState(false);
+  // Distinct from appLoading: stays false until the first Supabase load settles.
+  // /paciente/:id needs it to tell "patient not found" from "data hasn't arrived
+  // yet", since `children` starts out holding seed data on a cold deep link.
+  const [dataLoaded, setDataLoaded] = useState(false);
   const [driveStatus, setDriveStatus] = useState("idle"); // reuse for save status UI
 
 
   // ── Supabase: load all data on login ─────────────────────────────────────
-  const loadFromSupabase = useCallback(async () => {
+  const loadFromSupabase = useCallback(async (role, userId) => {
     setAppLoading(true);
     try {
       const [
         dbChildren, dbObjectives, dbSessions, dbDocuments,
         dbMeetings, dbSchools, dbGabineteSessions, dbTutorReports,
       ] = await Promise.all([
-        db.getChildren(), db.getObjectives(), db.getSessions(), db.getDocuments(),
+        // Pass role/id so specialists only receive their own assigned patients.
+        db.getChildren(role, userId), db.getObjectives(), db.getSessions(), db.getDocuments(),
         db.getMeetings(), db.getSchools(), db.getGabineteSessions(), db.getTutorReports(),
       ]);
-      if (dbChildren.length > 0) setChildren(dbChildren);
+      // Unconditional, unlike the rows below: now that getChildren filters by role,
+      // an empty result is a real answer ("this specialist has no patients"). Falling
+      // back to seed data there would show them every demo patient instead of none.
+      setChildren(dbChildren);
       if (dbObjectives.length > 0) setObjectives(dbObjectives);
       if (dbSessions.length > 0) setSessions(dbSessions);
       if (dbDocuments.length > 0) setDocuments(dbDocuments);
@@ -4679,6 +4738,7 @@ export default function App() {
       console.error("Supabase load error:", e);
     } finally {
       setAppLoading(false);
+      setDataLoaded(true);
     }
   }, []);
 
@@ -4689,7 +4749,10 @@ export default function App() {
   // Load from Supabase on login
   useEffect(() => {
     if (currentUser && currentUser.role !== "shadow") {
-      loadFromSupabase();
+      loadFromSupabase(currentUser.role, currentUser.id);
+    } else if (currentUser) {
+      // Shadow tutors run entirely off seed data — nothing to wait for.
+      setDataLoaded(true);
     }
   }, [currentUser, loadFromSupabase]);
 
@@ -4942,89 +5005,97 @@ export default function App() {
       <DriveSaveBar status={driveStatus} onSave={saveToDrive} />
       <TopBar
         user={currentUser}
-        onHome={() => { setView("home"); setSelectedChildId(null); }}
-        onBack={view === "child" ? () => { setView("home"); setSelectedChildId(null); } : null}
+        onHome={goHome}
+        onBack={isChildRoute ? goHome : null}
         backLabel={currentUser.role === "admin" ? "Panel administrativo" : currentUser.role === "clinical_director" ? "Panel clínico" : "Mis pacientes"}
-        onLogout={async () => { await auth.signOut(); setCurrentUser(null); setView("home"); setSelectedChildId(null); }}
+        onLogout={async () => { await auth.signOut(); setCurrentUser(null); goHome(); }}
         showGabinete={(currentUser.role === "admin" || currentUser.role === "clinical_director")}
-        onGabinete={() => { setView("gabinete"); setSelectedChildId(null); }}
-        gabineteActive={view === "gabinete"}
+        onGabinete={() => navigate("/gabinete")}
+        gabineteActive={isGabinete}
         onSave={null}
       />
 
-      {view === "home" && currentUser.role === "shadow" && (
-        <TutorAiraHome
-          user={currentUser} children={children} users={users} objectives={objectives}
-          tutorReports={tutorReports}
-          onOpenChild={(id) => { setSelectedChildId(id); setView("child"); }}
-          onAddTutorReport={handleAddTutorReport}
-        />
-      )}
+      <Routes>
+        <Route path="/" element={
+          currentUser.role === "shadow" ? (
+            <TutorAiraHome
+              user={currentUser} children={children} users={users} objectives={objectives}
+              tutorReports={tutorReports}
+              onOpenChild={openChild}
+              onAddTutorReport={handleAddTutorReport}
+            />
+          ) : currentUser.role === "specialist" ? (
+            <SpecialistHome
+              user={currentUser} children={children} users={users} sessions={sessions}
+              calendarEvents={calendarEvents} calendarLoading={calendarLoading} calendarError={calendarError}
+              calendarDate={calendarDate} onCalendarDateChange={(d) => { setCalendarDate(d); fetchCalendarEvents(d); }}
+              onOpenChild={openChild}
+            />
+          ) : currentUser.role === "clinical_director" ? (
+            <ClinicalDirectorHome
+              user={currentUser} children={children} users={users} sessions={sessions} objectives={objectives}
+              tutors={tutors} tutorReports={tutorReports}
+              calendarEvents={calendarEvents} calendarLoading={calendarLoading} calendarError={calendarError}
+              calendarDate={calendarDate} onCalendarDateChange={(d) => { setCalendarDate(d); fetchCalendarEvents(d); }}
+              activityLog={activityLog} onMarkSeen={() => setActivityLog(prev => prev.map(a => ({...a, seen:true})))}
+              onOpenChild={openChild}
+              onConnectGcal={handleConnectGcal}
+            />
+          ) : currentUser.role === "admin" ? (
+            <AdminDashboard
+              children={children} users={users} sessions={sessions} objectives={objectives} parentReports={parentReports}
+              calendarEvents={calendarEvents} calendarLoading={calendarLoading} calendarError={calendarError}
+              calendarDate={calendarDate} onCalendarDateChange={(d) => { setCalendarDate(d); fetchCalendarEvents(d); }}
+              activityLog={activityLog} onMarkSeen={() => setActivityLog(prev => prev.map(a => ({...a, seen:true})))}
+              onOpenChild={openChild}
+              onConnectGcal={handleConnectGcal}
+              currentUser={currentUser}
+              onAddChild={handleAddChild}
+            />
+          ) : null
+        } />
 
-      {view === "home" && currentUser.role === "specialist" && (
-        <SpecialistHome
-          user={currentUser} children={children} users={users} sessions={sessions}
-          calendarEvents={calendarEvents} calendarLoading={calendarLoading} calendarError={calendarError}
-          calendarDate={calendarDate} onCalendarDateChange={(d) => { setCalendarDate(d); fetchCalendarEvents(d); }}
-          onOpenChild={(id) => { setSelectedChildId(id); setView("child"); }}
-        />
-      )}
+        <Route path="/gabinete" element={
+          (currentUser.role === "admin" || currentUser.role === "clinical_director") ? (
+            <GabinetePanel
+              schools={schools} users={users} gabineteSessions={gabineteSessions}
+              onAddSession={handleAddGabineteSession}
+              onAddSchool={handleAddSchool}
+            />
+          ) : <Navigate to="/" replace />
+        } />
 
-      {view === "home" && currentUser.role === "clinical_director" && (
-        <ClinicalDirectorHome
-          user={currentUser} children={children} users={users} sessions={sessions} objectives={objectives}
-          tutors={tutors} tutorReports={tutorReports}
-          calendarEvents={calendarEvents} calendarLoading={calendarLoading} calendarError={calendarError}
-          calendarDate={calendarDate} onCalendarDateChange={(d) => { setCalendarDate(d); fetchCalendarEvents(d); }}
-          activityLog={activityLog} onMarkSeen={() => setActivityLog(prev => prev.map(a => ({...a, seen:true})))}
-          onOpenChild={(id) => { setSelectedChildId(id); setView("child"); }}
-          onConnectGcal={handleConnectGcal}
-        />
-      )}
+        <Route path="/paciente/:childId" element={
+          !dataLoaded ? (
+            <RouteLoading />
+          ) : selectedChild ? (
+            <ChildProfile
+              child={selectedChild} users={users} sessions={sessions} objectives={objectives}
+              documents={documents} meetings={meetings} parentReports={parentReports}
+              currentUser={currentUser}
+              onUpdateObjective={handleUpdateObjective}
+              onAddObjective={handleAddObjective}
+              onDeleteObjective={handleDeleteObjective}
+              onRenewPackage={handleRenewPackage}
+              onUpdateChild={handleUpdateChild}
+              onCloseProcess={handleCloseProcess}
+              onUpdateSession={handleUpdateSession}
+              onUpdateDocument={handleUpdateDocument}
+              onOpenSessionForm={() => setWizardOpen(true)}
+              onViewReport={(s) => setViewingReport(s)}
+              onGenerateFull={() => setFullHistoryOpen(true)}
+              onGenerateEvolution={() => setEvolutionOpen(true)}
+              onGenerateParentReport={() => setParentReportOpen(true)}
+              onAddDocument={handleAddDocument}
+              onAddMeeting={handleAddMeeting}
+            />
+          ) : (
+            <RouteNotFound onHome={goHome} />
+          )
+        } />
 
-      {view === "home" && currentUser.role === "admin" && (
-        <AdminDashboard
-          children={children} users={users} sessions={sessions} objectives={objectives} parentReports={parentReports}
-          calendarEvents={calendarEvents} calendarLoading={calendarLoading} calendarError={calendarError}
-          calendarDate={calendarDate} onCalendarDateChange={(d) => { setCalendarDate(d); fetchCalendarEvents(d); }}
-          activityLog={activityLog} onMarkSeen={() => setActivityLog(prev => prev.map(a => ({...a, seen:true})))}
-          onOpenChild={(id) => { setSelectedChildId(id); setView("child"); }}
-          onConnectGcal={handleConnectGcal}
-          currentUser={currentUser}
-          onAddChild={handleAddChild}
-        />
-      )}
-
-      {view === "gabinete" && (
-        <GabinetePanel
-          schools={schools} users={users} gabineteSessions={gabineteSessions}
-          onAddSession={handleAddGabineteSession}
-          onAddSchool={handleAddSchool}
-        />
-      )}
-
-      {view === "child" && selectedChild && (
-        <ChildProfile
-          child={selectedChild} users={users} sessions={sessions} objectives={objectives}
-          documents={documents} meetings={meetings} parentReports={parentReports}
-          currentUser={currentUser}
-          onUpdateObjective={handleUpdateObjective}
-          onAddObjective={handleAddObjective}
-          onDeleteObjective={handleDeleteObjective}
-          onRenewPackage={handleRenewPackage}
-          onUpdateChild={handleUpdateChild}
-          onCloseProcess={handleCloseProcess}
-          onUpdateSession={handleUpdateSession}
-          onUpdateDocument={handleUpdateDocument}
-          onOpenSessionForm={() => setWizardOpen(true)}
-          onViewReport={(s) => setViewingReport(s)}
-          onGenerateFull={() => setFullHistoryOpen(true)}
-          onGenerateEvolution={() => setEvolutionOpen(true)}
-          onGenerateParentReport={() => setParentReportOpen(true)}
-          onAddDocument={handleAddDocument}
-          onAddMeeting={handleAddMeeting}
-        />
-      )}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
 
       {wizardOpen && selectedChild && (
         <SessionWizard
