@@ -11,6 +11,9 @@ import { sessionsSinceLastParentReport, buildParentReportText } from "./lib/repo
 import { ACTIVITY_CATALOG, DOC_TYPES, MEETING_TYPES } from "./constants.js";
 import { seedUsers, seedChildren, seedObjectives, seedSessions, seedDocuments, seedMeetings,
          seedParentReports, seedTutors, seedSchools, seedGabineteSessions, seedTutorReports } from "./data/seed.js";
+import { Logo, Eyebrow, StatusPill, StatusRing, Avatar, Btn, Chip, Card, Modal, ModalHeader,
+         Field, Section, FieldLabel, StepDots, EmptyNote, SavedToast, StatStrip, DateRangeBar,
+         ReportCard } from "./ui/index.js";
 
 import {
   Search, ChevronRight, ChevronLeft, X, Plus, Check,
@@ -26,155 +29,6 @@ import {
 /* ============================================================
    SMALL PRIMITIVES
 ============================================================ */
-function Logo({ size = 28 }) {
-  return (
-    <img
-      src={AIRA_MARK_URI}
-      alt="AIRA"
-      style={{ height: size, width: "auto", display: "block" }}
-    />
-  );
-}
-
-function Eyebrow({ children, tone = "amber", style }) {
-  const color = tone === "amber" ? T.amberDeep : tone === "faint" ? T.inkFaint : T.brand;
-  return (
-    <div style={{
-      fontFamily: "Fraunces, serif", fontStyle: "italic", fontWeight: 500,
-      fontSize: 15, color, letterSpacing: "0.005em", marginBottom: 14, ...style,
-    }}>
-      {children}
-    </div>
-  );
-}
-
-function StatusPill({ status, size = "sm" }) {
-  const s = STATUS[status];
-  if (!s) return null;
-  const pad = size === "sm" ? "3px 9px" : "5px 12px";
-  const font = size === "sm" ? 12 : 13;
-  return (
-    <span style={{
-      display: "inline-flex", alignItems: "center", gap: 6,
-      background: s.tint, color: s.color, borderRadius: 999,
-      padding: pad, fontSize: font, fontWeight: 600, fontFamily: "Inter, sans-serif",
-      whiteSpace: "nowrap",
-    }}>
-      <span style={{ width: 7, height: 7, borderRadius: 999, background: s.color, display: "inline-block" }} />
-      {s.label}
-    </span>
-  );
-}
-
-function StatusRing({ status, size = 34 }) {
-  const s = STATUS[status] || STATUS.proceso;
-  const frac = status === "logrado" ? 1 : status === "proceso" ? 0.6 : 0.28;
-  const r = (size - 6) / 2;
-  const c = 2 * Math.PI * r;
-  return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      <circle cx={size / 2} cy={size / 2} r={r} stroke={T.border} strokeWidth="3.5" fill="none" />
-      <circle
-        cx={size / 2} cy={size / 2} r={r} stroke={s.color} strokeWidth="3.5" fill="none"
-        strokeDasharray={c} strokeDashoffset={c * (1 - frac)} strokeLinecap="round"
-        transform={`rotate(-90 ${size / 2} ${size / 2})`}
-      />
-    </svg>
-  );
-}
-
-function Avatar({ name, bg, size = 44 }) {
-  const initials = name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
-  const fg = readableTextOn(bg || T.brand);
-  return (
-    <div style={{
-      width: size, height: size, borderRadius: "50%", background: bg || T.brand,
-      color: fg, display: "flex", alignItems: "center", justifyContent: "center",
-      fontFamily: "Fraunces, serif", fontWeight: 600, fontSize: size * 0.4, flexShrink: 0,
-    }}>
-      {initials}
-    </div>
-  );
-}
-
-function Btn({ children, onClick, variant = "primary", size = "md", icon: Icon, disabled, full }) {
-  const base = {
-    display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8,
-    fontFamily: "Inter, sans-serif", fontWeight: 600, cursor: disabled ? "default" : "pointer",
-    border: "none", borderRadius: 12, transition: "all .15s ease",
-    opacity: disabled ? 0.45 : 1, width: full ? "100%" : "auto",
-  };
-  const sizes = {
-    md: { padding: "11px 18px", fontSize: 14 },
-    lg: { padding: "15px 24px", fontSize: 15.5 },
-    sm: { padding: "7px 13px", fontSize: 13 },
-  };
-  const variants = {
-    primary: { background: T.brand, color: "#fff" },
-    amber: { background: T.amber, color: T.brandDeep },
-    ghost: { background: "transparent", color: T.brand, border: `1.5px solid ${T.border}` },
-    subtle: { background: T.brandTint, color: T.brand },
-    danger: { background: T.apoyoTint, color: T.apoyo },
-  };
-  return (
-    <button
-      onClick={disabled ? undefined : onClick}
-      style={{ ...base, ...sizes[size], ...variants[variant] }}
-      onMouseEnter={(e) => { if (!disabled) e.currentTarget.style.filter = "brightness(0.94)"; }}
-      onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; }}
-    >
-      {Icon && <Icon size={size === "lg" ? 18 : 16} />}
-      {children}
-    </button>
-  );
-}
-
-function Chip({ label, selected, onClick, tone = "brand" }) {
-  const activeColors = tone === "brand"
-    ? { bg: T.brand, fg: "#fff", border: T.brand }
-    : { bg: T.amberTint, fg: T.amberDeep, border: T.amber };
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        display: "inline-flex", alignItems: "center", gap: 7,
-        padding: "9px 15px", borderRadius: 11, fontSize: 14, fontWeight: 600,
-        fontFamily: "Inter, sans-serif", cursor: "pointer",
-        border: `1.5px solid ${selected ? activeColors.border : T.border}`,
-        background: selected ? activeColors.bg : "#fff",
-        color: selected ? activeColors.fg : T.inkSoft,
-        transition: "all .12s ease",
-      }}
-    >
-      <span style={{
-        width: 16, height: 16, borderRadius: 5, border: `1.5px solid ${selected ? activeColors.fg : T.border}`,
-        display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-        background: selected ? "rgba(255,255,255,0.15)" : "transparent",
-      }}>
-        {selected && <Check size={11} strokeWidth={3} />}
-      </span>
-      {label}
-    </button>
-  );
-}
-
-function Card({ children, style, onClick }) {
-  return (
-    <div
-      onClick={onClick}
-      style={{
-        background: T.surface, borderRadius: T.radius, border: `1px solid ${T.border}`,
-        boxShadow: T.shadow, cursor: onClick ? "pointer" : "default",
-        transition: "box-shadow .18s ease, transform .18s ease",
-        ...style,
-      }}
-      onMouseEnter={onClick ? (e) => { e.currentTarget.style.boxShadow = "0 8px 24px rgba(32,48,46,0.09)"; e.currentTarget.style.transform = "translateY(-1px)"; } : undefined}
-      onMouseLeave={onClick ? (e) => { e.currentTarget.style.boxShadow = T.shadow; e.currentTarget.style.transform = "translateY(0)"; } : undefined}
-    >
-      {children}
-    </div>
-  );
-}
 
 /* ============================================================
    APP SHELL (top bar)
@@ -1447,22 +1301,6 @@ function ActivityFeed({ activityLog, users, onMarkSeen }) {
 /* ============================================================
    ADMIN DASHBOARD
 ============================================================ */
-function StatStrip({ items }) {
-  return (
-    <Card style={{ padding: 0, marginBottom: 28, overflow: "hidden" }}>
-      <div style={{ display: "grid", gridTemplateColumns: `repeat(${items.length}, 1fr)` }}>
-        {items.map((it, i) => (
-          <div key={it.label} style={{
-            padding: "20px 22px", borderLeft: i > 0 ? `1px solid ${T.borderSoft}` : "none",
-          }}>
-            <div style={{ fontFamily: "Fraunces, serif", fontSize: 30, fontWeight: 500, color: T.ink, lineHeight: 1 }}>{it.value}</div>
-            <div style={{ fontSize: 12.5, color: T.inkSoft, marginTop: 7 }}>{it.label}</div>
-          </div>
-        ))}
-      </div>
-    </Card>
-  );
-}
 
 function AdminDashboard({ children, users, sessions, objectives, parentReports, onOpenChild, calendarEvents, calendarLoading, calendarError, calendarDate, onCalendarDateChange, activityLog, onMarkSeen, onConnectGcal, currentUser, onAddChild }) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -1725,68 +1563,9 @@ function DailyReport({ session, child, specialist, objectives, printable }) {
   );
 }
 
-function Field({ label, value }) {
-  return (
-    <div style={{ padding: "8px 0" }}>
-      <div style={{ fontSize: 11.5, color: T.inkFaint, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</div>
-      <div style={{ fontSize: 14.5, color: T.ink, fontWeight: 600, marginTop: 2 }}>{value}</div>
-    </div>
-  );
-}
-
-function Section({ title, children, last }) {
-  return (
-    <div style={{ paddingBottom: 16, marginBottom: 16, borderBottom: last ? "none" : `1px solid ${T.border}` }}>
-      <div style={{ fontSize: 12, fontWeight: 700, color: T.inkFaint, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 9 }}>
-        {title}
-      </div>
-      {children}
-    </div>
-  );
-}
-
 /* ============================================================
    MODAL wrapper
 ============================================================ */
-function Modal({ children, onClose, width = 560 }) {
-  return (
-    <div style={{
-      position: "fixed", inset: 0, background: "rgba(21,47,54,0.45)", zIndex: 100,
-      display: "flex", alignItems: "flex-start", justifyContent: "center",
-      padding: "40px 20px", overflowY: "auto",
-    }} onClick={onClose}>
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          background: "#fff", borderRadius: 20, width: "100%", maxWidth: width,
-          boxShadow: "0 20px 60px rgba(21,47,54,0.25)", overflow: "hidden",
-        }}
-      >
-        {children}
-      </div>
-    </div>
-  );
-}
-
-function ModalHeader({ title, subtitle, onClose }) {
-  return (
-    <div style={{
-      display: "flex", alignItems: "flex-start", justifyContent: "space-between",
-      padding: "20px 24px", borderBottom: `1px solid ${T.border}`,
-    }}>
-      <div>
-        <div style={{ fontFamily: "Fraunces, serif", fontSize: 19, fontWeight: 600, color: T.ink }}>{title}</div>
-        {subtitle && <div style={{ fontSize: 13, color: T.inkSoft, marginTop: 3 }}>{subtitle}</div>}
-      </div>
-      <button onClick={onClose} style={{
-        border: "none", background: T.surfaceSunk, borderRadius: 10, width: 32, height: 32,
-        display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: T.inkSoft, flexShrink: 0,
-      }}>
-        <X size={16} />
-      </button>
-    </div>
-  );
-}
 
 function DailyReportModal({ session, child, specialist, objectives, onClose }) {
   return (
@@ -2198,30 +1977,6 @@ function HistorialTab({ child, sessions, objectives, users, onViewReport, onUpda
   );
 }
 
-function ReportCard({ icon: Icon, tone, title, description, action, actionLabel, badge }) {
-  const tones = {
-    brand: { bg: T.brandTint, fg: T.brand },
-    amber: { bg: T.amberTint, fg: T.amberDeep },
-  }[tone];
-  return (
-    <Card style={{ padding: 22, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
-      <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
-        <div style={{ width: 40, height: 40, borderRadius: 11, background: tones.bg, color: tones.fg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-          <Icon size={18} />
-        </div>
-        <div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{ fontWeight: 700, fontSize: 15, color: T.ink }}>{title}</div>
-            {badge}
-          </div>
-          <div style={{ fontSize: 13, color: T.inkSoft, marginTop: 3, maxWidth: 380 }}>{description}</div>
-        </div>
-      </div>
-      <Btn variant={tone === "amber" ? "amber" : "primary"} onClick={action}>{actionLabel}</Btn>
-    </Card>
-  );
-}
-
 function DocumentsSection({ type, documents, users, onAdd, onUpdateDocument, currentUser }) {
   const meta = DOC_TYPES[type];
   const docs = documents.filter((d) => d.type === type).sort((a, b) => b.date.localeCompare(a.date));
@@ -2388,10 +2143,6 @@ function AddDocumentModal({ type, onClose, onSave }) {
       </div>
     </Modal>
   );
-}
-
-function FieldLabel({ children }) {
-  return <div style={{ fontSize: 12, fontWeight: 700, color: T.inkFaint, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>{children}</div>;
 }
 
 function AnamnesisTab({ child, documents, users, currentUser, onAddDocument, onUpdateDocument }) {
@@ -3700,18 +3451,6 @@ function ChildProfile({ child, users, sessions, objectives, documents, meetings,
 /* ============================================================
    SESSION WIZARD — "Registrar sesión" (6 steps)
 ============================================================ */
-function StepDots({ step, total }) {
-  return (
-    <div style={{ display: "flex", gap: 6 }}>
-      {Array.from({ length: total }).map((_, i) => (
-        <div key={i} style={{
-          width: i === step ? 20 : 7, height: 7, borderRadius: 999,
-          background: i <= step ? T.amber : T.border, transition: "all .2s ease",
-        }} />
-      ))}
-    </div>
-  );
-}
 
 function SessionWizard({ child, currentUser, objectives, onClose, onSave }) {
   const [date, setDate] = useState(TODAY);
@@ -3847,22 +3586,6 @@ function SessionWizard({ child, currentUser, objectives, onClose, onSave }) {
   );
 }
 
-function SavedToast() {
-  return (
-    <div style={{
-      position: "fixed", bottom: 26, left: "50%", transform: "translateX(-50%)", zIndex: 200,
-      background: T.brandDeep, color: "#fff", padding: "13px 22px", borderRadius: 14,
-      display: "flex", alignItems: "center", gap: 10, fontSize: 14, fontWeight: 600,
-      boxShadow: "0 10px 30px rgba(21,47,54,0.35)", fontFamily: "Inter, sans-serif",
-    }}>
-      <span style={{ width: 22, height: 22, borderRadius: 999, background: T.amber, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <Check size={13} strokeWidth={3} />
-      </span>
-      Sesión guardada · reporte diario generado automáticamente
-    </div>
-  );
-}
-
 /* ============================================================
    FULL HISTORY generator (admin) — chronological compiled document
 ============================================================ */
@@ -3935,28 +3658,6 @@ function FullHistoryModal({ child, sessions, objectives, users, onClose }) {
 /* ============================================================
    EVOLUTION REPORT generator — derived strictly from recorded data
 ============================================================ */
-function DateRangeBar({ fromDate, setFromDate, minDate, presets }) {
-  return (
-    <div style={{ padding: "16px 24px 0", display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <FieldLabel style={{ margin: 0 }}>Desde</FieldLabel>
-        <input
-          type="date" value={fromDate} min={minDate} max={TODAY}
-          onChange={(e) => setFromDate(e.target.value)}
-          style={{ ...inputStyle, padding: "7px 10px", fontSize: 13 }}
-        />
-      </div>
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-        {presets.map((p) => (
-          <button key={p.label} onClick={() => setFromDate(p.value)} style={{
-            fontSize: 12.5, fontWeight: 600, color: T.brand, background: T.brandTint,
-            border: "none", borderRadius: 999, padding: "6px 12px", cursor: "pointer",
-          }}>{p.label}</button>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 function EvolutionReportModal({ child, sessions, objectives, users, onClose }) {
   const [fromDate, setFromDate] = useState(child.admissionDate || "2025-01-01");
@@ -4042,10 +3743,6 @@ function EvolutionReportModal({ child, sessions, objectives, users, onClose }) {
       </div>
     </Modal>
   );
-}
-
-function EmptyNote({ text }) {
-  return <div style={{ fontSize: 13, color: T.inkFaint, fontStyle: "italic" }}>{text}</div>;
 }
 
 /* ============================================================
