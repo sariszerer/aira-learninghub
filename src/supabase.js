@@ -238,13 +238,14 @@ export const db = {
   // link with a random token stored inside the anamnesis document's fields;
   // the parent opens that link (no account needed) and signs there.
   async getDocumentByConsentToken(token) {
-    const { data, error } = await supabase
-      .from('documents')
-      .select('*')
-      .filter('fields->>consentToken', 'eq', token)
-      .maybeSingle()
+    // Security-definer RPC rather than a direct select: the previous public RLS
+    // policy matched every document with a consentToken, not just this one, so
+    // any anonymous caller could read all pending consent forms. The RPC narrows
+    // it to the exact token presented.
+    const { data, error } = await supabase.rpc('get_consent_by_token', { p_token: token })
     if (error) throw error
-    return data ? dbDocumentToApp(data) : null
+    const row = Array.isArray(data) ? data[0] : data
+    return row ? dbDocumentToApp(row) : null
   },
   async saveConsentSignature(token, signatureDataUrl) {
     // Runs through a security-definer RPC (not a direct table update): once the
