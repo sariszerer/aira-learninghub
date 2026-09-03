@@ -6,6 +6,9 @@ import { signInToGoogle, fetchCalendarEvents as gcalFetch, getStoredToken, clear
 import Login from "./Login.jsx";
 import { T, FONTS, STATUS, SPECIALIST_COLORS, CHILD_AVATAR_COLORS, inputStyle, TODAY, MobileStyles } from "./theme.js";
 import { AIRA_MARK_URI, AIRA_LOGO_FULL_URI } from "./brand.js";
+import { fmtDate, fmtDateShort, readableTextOn, slugifyName, daysAgoISO } from "./lib/format.js";
+import { sessionsSinceLastParentReport, buildParentReportText } from "./lib/reports.js";
+import { ACTIVITY_CATALOG, DOC_TYPES, MEETING_TYPES } from "./constants.js";
 
 import {
   Search, ChevronRight, ChevronLeft, X, Plus, Check,
@@ -14,12 +17,6 @@ import {
   Sparkles, ArrowRight, Printer, Filter, ChevronDown,
 } from "lucide-react";
 
-const ACTIVITY_CATALOG = [
-  "Rompecabezas", "Sudoku", "Jenga", "Recorte", "Escritura",
-  "Actividad sensorial", "Juego de mesa", "Clasificación",
-  "Comprensión lectora", "Motricidad fina", "Circuito motor",
-  "Cuento interactivo",
-];
 
 /* ============================================================
    SEED DATA
@@ -150,14 +147,6 @@ const seedSessions = [
   },
 ];
 
-const DOC_TYPES = {
-  evaluacion: { label: "Evaluación", plural: "Evaluaciones" },
-  reporte: { label: "Reporte", plural: "Reportes" },
-  informe: { label: "Informe", plural: "Informes" },
-  anamnesis: { label: "Anamnesis", plural: "Anamnesis" },
-  plan_trabajo: { label: "Plan de trabajo", plural: "Planes de trabajo" },
-  pautas_crianza: { label: "Pautas de Crianza", plural: "Pautas de Crianza" },
-};
 
 const seedDocuments = [
   {
@@ -258,22 +247,7 @@ const seedGabineteSessions = [];
 // ── Shadow reports (quincenal) ───────────────────────────────────────────────
 const seedTutorReports = [];
 
-function fmtDate(iso) {
-  const d = new Date(iso + "T00:00:00");
-  return d.toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" });
-}
-function fmtDateShort(iso) {
-  const d = new Date(iso + "T00:00:00");
-  return d.toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" }).replace(".", "").toUpperCase();
-}
 
-function sessionsSinceLastParentReport(childId, sessions, parentReports) {
-  const childReports = (parentReports || []).filter((r) => r.childId === childId).sort((a, b) => b.toDate.localeCompare(a.toDate));
-  const lastReport = childReports[0];
-  const childSessions = sessions.filter((s) => s.childId === childId);
-  if (!lastReport) return childSessions;
-  return childSessions.filter((s) => s.date > lastReport.toDate);
-}
 
 /* ============================================================
    SMALL PRIMITIVES
@@ -335,15 +309,6 @@ function StatusRing({ status, size = 34 }) {
   );
 }
 
-function readableTextOn(hex) {
-  if (!hex || hex[0] !== "#") return "#fff";
-  const h = hex.length === 4
-    ? "#" + [...hex.slice(1)].map((c) => c + c).join("")
-    : hex;
-  const r = parseInt(h.slice(1, 3), 16), g = parseInt(h.slice(3, 5), 16), b = parseInt(h.slice(5, 7), 16);
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.62 ? T.brandDeep : "#fff";
-}
 
 function Avatar({ name, bg, size = 44 }) {
   const initials = name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
@@ -2949,11 +2914,6 @@ function AnamnesisTab({ child, documents, users, currentUser, onAddDocument, onU
    ADD PATIENT WIZARD (datos → anamnesis → especialistas)
 ============================================================ */
 
-function slugifyName(s) {
-  return (s || "")
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase().replace(/[^a-z0-9]+/g, "").slice(0, 14) || "paciente";
-}
 
 function AddPatientWizard({ users, currentUser, onClose, onCreate }) {
   const [step, setStep] = useState(1);
@@ -3327,7 +3287,6 @@ function ReportesTab({ child, documents, users, sessions, parentReports, current
   );
 }
 
-const MEETING_TYPES = ["Escuela", "Especialista externo", "Familia", "Otro"];
 
 function MeetingCard({ meeting, users }) {
   const author = users.find((u) => u.id === meeting.createdBy);
@@ -4228,11 +4187,6 @@ function DateRangeBar({ fromDate, setFromDate, minDate, presets }) {
   );
 }
 
-function daysAgoISO(n) {
-  const d = new Date(TODAY + "T00:00:00");
-  d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0, 10);
-}
 
 function EvolutionReportModal({ child, sessions, objectives, users, onClose }) {
   const [fromDate, setFromDate] = useState(child.admissionDate || "2025-01-01");
@@ -4328,38 +4282,6 @@ function EmptyNote({ text }) {
    PARENT PROGRESS REPORT — every ~8 sessions, plain language,
    exportable by email or WhatsApp
 ============================================================ */
-function buildParentReportText(child, rangeSessions, objectives) {
-  const lines = [];
-  lines.push(`Reporte de progreso — ${child.name} ${child.lastName}`);
-  lines.push(`AIRA Learning Hub`);
-  lines.push("");
-  lines.push(`Periodo: ${fmtDate(rangeSessions[0]?.date || TODAY)} al ${fmtDate(rangeSessions[rangeSessions.length - 1]?.date || TODAY)}`);
-  lines.push(`Sesiones incluidas: ${rangeSessions.length}`);
-  lines.push("");
-
-  const objIds = Array.from(new Set(rangeSessions.flatMap((s) => s.objectivesWorked.map((ow) => ow.objectiveId))));
-  const objs = objIds.map((id) => objectives.find((o) => o.id === id)).filter(Boolean);
-  const logrados = objs.filter((o) => o.status === "logrado");
-  const enProceso = objs.filter((o) => o.status === "proceso");
-
-  if (logrados.length) {
-    lines.push("Logros de este periodo:");
-    logrados.forEach((o) => lines.push(`• ${o.name}`));
-    lines.push("");
-  }
-  if (enProceso.length) {
-    lines.push("En proceso, seguimos trabajando en:");
-    enProceso.forEach((o) => lines.push(`• ${o.name}`));
-    lines.push("");
-  }
-  const lastNote = [...rangeSessions].reverse().find((s) => s.nextSteps)?.nextSteps;
-  if (lastNote) {
-    lines.push(`Próximos pasos: ${lastNote}`);
-    lines.push("");
-  }
-  lines.push("Cualquier duda, con gusto la conversamos en la próxima sesión.");
-  return lines.join("\n");
-}
 
 function ParentReportModal({ child, sessions, objectives, parentReports, onClose, onGenerated }) {
   const sinceLastSessions = useMemo(
