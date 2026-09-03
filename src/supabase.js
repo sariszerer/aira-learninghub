@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { buildUser } from './permissions.js'
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://wxsxtevvxepgjfxphdxt.supabase.co'
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4c3h0ZXZ2eGVwZ2pmeHBoZHh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4MzQ5NDcsImV4cCI6MjEwMjQxMDk0N30.AlyZM8R9wMCYBaTvYV6QfDSJC5Y5l2m46OZ43P2Im0Y'
@@ -31,7 +32,9 @@ export async function getAppUser(authUserId) {
     .eq('auth_id', authUserId)
     .single()
   if (error) return null
-  return dbUserToApp(data)
+  // buildUser adjunta permisos y alcance desde la matriz en código. En la Fase 2
+  // esto pasa a leerse de las tablas roles/role_permissions.
+  return buildUser(dbUserToApp(data))
 }
 
 export function dbUserToApp(u) {
