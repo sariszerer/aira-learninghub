@@ -2,15 +2,15 @@ import React, { useState, useMemo, useEffect, useCallback, useRef } from "react"
 import { Routes, Route, Navigate, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { db, auth, getAppUser } from "./supabase.js";
 import { can, visibleChildren, ROLES } from "./permissions.js";
-import { signInToGoogle, fetchCalendarEvents as gcalFetch, getStoredToken, clearToken } from "./googleCalendar.js";
 import Login from "./Login.jsx";
 import { T, FONTS, STATUS, SPECIALIST_COLORS, CHILD_AVATAR_COLORS, inputStyle, TODAY, MobileStyles } from "./theme.js";
 import { AIRA_MARK_URI, AIRA_LOGO_FULL_URI } from "./brand.js";
+import { useAuthStore } from "./store/authStore.js";
+import { useDataStore } from "./store/dataStore.js";
+import { useCalendarStore } from "./store/calendarStore.js";
 import { fmtDate, fmtDateShort, readableTextOn, slugifyName, daysAgoISO } from "./lib/format.js";
 import { sessionsSinceLastParentReport, buildParentReportText } from "./lib/reports.js";
 import { ACTIVITY_CATALOG, DOC_TYPES, MEETING_TYPES } from "./constants.js";
-import { seedUsers, seedChildren, seedObjectives, seedSessions, seedDocuments, seedMeetings,
-         seedParentReports, seedTutors, seedSchools, seedGabineteSessions, seedTutorReports } from "./data/seed.js";
 import { Logo, Eyebrow, StatusPill, StatusRing, Avatar, Btn, Chip, Card, Modal, ModalHeader,
          Field, Section, FieldLabel, StepDots, EmptyNote, SavedToast, StatStrip, DateRangeBar,
          ReportCard } from "./ui/index.js";
@@ -3838,8 +3838,10 @@ function RouteNotFound({ onHome }) {
 }
 
 export default function App() {
-  const [currentUser, setCurrentUser] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true);
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const authLoading = useAuthStore((s) => s.authLoading);
+  const setCurrentUser = useAuthStore((s) => s.setCurrentUser);
+  const setAuthLoading = useAuthStore((s) => s.setAuthLoading);
   const consentToken = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("firmar") : null;
 
   // Navigation lives in the URL: / (home) · /gabinete · /paciente/:childId?tab=slug
@@ -3880,295 +3882,103 @@ export default function App() {
     return () => subscription.unsubscribe()
   }, [goHome]);
 
-  const [children, setChildren] = useState(seedChildren);
-  const [users] = useState(seedUsers);
-  const [objectives, setObjectives] = useState(seedObjectives);
-  const [sessions, setSessions] = useState(seedSessions);
-  const [documents, setDocuments] = useState(seedDocuments);
-  const [meetings, setMeetings] = useState(seedMeetings);
-  const [parentReports, setParentReports] = useState(seedParentReports);
-  const [tutors, setTutors] = useState(seedTutors);
-  const [schools, setSchools] = useState(seedSchools);
-  const [gabineteSessions, setGabineteSessions] = useState(seedGabineteSessions);
-  const [tutorReports, setTutorReports] = useState(seedTutorReports);
-  const [activityLog, setActivityLog] = useState([]);
+  // ── Estado global: datos clinicos y agenda ──────────────────────────────────
+  const children = useDataStore((s) => s.children);
+  const users = useDataStore((s) => s.users);
+  const objectives = useDataStore((s) => s.objectives);
+  const sessions = useDataStore((s) => s.sessions);
+  const documents = useDataStore((s) => s.documents);
+  const meetings = useDataStore((s) => s.meetings);
+  const parentReports = useDataStore((s) => s.parentReports);
+  const tutors = useDataStore((s) => s.tutors);
+  const schools = useDataStore((s) => s.schools);
+  const gabineteSessions = useDataStore((s) => s.gabineteSessions);
+  const tutorReports = useDataStore((s) => s.tutorReports);
+  const activityLog = useDataStore((s) => s.activityLog);
+  const dataLoaded = useDataStore((s) => s.dataLoaded);
+  const loadAll = useDataStore((s) => s.loadAll);
+  const markLoaded = useDataStore((s) => s.markLoaded);
+  const markActivitySeen = useDataStore((s) => s.markActivitySeen);
 
-  // ── Google Calendar live agenda ─────────────────────────────────────────────
-  const [calendarEvents, setCalendarEvents] = useState([]);
-  const [gcalConnected, setGcalConnected] = useState(!!localStorage.getItem("gcal_token"));
-  const [calendarLoading, setCalendarLoading] = useState(false);
-  const [calendarError, setCalendarError] = useState(null);
-  const [calendarDate, setCalendarDate] = useState(TODAY);
+  const calendarEvents = useCalendarStore((s) => s.events);
+  const calendarLoading = useCalendarStore((s) => s.loading);
+  const calendarError = useCalendarStore((s) => s.error);
+  const calendarDate = useCalendarStore((s) => s.date);
+  const setCalendarDate = useCalendarStore((s) => s.setDate);
+  const fetchCalendarEvents = useCalendarStore((s) => s.fetchEvents);
+  const handleConnectGcal = useCalendarStore((s) => s.connect);
 
-  // ── Loading state ────────────────────────────────────────────────────────
-  const [appLoading, setAppLoading] = useState(false);
-  // Distinct from appLoading: stays false until the first Supabase load settles.
-  // /paciente/:id needs it to tell "patient not found" from "data hasn't arrived
-  // yet", since `children` starts out holding seed data on a cold deep link.
-  const [dataLoaded, setDataLoaded] = useState(false);
-  const [driveStatus, setDriveStatus] = useState("idle"); // reuse for save status UI
+  const driveStatus = "idle"; // barra de guardado: Supabase persiste al instante
+  const saveToDrive = () => {}; // se conserva por compatibilidad de la barra
 
-  // ── Supabase: load all data on login ─────────────────────────────────────
-  const loadFromSupabase = useCallback(async (role, userId) => {
-    setAppLoading(true);
-    try {
-      const [
-        dbChildren, dbObjectives, dbSessions, dbDocuments,
-        dbMeetings, dbSchools, dbGabineteSessions, dbTutorReports,
-      ] = await Promise.all([
-        // Pass role/id so specialists only receive their own assigned patients.
-        db.getChildren(role, userId), db.getObjectives(), db.getSessions(), db.getDocuments(),
-        db.getMeetings(), db.getSchools(), db.getGabineteSessions(), db.getTutorReports(),
-      ]);
-      // Unconditional, unlike the rows below: now that getChildren filters by role,
-      // an empty result is a real answer ("this specialist has no patients"). Falling
-      // back to seed data there would show them every demo patient instead of none.
-      setChildren(dbChildren);
-      if (dbObjectives.length > 0) setObjectives(dbObjectives);
-      if (dbSessions.length > 0) setSessions(dbSessions);
-      if (dbDocuments.length > 0) setDocuments(dbDocuments);
-      if (dbMeetings.length > 0) setMeetings(dbMeetings);
-      if (dbSchools.length > 0) setSchools(dbSchools);
-      if (dbGabineteSessions.length > 0) setGabineteSessions(dbGabineteSessions);
-      if (dbTutorReports.length > 0) setTutorReports(dbTutorReports);
-    } catch(e) {
-      console.error("Supabase load error:", e);
-    } finally {
-      setAppLoading(false);
-      setDataLoaded(true);
-    }
-  }, []);
-
-  const saveToDrive = () => {}; // kept for UI compatibility — Supabase saves are instant
-
-  // Load from Supabase on login
+  // Carga los datos al iniciar sesion. Los tutores sombra trabajan sobre datos
+  // semilla y no consultan la base.
   useEffect(() => {
     if (currentUser && currentUser.home !== "tutor") {
-      loadFromSupabase(currentUser.role, currentUser.id);
+      loadAll(currentUser.role, currentUser.id);
     } else if (currentUser) {
-      // Shadow tutors run entirely off seed data — nothing to wait for.
-      setDataLoaded(true);
+      markLoaded();
     }
-  }, [currentUser, loadFromSupabase]);
+  }, [currentUser, loadAll, markLoaded]);
 
-  const fetchCalendarEvents = async (date) => {
-    // Only load if we already have a token
-    const token = getStoredToken();
-    if (!token) {
-      setGcalConnected(false);
-      setCalendarError("conectar");
-      setCalendarLoading(false);
-      return;
-    }
-    setCalendarLoading(true);
-    setCalendarError(null);
-    try {
-      const events = await gcalFetch(date);
-      setCalendarEvents(events);
-      setGcalConnected(true);
-    } catch (e) {
-      if (e.message === "NOT_AUTHENTICATED") {
-        setGcalConnected(false);
-        setCalendarError("conectar");
-      } else {
-        setCalendarError("No se pudo cargar el calendario");
-      }
-      setCalendarEvents([]);
-    } finally {
-      setCalendarLoading(false);
-    }
-  };
-
-  const handleConnectGcal = async () => {
-    try {
-      await signInToGoogle();
-      setGcalConnected(true);
-      fetchCalendarEvents(calendarDate);
-    } catch(e) {
-      setCalendarError("No se pudo conectar con Google");
-    }
-  };
-
-  // Fetch on login for admin/clinical_director, and when date changes
-  React.useEffect(() => {
+  // Carga la agenda al iniciar sesion y cada vez que cambia la fecha.
+  useEffect(() => {
     if (currentUser && currentUser.home !== "tutor") {
       fetchCalendarEvents(calendarDate);
     }
-  }, [currentUser, calendarDate]);
+  }, [currentUser, calendarDate, fetchCalendarEvents]);
 
-    const [wizardOpen, setWizardOpen] = useState(false);
+  // Estado efimero de pantalla: no va a los stores porque es de la vista, no de
+  // la aplicacion. La tarea 8 lo baja a ChildProfile, que es donde se usa.
+  const [wizardOpen, setWizardOpen] = useState(false);
   const [viewingReport, setViewingReport] = useState(null);
   const [fullHistoryOpen, setFullHistoryOpen] = useState(false);
   const [evolutionOpen, setEvolutionOpen] = useState(false);
   const [parentReportOpen, setParentReportOpen] = useState(false);
   const [toast, setToast] = useState(false);
 
-  const selectedChild = children.find((c) => c.id === selectedChildId);
+  // ── Acciones del store ──────────────────────────────────────────────────────
+  const saveSession = useDataStore((s) => s.saveSession);
+  const handleUpdateChild = useDataStore((s) => s.updateChild);
+  const handleUpdateSession = useDataStore((s) => s.updateSession);
+  const handleUpdateDocument = useDataStore((s) => s.updateDocument);
+  const handleCloseProcess = useDataStore((s) => s.closeProcess);
+  const handleRenewPackage = useDataStore((s) => s.renewPackage);
+  const handleUpdateObjective = useDataStore((s) => s.updateObjective);
+  const handleAddObjective = useDataStore((s) => s.addObjective);
+  const handleDeleteObjective = useDataStore((s) => s.deleteObjective);
+  const handleAddTutorReport = useDataStore((s) => s.addTutorReport);
+  const handleAddGabineteSession = useDataStore((s) => s.addGabineteSession);
+  const handleAddSchool = useDataStore((s) => s.addSchool);
+  const handleAddChild = useDataStore((s) => s.addChild);
+  const addDocument = useDataStore((s) => s.addDocument);
+  const addMeeting = useDataStore((s) => s.addMeeting);
 
-  function handleSaveSession(payload) {
-    const newObjectives = (payload._newObjectiveNames || []).map((name, i) => ({
-      id: `obj-${Date.now()}-${i}`,
-      childId: payload.childId,
-      name,
-      area: payload.specialty,
-      createdDate: payload.date,
-      specialistId: payload.specialistId,
-      status: "proceso",
-    }));
-    let updatedObjectives = objectives;
-    if (newObjectives.length) {
-      updatedObjectives = [...objectives, ...newObjectives];
-      setObjectives(updatedObjectives);
-    }
-    // remap any "new-i" temp ids in objectivesWorked to the real new objective ids
-    const remappedObjectivesWorked = payload.objectivesWorked.map((ow) => {
-      if (String(ow.objectiveId).startsWith("new-")) {
-        const idx = parseInt(String(ow.objectiveId).split("-")[1], 10);
-        return { ...ow, objectiveId: newObjectives[idx]?.id || ow.objectiveId };
-      }
-      return ow;
-    });
-    // apply the performance status back onto the objective records
-    setObjectives((prev) => prev.map((o) => {
-      const match = remappedObjectivesWorked.find((ow) => ow.objectiveId === o.id);
-      return match ? { ...o, status: match.status } : o;
-    }));
-
-    const newSession = {
-      id: `s-${Date.now()}`,
-      childId: payload.childId,
-      specialistId: payload.specialistId,
-      specialty: payload.specialty,
-      date: payload.date,
-      duration: payload.duration,
-      objectivesWorked: remappedObjectivesWorked,
-      activities: payload.activities,
-      observation: payload.observation,
-      nextSteps: payload.nextSteps,
-      createdAt: new Date().toISOString(),
-    };
-    setSessions((prev) => [...prev, newSession]);
+  // El store hace el trabajo de datos; el cierre del asistente y el aviso de
+  // guardado son de la vista y se quedan aqui.
+  const handleSaveSession = (payload) => {
+    saveSession(payload);
     setWizardOpen(false);
-    const child = children.find(c => c.id === newSession.childId);
-    setActivityLog(prev => [{
-      id: `act-${Date.now()}`, type: "session", timestamp: new Date().toISOString(),
-      specialistId: newSession.specialistId, childId: newSession.childId,
-      childName: child ? `${child.name} ${child.lastName}` : "Paciente",
-      description: `Sesión registrada`,
-      seen: false,
-    }, ...prev]);
-    try { db.insertSession(newSession); } catch(e) { console.error("Save session:", e); }
     setToast(true);
     setTimeout(() => setToast(false), 3200);
-  }
+  };
 
-  async function handleUpdateChild(childId, updates) {
-    setChildren((prev) => prev.map((c) => {
-      if (c.id !== childId) return c;
-      const updated = { ...c, ...updates };
-      if (updates.parentContact) updated.parentContact = updates.parentContact;
-      return updated;
-    }));
-    try { await db.updateChild(childId, updates); } catch(e) { console.error("Update child:", e); }
-  }
+  // El childId llega explicito porque el store no conoce la ruta activa.
+  const handleAddDocument = (doc) => addDocument(selectedChildId, doc);
+  const handleAddMeeting = (meeting) => addMeeting(selectedChildId, meeting);
 
-  async function handleUpdateSession(session) {
-    setSessions(prev => prev.map(s => s.id === session.id ? session : s));
-    try { await db.updateSession(session); } catch(e) { console.error("Update session:", e); }
-  }
+  const selectedChild = children.find((c) => c.id === selectedChildId);
 
-  async function handleUpdateDocument(doc) {
-    setDocuments(prev => prev.map(d => d.id === doc.id ? doc : d));
-    try { await db.updateDocument(doc); } catch(e) { console.error("Update document:", e); }
-  }
 
-  async function handleCloseProcess(childId, note, objectives, totalSessions) {
-    const child = children.find(c => c.id === childId);
-    if (!child) return;
-    // Create a closure document (Reporte de Logros)
-    const doc = {
-      id: `d-close-${Date.now()}`,
-      childId,
-      type: "reporte",
-      title: "Reporte de Logros - Cierre de Proceso",
-      date: TODAY,
-      authorId: currentUser.id,
-      notes: note || "Proceso cerrado con objetivos alcanzados.",
-      fields: {
-        totalSessions,
-        objectives: objectives.map(o => ({ name: o.name, status: o.status })),
-        closedBy: currentUser.name,
-        closedDate: TODAY,
-      }
-    };
-    setDocuments(prev => [doc, ...prev]);
-    setActivityLog(prev => [{
-      id: `act-${Date.now()}`, type: "document", timestamp: new Date().toISOString(),
-      specialistId: currentUser.id, childId,
-      childName: `${child.name} ${child.lastName}`,
-      description: "Reporte de Logros generado - Cierre de proceso",
-      seen: false,
-    }, ...prev]);
-    try { await db.insertDocument(doc); } catch(e) { console.error("Close process:", e); }
-  }
 
-  async function handleRenewPackage(childId) {
-    const today = TODAY;
-    setChildren((prev) => prev.map((c) => {
-      if (c.id !== childId) return c;
-      const newPkg = (c.packageNum || 1) + 1;
-      return { ...c, packageStart: today, packageNum: newPkg };
-    }));
-    const child = children.find(c => c.id === childId);
-    if (child) {
-      try { await db.updateChild(childId, { packageStart: today, packageNum: (child.packageNum || 1) + 1 }); }
-      catch(e) { console.error("Renew package:", e); }
-    }
-  }
-  async function handleUpdateObjective(updated) {
-    setObjectives((prev) => prev.map((o) => o.id === updated.id ? updated : o));
-    try { await db.upsertObjective(updated); } catch(e) { console.error("Update objective:", e); }
-  }
-  async function handleAddObjective(obj) {
-    const newObj = { id: `o-${Date.now()}`, ...obj };
-    setObjectives((prev) => [...prev, newObj]);
-    try { await db.upsertObjective(newObj); } catch(e) { console.error("Add objective:", e); }
-  }
-  async function handleDeleteObjective(id) {
-    setObjectives((prev) => prev.filter((o) => o.id !== id));
-    try { await db.deleteObjective(id); } catch(e) { console.error("Delete objective:", e); }
-  }
-  function handleAddDocument(doc) {
-    setDocuments((prev) => [...prev, { id: `doc-${Date.now()}`, childId: selectedChildId, authorId: currentUser.id, ...doc }]);
-  }
 
-  function handleAddMeeting(meeting) {
-    setMeetings((prev) => [...prev, { id: `mtg-${Date.now()}`, childId: selectedChildId, createdBy: currentUser.id, ...meeting }]);
-  }
 
-  async function handleAddTutorReport(report) {
-    setTutorReports((prev) => [...prev, report]);
-    try { await db.insertTutorReport(report); } catch(e) { console.error("Add tutor report:", e); }
-  }
 
-  async function handleAddGabineteSession(session) {
-    setGabineteSessions((prev) => [...prev, session]);
-    try { await db.insertGabineteSession(session); } catch(e) { console.error("Add gabinete session:", e); }
-  }
 
-  async function handleAddSchool(school) {
-    setSchools((prev) => [...prev, school]);
-    try { await db.insertSchool(school); } catch(e) { console.error("Add school:", e); }
-  }
 
-  async function handleAddChild(child, anamnesisDoc) {
-    setChildren((prev) => [...prev, child]);
-    try { await db.insertChild(child); } catch(e) { console.error("Add child:", e); }
-    if (anamnesisDoc) {
-      setDocuments((prev) => [...prev, anamnesisDoc]);
-      try { await db.insertDocument(anamnesisDoc); } catch(e) { console.error("Add anamnesis doc:", e); }
-    }
-  }
+
+
+
 
   // Public link for a parent to sign the informed-consent form — no login needed.
   if (consentToken) {
@@ -4232,7 +4042,7 @@ export default function App() {
               tutors={tutors} tutorReports={tutorReports}
               calendarEvents={calendarEvents} calendarLoading={calendarLoading} calendarError={calendarError}
               calendarDate={calendarDate} onCalendarDateChange={(d) => { setCalendarDate(d); fetchCalendarEvents(d); }}
-              activityLog={activityLog} onMarkSeen={() => setActivityLog(prev => prev.map(a => ({...a, seen:true})))}
+              activityLog={activityLog} onMarkSeen={markActivitySeen}
               onOpenChild={openChild}
               onConnectGcal={handleConnectGcal}
             />
@@ -4241,7 +4051,7 @@ export default function App() {
               children={children} users={users} sessions={sessions} objectives={objectives} parentReports={parentReports}
               calendarEvents={calendarEvents} calendarLoading={calendarLoading} calendarError={calendarError}
               calendarDate={calendarDate} onCalendarDateChange={(d) => { setCalendarDate(d); fetchCalendarEvents(d); }}
-              activityLog={activityLog} onMarkSeen={() => setActivityLog(prev => prev.map(a => ({...a, seen:true})))}
+              activityLog={activityLog} onMarkSeen={markActivitySeen}
               onOpenChild={openChild}
               onConnectGcal={handleConnectGcal}
               currentUser={currentUser}
