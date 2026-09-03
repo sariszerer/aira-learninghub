@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { Routes, Route, Navigate, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { db, auth, getAppUser } from "./supabase.js";
-import { can } from "./permissions.js";
+import { can, visibleChildren, ROLES } from "./permissions.js";
 import { signInToGoogle, fetchCalendarEvents as gcalFetch, getStoredToken, clearToken } from "./googleCalendar.js";
 import Login from "./Login.jsx";
 
@@ -757,7 +757,7 @@ function TodaySchedule({ childrenToday, onOpenChild }) {
 
 function SpecialistHome({ user, children, users, sessions, onOpenChild, calendarEvents, calendarLoading, calendarError, calendarDate, onCalendarDateChange }) {
   const [query, setQuery] = useState("");
-  const myChildren = children.filter((c) => c.assignedSpecialists.includes(user.id));
+  const myChildren = visibleChildren(user, children);
   const filtered = myChildren.filter((c) =>
     (c.name + " " + c.lastName).toLowerCase().includes(query.toLowerCase())
   );
@@ -1012,11 +1012,11 @@ function ClinicalDirectorHome({ user, children, users, sessions, objectives, tut
     return matchQ && matchS;
   });
 
-  const myChildren = children.filter((c) => c.assignedSpecialists.includes(user.id));
-  const myToday = myChildren.filter((c) => c.nextSession === TODAY)
+  const misPacientesAsignados = children.filter((c) => c.assignedSpecialists.includes(user.id));
+  const myToday = misPacientesAsignados.filter((c) => c.nextSession === TODAY)
     .sort((a, b) => (a.nextSessionTime || "").localeCompare(b.nextSessionTime || ""));
 
-  const allSpecialistsAndDir = users.filter((u) => u.role === "specialist" || u.role === "clinical_director");
+  const allSpecialistsAndDir = users.filter((u) => ROLES[u.role]?.esClinico);
 
   // ── Alert calculations ─────────────────────────────────────────────────────
 
@@ -1580,7 +1580,7 @@ function GabinetePanel({ schools, users, gabineteSessions, onAddSession, onAddSc
   const school = schools.find((s) => s.id === selectedSchool) || schools[0] || null;
   const schoolSessions = school ? gabineteSessions.filter((s) => s.schoolId === school.id).sort((a, b) => b.date.localeCompare(a.date)) : [];
 
-  const allSpecialists = users.filter((u) => u.role === "specialist" || u.role === "clinical_director");
+  const allSpecialists = users.filter((u) => ROLES[u.role]?.esClinico);
 
   const emptySession = () => ({ specialistId: "", specialty: "", date: TODAY, participants: "", duration: 60, area: "", notes: "" });
 
@@ -1890,7 +1890,7 @@ function AdminDashboard({ children, users, sessions, objectives, parentReports, 
   const [searchQuery, setSearchQuery] = useState("");
   const [alertsOpen, setAlertsOpen] = useState(true);
   const [showAddPatient, setShowAddPatient] = useState(false);
-  const specialists = users.filter((u) => u.role === "specialist" || u.role === "clinical_director");
+  const specialists = users.filter((u) => ROLES[u.role]?.esClinico);
   const today = TODAY;
   const sessionsToday = sessions.filter((s) => s.date === today).length;
   const childrenNoRecentSession = children.filter((c) => {
@@ -3141,7 +3141,7 @@ function AddPatientWizard({ users, currentUser, onClose, onCreate }) {
 
   // Step 3 — especialistas
   const [assignedSpecialists, setAssignedSpecialists] = useState([]);
-  const specialists = users.filter((u) => u.role === "specialist" || u.role === "clinical_director");
+  const specialists = users.filter((u) => ROLES[u.role]?.esClinico);
   const toggleSpecialist = (id) => {
     setAssignedSpecialists((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
   };
@@ -5008,7 +5008,7 @@ export default function App() {
         user={currentUser}
         onHome={goHome}
         onBack={isChildRoute ? goHome : null}
-        backLabel={currentUser.role === "admin" ? "Panel administrativo" : currentUser.role === "clinical_director" ? "Panel clínico" : "Mis pacientes"}
+        backLabel={currentUser.home === "admin" ? "Panel administrativo" : currentUser.home === "clinico" ? "Panel clínico" : "Mis pacientes"}
         onLogout={async () => { await auth.signOut(); setCurrentUser(null); goHome(); }}
         showGabinete={can(currentUser, "gabinete:view")}
         onGabinete={() => navigate("/gabinete")}
@@ -5018,21 +5018,21 @@ export default function App() {
 
       <Routes>
         <Route path="/" element={
-          currentUser.role === "shadow" ? (
+          currentUser.home === "tutor" ? (
             <TutorAiraHome
               user={currentUser} children={children} users={users} objectives={objectives}
               tutorReports={tutorReports}
               onOpenChild={openChild}
               onAddTutorReport={handleAddTutorReport}
             />
-          ) : currentUser.role === "specialist" ? (
+          ) : currentUser.home === "especialista" ? (
             <SpecialistHome
               user={currentUser} children={children} users={users} sessions={sessions}
               calendarEvents={calendarEvents} calendarLoading={calendarLoading} calendarError={calendarError}
               calendarDate={calendarDate} onCalendarDateChange={(d) => { setCalendarDate(d); fetchCalendarEvents(d); }}
               onOpenChild={openChild}
             />
-          ) : currentUser.role === "clinical_director" ? (
+          ) : currentUser.home === "clinico" ? (
             <ClinicalDirectorHome
               user={currentUser} children={children} users={users} sessions={sessions} objectives={objectives}
               tutors={tutors} tutorReports={tutorReports}
@@ -5042,7 +5042,7 @@ export default function App() {
               onOpenChild={openChild}
               onConnectGcal={handleConnectGcal}
             />
-          ) : currentUser.role === "admin" ? (
+          ) : currentUser.home === "admin" ? (
             <AdminDashboard
               children={children} users={users} sessions={sessions} objectives={objectives} parentReports={parentReports}
               calendarEvents={calendarEvents} calendarLoading={calendarLoading} calendarError={calendarError}
