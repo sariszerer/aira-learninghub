@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { PERMISSIONS, can, visibleChildren, canSeeChild } from './permissions.js'
+import { ROLES, buildUser, PERMISSIONS as CAT } from './permissions.js'
 
 const usuario = (perms, extra = {}) => ({
   id: 'u-1', permissions: new Set(perms), scope: 'asignados', assignedChildId: null, ...extra,
@@ -132,5 +133,104 @@ describe('canSeeChild', () => {
   it('sin niño devuelve false', () => {
     const u = { id: 'u-1', permissions: new Set(), scope: 'todos' }
     expect(canSeeChild(u, null)).toBe(false)
+  })
+})
+
+describe('ROLES — matriz semilla', () => {
+  it('define exactamente los 4 roles actuales', () => {
+    expect(Object.keys(ROLES).sort()).toEqual(
+      ['admin', 'clinical_director', 'shadow', 'specialist']
+    )
+  })
+
+  it('todo permiso listado existe en el catálogo', () => {
+    const validas = new Set(CAT.map(p => p.key))
+    for (const [id, r] of Object.entries(ROLES)) {
+      for (const key of r.permisos) {
+        expect(validas.has(key), `${id} declara ${key}`).toBe(true)
+      }
+    }
+  })
+
+  it('cada rol declara sus cuatro atributos', () => {
+    for (const [id, r] of Object.entries(ROLES)) {
+      expect(['todos', 'asignados', 'un_nino'], id).toContain(r.scope)
+      expect(['admin', 'clinico', 'especialista', 'tutor'], id).toContain(r.home)
+      expect(typeof r.esClinico, id).toBe('boolean')
+      expect(r.etiqueta, id).toBeTruthy()
+    }
+  })
+
+  // Contratos que preservan el comportamiento actual, derivados de los checks de App.jsx
+  it('admin NO registra sesiones (App.jsx:3850 lo excluye)', () => {
+    expect(ROLES.admin.permisos).not.toContain('session:create')
+  })
+
+  it('solo admin da de alta pacientes (onAddChild solo en AdminDashboard)', () => {
+    expect(ROLES.admin.permisos).toContain('patient:create')
+    expect(ROLES.clinical_director.permisos).not.toContain('patient:create')
+    expect(ROLES.specialist.permisos).not.toContain('patient:create')
+  })
+
+  it('solo admin administra usuarios y roles', () => {
+    for (const id of ['clinical_director', 'specialist', 'shadow']) {
+      expect(ROLES[id].permisos, id).not.toContain('role:manage')
+      expect(ROLES[id].permisos, id).not.toContain('user:manage')
+    }
+  })
+
+  it('admin y dirección clínica editan cualquier sesión; especialista solo las propias', () => {
+    expect(ROLES.admin.permisos).toContain('session:edit:any')
+    expect(ROLES.clinical_director.permisos).toContain('session:edit:any')
+    expect(ROLES.specialist.permisos).toContain('session:edit:own')
+    expect(ROLES.specialist.permisos).not.toContain('session:edit:any')
+  })
+
+  it('gabinete solo para admin y dirección clínica (App.jsx:5012)', () => {
+    expect(ROLES.specialist.permisos).not.toContain('gabinete:view')
+    expect(ROLES.shadow.permisos).not.toContain('gabinete:view')
+  })
+
+  it('guidelines:view reemplaza el id u-admin incrustado', () => {
+    expect(ROLES.admin.permisos).toContain('guidelines:view')
+    expect(ROLES.clinical_director.permisos).toContain('guidelines:view')
+    expect(ROLES.specialist.permisos).not.toContain('guidelines:view')
+  })
+
+  // Cambio de comportamiento aprobado: se cierra el hueco del tutor sombra
+  it('shadow NO cierra procesos, ni renueva paquetes, ni genera reportes', () => {
+    for (const key of ['patient:close', 'patient:renew_package', 'report:generate', 'report:parent:generate']) {
+      expect(ROLES.shadow.permisos, key).not.toContain(key)
+    }
+  })
+
+  it('shadow conserva lectura y sus reportes de tutor', () => {
+    expect(ROLES.shadow.permisos).toContain('tutorreport:create')
+    expect(ROLES.shadow.permisos).toContain('patient:view')
+    expect(ROLES.shadow.scope).toBe('un_nino')
+  })
+
+  it('solo especialista y dirección clínica son clínicos (aparecen en selectores de terapeuta)', () => {
+    expect(ROLES.specialist.esClinico).toBe(true)
+    expect(ROLES.clinical_director.esClinico).toBe(true)
+    expect(ROLES.admin.esClinico).toBe(false)
+    expect(ROLES.shadow.esClinico).toBe(false)
+  })
+})
+
+describe('buildUser', () => {
+  it('adjunta permisos como Set y los atributos del rol', () => {
+    const u = buildUser({ id: 'u-1', name: 'Ana', role: 'specialist', assignedChildId: null })
+    expect(u.permissions).toBeInstanceOf(Set)
+    expect(u.permissions.has('session:edit:own')).toBe(true)
+    expect(u.scope).toBe('asignados')
+    expect(u.home).toBe('especialista')
+    expect(u.name).toBe('Ana')
+  })
+
+  it('un rol desconocido produce un usuario sin permisos ni alcance', () => {
+    const u = buildUser({ id: 'u-9', role: 'inventado' })
+    expect(u.permissions.size).toBe(0)
+    expect(visibleChildren(u, [{ id: 'c-1', assignedSpecialists: ['u-9'] }])).toEqual([])
   })
 })

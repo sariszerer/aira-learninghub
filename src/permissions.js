@@ -91,3 +91,90 @@ export function canSeeChild(user, child) {
   if (!child) return false
   return visibleChildren(user, [child]).length === 1
 }
+
+const TODAS_LAS_LECTURAS = [
+  'patient:view', 'session:view', 'objective:view', 'document:view',
+  'anamnesis:view', 'workplan:view', 'report:view', 'meeting:view', 'tutorreport:view',
+]
+
+// Los 4 roles actuales, derivados uno a uno de los checks de App.jsx.
+// La Fase 2 los siembra como filas con es_sistema = true; hasta entonces esta
+// es la única fuente. Cambiar algo aquí cambia permisos en producción.
+export const ROLES = {
+  admin: {
+    nombre: 'Administración', etiqueta: 'Admin', color: 'amberDeep',
+    scope: 'todos', home: 'admin', esClinico: false,
+    permisos: [
+      ...TODAS_LAS_LECTURAS,
+      'patient:create', 'patient:edit', 'patient:close', 'patient:renew_package',
+      // sin session:create — App.jsx:3850 excluye a admin del botón "Registrar sesión"
+      'session:edit:any',
+      'objective:create', 'objective:edit:any',
+      'document:create', 'document:edit:any',
+      'anamnesis:edit', 'workplan:create',
+      'report:generate', 'report:parent:generate',
+      'meeting:create', 'guidelines:view',
+      'gabinete:view', 'gabinete:session:create', 'school:create',
+      'tutorreport:create',
+      'user:manage', 'role:manage',
+    ],
+  },
+
+  clinical_director: {
+    nombre: 'Dirección clínica', etiqueta: 'Dir. Clínica', color: 'brandBright',
+    scope: 'todos', home: 'clinico', esClinico: true,
+    permisos: [
+      ...TODAS_LAS_LECTURAS,
+      'patient:edit', 'patient:close', 'patient:renew_package',
+      'session:create', 'session:edit:any',
+      'objective:create', 'objective:edit:any',
+      'document:create', 'document:edit:any',
+      'anamnesis:edit', 'workplan:create',
+      'report:generate', 'report:parent:generate',
+      'meeting:create', 'guidelines:view',
+      'gabinete:view', 'gabinete:session:create', 'school:create',
+      'tutorreport:create',
+    ],
+  },
+
+  specialist: {
+    nombre: 'Especialista', etiqueta: 'Especialista', color: 'inkFaint',
+    scope: 'asignados', home: 'especialista', esClinico: true,
+    permisos: [
+      ...TODAS_LAS_LECTURAS,
+      'patient:close', 'patient:renew_package',
+      'session:create', 'session:edit:own',
+      'objective:create', 'objective:edit:own',
+      'document:create', 'document:edit:own',
+      'anamnesis:edit', 'workplan:create',
+      'report:generate', 'report:parent:generate',
+      'meeting:create',
+    ],
+  },
+
+  shadow: {
+    nombre: 'Tutor AIRA', etiqueta: 'Tutor AIRA', color: 'inkFaint',
+    scope: 'un_nino', home: 'tutor', esClinico: false,
+    // Cambio de comportamiento aprobado: hoy podría cerrar procesos y generar
+    // reportes por ausencia de check, no por diseño. Se cierra el hueco.
+    permisos: [
+      ...TODAS_LAS_LECTURAS,
+      'tutorreport:create',
+    ],
+  },
+}
+
+// Convierte la fila de public.users en el objeto que consume can()/visibleChildren().
+// Un rol desconocido produce un usuario sin permisos ni alcance: falla cerrado.
+export function buildUser(dbUser) {
+  const rol = ROLES[dbUser?.role]
+  return {
+    ...dbUser,
+    permissions: new Set(rol ? rol.permisos : []),
+    scope: rol ? rol.scope : null,
+    home: rol ? rol.home : null,
+    esClinico: rol ? rol.esClinico : false,
+    etiqueta: rol ? rol.etiqueta : '',
+    color: rol ? rol.color : null,
+  }
+}
