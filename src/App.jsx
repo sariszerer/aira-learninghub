@@ -514,89 +514,6 @@ function Card({ children, style, onClick }) {
 }
 
 /* ============================================================
-   LOGIN
-============================================================ */
-function LoginScreen({ users, tutors, onLogin }) {
-  return (
-    <div style={{
-      minHeight: "100vh", background: `radial-gradient(circle at 12% 8%, ${T.brandTint}, ${T.bg} 58%)`,
-      display: "flex", alignItems: "center", justifyContent: "center", padding: 24,
-    }}>
-      <div style={{ width: "100%", maxWidth: 480 }}>
-        <div style={{ textAlign: "center", marginBottom: 44 }}>
-          <img src={AIRA_LOGO_FULL_URI} alt="AIRA Learning Hub" style={{ width: 340, height: "auto", margin: "0 auto" }} />
-          <div style={{ fontFamily: "Fraunces, serif", fontStyle: "italic", color: T.inkSoft, fontSize: 16, marginTop: 14 }}>
-            Expediente digital compartido entre especialistas
-          </div>
-        </div>
-
-        <div style={{ marginBottom: 14, paddingLeft: 4 }}>
-          <Eyebrow tone="faint" style={{ marginBottom: 0, fontSize: 13.5 }}>Selecciona tu usuario</Eyebrow>
-        </div>
-        <Card style={{ padding: 8 }}>
-          {users.filter(u => u.role !== "shadow").map((u, i) => (
-            <button
-              key={u.id}
-              onClick={() => onLogin(u)}
-              style={{
-                width: "100%", display: "flex", alignItems: "center", gap: 16,
-                padding: "16px 14px", border: "none", background: "transparent",
-                borderTop: i > 0 ? `1px solid ${T.borderSoft}` : "none",
-                cursor: "pointer", textAlign: "left",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = T.surfaceSunk)}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-            >
-              <Avatar name={u.name} bg={u.avatarBg} size={46} />
-              <div style={{ flex: 1 }}>
-                <div style={{ fontFamily: "Fraunces, serif", fontWeight: 600, fontSize: 16.5, color: T.ink }}>{u.name}</div>
-                <div style={{ fontSize: 13, color: T.inkSoft, marginTop: 1 }}>
-                  {u.role === "admin" || u.role === "clinical_director" ? u.title || u.specialty : u.specialty}
-                </div>
-              </div>
-              <span style={{
-                fontSize: 11, fontWeight: 600, letterSpacing: "0.03em",
-                color: u.role === "admin" ? T.amberDeep : u.role === "clinical_director" ? T.brandBright : T.inkFaint,
-              }}>
-                {u.role === "admin" ? "Admin" : u.role === "clinical_director" ? "Dir. Clínica" : u.role === "shadow" ? "Tutor AIRA" : "Especialista"}
-              </span>
-              <ChevronRight size={17} color={T.inkFaint} />
-            </button>
-          ))}
-        </Card>
-        {tutors && tutors.length > 0 && (
-          <div style={{ marginTop: 20 }}>
-            <div style={{ marginBottom: 10, paddingLeft: 4 }}>
-              <Eyebrow tone="faint" style={{ marginBottom: 0, fontSize: 13.5 }}>Tutores AIRA</Eyebrow>
-            </div>
-            <Card style={{ padding: 8 }}>
-              {tutors.map((u, i) => (
-                <button key={u.id} onClick={() => onLogin(u)}
-                  style={{ width: "100%", display: "flex", alignItems: "center", gap: 16, padding: "14px 14px", border: "none", background: "transparent", borderTop: i > 0 ? `1px solid ${T.borderSoft}` : "none", cursor: "pointer", textAlign: "left" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = T.surfaceSunk)}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                >
-                  <Avatar name={u.name} bg={u.avatarBg} size={40} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontFamily: "Fraunces, serif", fontWeight: 600, fontSize: 15, color: T.ink }}>{u.name}</div>
-                    <div style={{ fontSize: 12.5, color: T.inkSoft, marginTop: 1 }}>{u.school}</div>
-                  </div>
-                  <span style={{ fontSize: 11, fontWeight: 600, color: "#9A6B9A" }}>Tutor AIRA</span>
-                  <ChevronRight size={17} color={T.inkFaint} />
-                </button>
-              ))}
-            </Card>
-          </div>
-        )}
-        <div style={{ textAlign: "center", fontSize: 12.5, color: T.inkFaint, marginTop: 26 }}>
-          Acceso protegido · datos confidenciales de pacientes
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ============================================================
    APP SHELL (top bar)
 ============================================================ */
 function DriveSaveBar({ status, onSave }) {
@@ -649,7 +566,7 @@ function TopBar({ user, onBack, backLabel, onLogout, onHome, showGabinete, onGab
         <div style={{ display: "flex", alignItems: "center", gap: 13 }}>
           <div style={{ textAlign: "right" }}>
             <div style={{ fontSize: 13.5, fontWeight: 600, color: T.ink }}>{user.name}</div>
-            <div style={{ fontSize: 11.5, color: T.inkFaint }}>{user.role === "admin" || user.role === "clinical_director" ? user.title || user.specialty : user.role === "shadow" ? `Tutor AIRA · ${user.school}` : user.specialty}</div>
+            <div style={{ fontSize: 11.5, color: T.inkFaint }}>{user.home === "admin" || user.home === "clinico" ? user.title || user.specialty : user.home === "tutor" ? `Tutor AIRA · ${user.school}` : user.specialty}</div>
           </div>
           <Avatar name={user.name} bg={user.avatarBg} size={36} />
           {onSave && (
@@ -4159,7 +4076,7 @@ function SessionWizard({ child, currentUser, objectives, onClose, onSave }) {
   // Only show this specialist's objectives for this child
   const myObjectives = objectives.filter(o => 
     o.childId === child.id && 
-    (currentUser.role === "admin" || currentUser.role === "clinical_director" || o.specialistId === currentUser.id)
+    can(currentUser, "objective:edit", o)
   );
 
   // Session number for this specialist + child
@@ -4749,7 +4666,7 @@ export default function App() {
 
   // Load from Supabase on login
   useEffect(() => {
-    if (currentUser && currentUser.role !== "shadow") {
+    if (currentUser && currentUser.home !== "tutor") {
       loadFromSupabase(currentUser.role, currentUser.id);
     } else if (currentUser) {
       // Shadow tutors run entirely off seed data — nothing to wait for.
@@ -4797,7 +4714,7 @@ export default function App() {
 
   // Fetch on login for admin/clinical_director, and when date changes
   React.useEffect(() => {
-    if (currentUser && currentUser.role !== "shadow") {
+    if (currentUser && currentUser.home !== "tutor") {
       fetchCalendarEvents(calendarDate);
     }
   }, [currentUser, calendarDate]);
