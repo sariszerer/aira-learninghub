@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { PERMISSIONS, can, visibleChildren, canSeeChild } from './permissions.js'
-import { ROLES, buildUser, PERMISSIONS as CAT } from './permissions.js'
+import { PERMISSIONS, can, visibleChildren, canSeeChild, ROLES, buildUser } from './permissions.js'
 
 const usuario = (perms, extra = {}) => ({
   id: 'u-1', permissions: new Set(perms), scope: 'asignados', assignedChildId: null, ...extra,
@@ -143,9 +142,11 @@ describe('ROLES — matriz semilla', () => {
     )
   })
 
-  it('todo permiso listado existe en el catálogo', () => {
-    const validas = new Set(CAT.map(p => p.key))
+  it('todo permiso listado existe en el catálogo, sin duplicados y sin roles vacíos', () => {
+    const validas = new Set(PERMISSIONS.map(p => p.key))
     for (const [id, r] of Object.entries(ROLES)) {
+      expect(r.permisos.length, `${id} no debe tener permisos vacíos`).toBeGreaterThan(0)
+      expect(new Set(r.permisos).size, `${id} no debe declarar duplicados`).toBe(r.permisos.length)
       for (const key of r.permisos) {
         expect(validas.has(key), `${id} declara ${key}`).toBe(true)
       }
@@ -197,14 +198,24 @@ describe('ROLES — matriz semilla', () => {
     expect(ROLES.specialist.permisos).not.toContain('guidelines:view')
   })
 
-  // Cambio de comportamiento aprobado: se cierra el hueco del tutor sombra
-  it('shadow NO cierra procesos, ni renueva paquetes, ni genera reportes', () => {
-    for (const key of ['patient:close', 'patient:renew_package', 'report:generate', 'report:parent:generate']) {
+  // Cambio de comportamiento aprobado: se cierra el hueco del tutor sombra.
+  // Las 8 capacidades de escritura que shadow tenía solo por ausencia de
+  // check en App.jsx (no por diseño): cerrar procesos, renovar paquetes,
+  // generar reportes, subir/editar documentos, crear plan de trabajo y
+  // registrar reuniones.
+  it('shadow NO cierra procesos, ni renueva paquetes, ni genera reportes, ni sube documentos, ni crea planes o reuniones', () => {
+    for (const key of [
+      'patient:close', 'patient:renew_package',
+      'report:generate', 'report:parent:generate',
+      'document:create', 'document:edit:own',
+      'workplan:create', 'meeting:create',
+    ]) {
       expect(ROLES.shadow.permisos, key).not.toContain(key)
     }
   })
 
   it('shadow conserva lectura y sus reportes de tutor', () => {
+    expect(ROLES.shadow.permisos).toContain('tutorreport:view')
     expect(ROLES.shadow.permisos).toContain('tutorreport:create')
     expect(ROLES.shadow.permisos).toContain('patient:view')
     expect(ROLES.shadow.scope).toBe('un_nino')
@@ -215,6 +226,85 @@ describe('ROLES — matriz semilla', () => {
     expect(ROLES.clinical_director.esClinico).toBe(true)
     expect(ROLES.admin.esClinico).toBe(false)
     expect(ROLES.shadow.esClinico).toBe(false)
+  })
+
+  it('tutorreport:create solo lo tiene shadow — único punto de creación es TutorAiraHome', () => {
+    for (const id of ['admin', 'clinical_director', 'specialist']) {
+      expect(ROLES[id].permisos, id).not.toContain('tutorreport:create')
+    }
+    expect(ROLES.shadow.permisos).toContain('tutorreport:create')
+  })
+
+  it('tutorreport:view solo lo tienen dirección clínica y shadow', () => {
+    for (const id of ['admin', 'specialist']) {
+      expect(ROLES[id].permisos, id).not.toContain('tutorreport:view')
+    }
+    expect(ROLES.clinical_director.permisos).toContain('tutorreport:view')
+    expect(ROLES.shadow.permisos).toContain('tutorreport:view')
+  })
+
+  // Contrato completo: fija el conjunto exacto de permisos por rol para que
+  // agregar o quitar una sola clave rompa la prueba, no solo los checks puntuales.
+  it('admin tiene exactamente este conjunto de permisos', () => {
+    expect([...ROLES.admin.permisos].sort()).toEqual([
+      'anamnesis:edit', 'anamnesis:view',
+      'document:create', 'document:edit:any', 'document:view',
+      'gabinete:session:create', 'gabinete:view',
+      'guidelines:view',
+      'meeting:create', 'meeting:view',
+      'objective:create', 'objective:edit:any', 'objective:view',
+      'patient:close', 'patient:create', 'patient:edit', 'patient:renew_package', 'patient:view',
+      'report:generate', 'report:parent:generate', 'report:view',
+      'role:manage',
+      'school:create',
+      'session:edit:any', 'session:view',
+      'user:manage',
+      'workplan:create', 'workplan:view',
+    ].sort())
+  })
+
+  it('clinical_director tiene exactamente este conjunto de permisos', () => {
+    expect([...ROLES.clinical_director.permisos].sort()).toEqual([
+      'anamnesis:edit', 'anamnesis:view',
+      'document:create', 'document:edit:any', 'document:view',
+      'gabinete:session:create', 'gabinete:view',
+      'guidelines:view',
+      'meeting:create', 'meeting:view',
+      'objective:create', 'objective:edit:any', 'objective:view',
+      'patient:close', 'patient:edit', 'patient:renew_package', 'patient:view',
+      'report:generate', 'report:parent:generate', 'report:view',
+      'school:create',
+      'session:create', 'session:edit:any', 'session:view',
+      'tutorreport:view',
+      'workplan:create', 'workplan:view',
+    ].sort())
+  })
+
+  it('specialist tiene exactamente este conjunto de permisos', () => {
+    expect([...ROLES.specialist.permisos].sort()).toEqual([
+      'anamnesis:edit', 'anamnesis:view',
+      'document:create', 'document:edit:own', 'document:view',
+      'meeting:create', 'meeting:view',
+      'objective:create', 'objective:edit:own', 'objective:view',
+      'patient:close', 'patient:renew_package', 'patient:view',
+      'report:generate', 'report:parent:generate', 'report:view',
+      'session:create', 'session:edit:own', 'session:view',
+      'workplan:create', 'workplan:view',
+    ].sort())
+  })
+
+  it('shadow tiene exactamente este conjunto de permisos', () => {
+    expect([...ROLES.shadow.permisos].sort()).toEqual([
+      'anamnesis:view',
+      'document:view',
+      'meeting:view',
+      'objective:view',
+      'patient:view',
+      'report:view',
+      'session:view',
+      'tutorreport:create', 'tutorreport:view',
+      'workplan:view',
+    ].sort())
   })
 })
 
@@ -231,6 +321,16 @@ describe('buildUser', () => {
   it('un rol desconocido produce un usuario sin permisos ni alcance', () => {
     const u = buildUser({ id: 'u-9', role: 'inventado' })
     expect(u.permissions.size).toBe(0)
+    expect(u.scope).toBeNull()
     expect(visibleChildren(u, [{ id: 'c-1', assignedSpecialists: ['u-9'] }])).toEqual([])
+  })
+
+  it('buildUser(null) no truena y falla cerrado', () => {
+    const u = buildUser(null)
+    expect(u.permissions.size).toBe(0)
+    expect(u.scope).toBeNull()
+    expect(u.home).toBeNull()
+    expect(u.etiqueta).toBeNull()
+    expect(u.color).toBeNull()
   })
 })

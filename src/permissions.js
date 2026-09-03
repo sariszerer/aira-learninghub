@@ -94,12 +94,17 @@ export function canSeeChild(user, child) {
 
 const TODAS_LAS_LECTURAS = [
   'patient:view', 'session:view', 'objective:view', 'document:view',
-  'anamnesis:view', 'workplan:view', 'report:view', 'meeting:view', 'tutorreport:view',
+  'anamnesis:view', 'workplan:view', 'report:view', 'meeting:view',
 ]
 
 // Los 4 roles actuales, derivados uno a uno de los checks de App.jsx.
 // La Fase 2 los siembra como filas con es_sistema = true; hasta entonces esta
 // es la única fuente. Cambiar algo aquí cambia permisos en producción.
+//
+// patient:renew_package se asigna a admin, dirección clínica y especialista
+// porque el cableado (onRenewPackage) existe, pero hoy no tiene punto de uso
+// en la interfaz: no hay botón en App.jsx que lo invoque y el estado
+// confirmRenew está muerto. Nadie ejerce esta capacidad todavía.
 export const ROLES = {
   admin: {
     nombre: 'Administración', etiqueta: 'Admin', color: 'amberDeep',
@@ -115,7 +120,8 @@ export const ROLES = {
       'report:generate', 'report:parent:generate',
       'meeting:create', 'guidelines:view',
       'gabinete:view', 'gabinete:session:create', 'school:create',
-      'tutorreport:create',
+      // sin tutorreport:create — el único punto de creación es TutorAiraHome,
+      // que solo se monta para shadow
       'user:manage', 'role:manage',
     ],
   },
@@ -125,6 +131,8 @@ export const ROLES = {
     scope: 'todos', home: 'clinico', esClinico: true,
     permisos: [
       ...TODAS_LAS_LECTURAS,
+      // tutorreport:view: hoy solo ClinicalDirectorHome muestra reportes de tutor
+      'tutorreport:view',
       'patient:edit', 'patient:close', 'patient:renew_package',
       'session:create', 'session:edit:any',
       'objective:create', 'objective:edit:any',
@@ -133,7 +141,8 @@ export const ROLES = {
       'report:generate', 'report:parent:generate',
       'meeting:create', 'guidelines:view',
       'gabinete:view', 'gabinete:session:create', 'school:create',
-      'tutorreport:create',
+      // sin tutorreport:create — el único punto de creación es TutorAiraHome,
+      // que solo se monta para shadow
     ],
   },
 
@@ -155,11 +164,18 @@ export const ROLES = {
   shadow: {
     nombre: 'Tutor AIRA', etiqueta: 'Tutor AIRA', color: 'inkFaint',
     scope: 'un_nino', home: 'tutor', esClinico: false,
-    // Cambio de comportamiento aprobado: hoy podría cerrar procesos y generar
-    // reportes por ausencia de check, no por diseño. Se cierra el hueco.
+    // Cambio de comportamiento aprobado: cierra el hueco de shadow, que hoy
+    // podría ejercer 8 capacidades de escritura solo por ausencia de check en
+    // App.jsx, no por diseño: cerrar procesos (patient:close), renovar
+    // paquetes (patient:renew_package), generar reportes (report:generate,
+    // report:parent:generate), subir o editar sus documentos (document:create,
+    // document:edit:own — DocumentsSection:2661), crear plan de trabajo
+    // (workplan:create — bypass del canAdd en PlanTrabajoTab:3763) y registrar
+    // reuniones (meeting:create — InterdisciplinaryTab:3654). shadow queda
+    // solo con las 8 lecturas de TODAS_LAS_LECTURAS más sus reportes de tutor.
     permisos: [
       ...TODAS_LAS_LECTURAS,
-      'tutorreport:create',
+      'tutorreport:view', 'tutorreport:create',
     ],
   },
 }
@@ -174,7 +190,7 @@ export function buildUser(dbUser) {
     scope: rol ? rol.scope : null,
     home: rol ? rol.home : null,
     esClinico: rol ? rol.esClinico : false,
-    etiqueta: rol ? rol.etiqueta : '',
+    etiqueta: rol ? rol.etiqueta : null,
     color: rol ? rol.color : null,
   }
 }
