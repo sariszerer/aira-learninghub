@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { Routes, Route, Navigate, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { db, auth, getAppUser } from "./supabase.js";
+import { can } from "./permissions.js";
 import { signInToGoogle, fetchCalendarEvents as gcalFetch, getStoredToken, clearToken } from "./googleCalendar.js";
 import Login from "./Login.jsx";
 
@@ -2566,7 +2567,7 @@ function HistorialTab({ child, sessions, objectives, users, onViewReport, onUpda
     return <div style={{ color: T.inkFaint, fontSize: 14, textAlign: "center", padding: 40 }}>Aún no hay sesiones registradas para este paciente.</div>;
   }
 
-  const canEdit = (s) => currentUser && (currentUser.role === "admin" || currentUser.role === "clinical_director" || currentUser.id === s.specialistId);
+  const canEdit = (s) => can(currentUser, "session:edit", s);
   const AREA_COLORS = {"Terapia Ocupacional":"#175FAF","Fonoaudiologia":"#7A9E7E","Funciones Ejecutivas":"#C79A6B","Psicologia":"#A6779A","Psicologia Clinica":"#A6779A","Desarrollo (DVLP)":"#B8860B","Kids Club":"#82A166"};
 
   return (
@@ -2672,7 +2673,7 @@ function DocumentsSection({ type, documents, users, onAdd, onUpdateDocument, cur
             const isEditing = editingId === d.id;
             const isExpanded = expandedId === d.id;
             const isPdf = d.fields?.pdfUrl || d.fields?.pdfData;
-            const canEdit = currentUser && (currentUser.role === "admin" || currentUser.role === "clinical_director" || currentUser.id === d.authorId);
+            const canEdit = can(currentUser, "document:edit", d);
             return (
               <div key={d.id} style={{ padding: "13px 14px", borderTop: i > 0 ? `1px solid ${T.border}` : "none" }}>
                 <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
@@ -3675,7 +3676,7 @@ function SesionesTab({ child, sessions, objectives, users, currentUser, onUpdate
 
   const childSessions = sessions.filter(s => s.childId === child.id).sort((a,b) => b.date.localeCompare(a.date));
   const specs = [...new Set(childSessions.map(s => s.specialty))].filter(Boolean);
-  const canEdit = (s) => currentUser && (currentUser.role === "admin" || currentUser.role === "clinical_director" || currentUser.id === s.specialistId);
+  const canEdit = (s) => can(currentUser, "session:edit", s);
   const filtered = filterSpec ? childSessions.filter(s => s.specialty === filterSpec) : childSessions;
   const getSessionColor = (s) => SPECIALIST_COLORS[s.specialistId] || "#888";
 
@@ -3963,7 +3964,7 @@ function ChildProfile({ child, users, sessions, objectives, documents, meetings,
           groups[key].objs.push(o);
         });
         const groupList = Object.values(groups).sort((a, b) => a.area.localeCompare(b.area));
-        const canEdit = (specId) => currentUser.role === "admin" || currentUser.role === "clinical_director" || currentUser.id === specId;
+        const canEdit = (specId) => can(currentUser, "objective:edit", { specialistId: specId });
         const AREA_COLORS = {
           "Terapia Ocupacional": "#175FAF",
           "Fonoaudiologia": "#7A9E7E",
@@ -4070,7 +4071,7 @@ function ChildProfile({ child, users, sessions, objectives, documents, meetings,
                       <div style={{ fontSize: 12, color: T.inkSoft, marginBottom: 10 }}>{spec.name}</div>
                       <div style={{ fontSize: 12, color: T.inkFaint, fontStyle: "italic", padding: "8px 0" }}>Sin objetivos definidos.</div>
                     </div>
-              {(canEditThis || currentUser?.role === "admin" || currentUser?.role === "clinical_director") && (
+              {canEditThis && (
                       <div style={{ borderTop: `0.5px solid ${T.border}`, padding: "6px 14px 10px" }}>
                         <ObjectivesList
                           objectives={[]}
