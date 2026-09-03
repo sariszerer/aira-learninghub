@@ -80,7 +80,9 @@ export function visibleChildren(user, children) {
   switch (user.scope) {
     case 'todos':     return children
     case 'asignados': return children.filter(c => c.assignedSpecialists?.includes(user.id))
-    case 'un_nino':   return children.filter(c => c.id === user.assignedChildId)
+    case 'un_nino':   return user.assignedChildId != null
+      ? children.filter(c => c.id === user.assignedChildId)
+      : []
     default:          return []
   }
 }

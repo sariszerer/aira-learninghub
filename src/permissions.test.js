@@ -100,6 +100,18 @@ describe('visibleChildren', () => {
     expect(visibleChildren(u, ninos).map(c => c.id)).toEqual(['c-2'])
   })
 
+  it('scope un_nino con assignedChildId nulo no devuelve nada, ni contra un child con id undefined', () => {
+    const u = { id: 'u-1', permissions: new Set(), scope: 'un_nino', assignedChildId: null }
+    const ninosConIdIndefinido = [...ninos, { id: undefined, assignedSpecialists: [] }]
+    expect(visibleChildren(u, ninosConIdIndefinido)).toEqual([])
+  })
+
+  it('scope un_nino con assignedChildId ausente no devuelve nada, ni contra un child con id undefined', () => {
+    const u = { id: 'u-1', permissions: new Set(), scope: 'un_nino' }
+    const ninosConIdIndefinido = [...ninos, { id: undefined, assignedSpecialists: [] }]
+    expect(visibleChildren(u, ninosConIdIndefinido)).toEqual([])
+  })
+
   it('scope desconocido no devuelve nada', () => {
     const u = { id: 'u-1', permissions: new Set(), scope: 'inventado' }
     expect(visibleChildren(u, ninos)).toEqual([])
