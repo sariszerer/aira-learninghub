@@ -57,9 +57,12 @@ describe('loadAll', () => {
     expect(useDataStore.getState().objectives).toEqual(inicial.objectives)
   })
 
-  it('pasa rol e id a getChildren para el filtrado por rol', async () => {
+  it('no filtra pacientes desde el cliente: el alcance lo aplica RLS', async () => {
+    // El filtro que habia aqui solo miraba el rol llamado 'specialist', asi que
+    // un rol nuevo con alcance 'asignados' no lo activaba — y era evadible con
+    // un curl. Desde la fase 3 lo resuelve la base para cualquier rol.
     await useDataStore.getState().loadAll('specialist', 'u-7')
-    expect(db.getChildren).toHaveBeenCalledWith('specialist', 'u-7')
+    expect(db.getChildren).toHaveBeenCalledWith()
   })
 })
 

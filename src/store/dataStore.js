@@ -43,14 +43,13 @@ export const useDataStore = create((set, get) => ({
         dbChildren, dbObjectives, dbSessions, dbDocuments,
         dbMeetings, dbSchools, dbGabineteSessions, dbTutorReports,
       ] = await Promise.all([
-        // Se pasa rol e id para que un especialista solo reciba sus pacientes.
-        db.getChildren(role, userId), db.getObjectives(), db.getSessions(), db.getDocuments(),
+        db.getChildren(), db.getObjectives(), db.getSessions(), db.getDocuments(),
         db.getMeetings(), db.getSchools(), db.getGabineteSessions(), db.getTutorReports(),
       ])
-      // Incondicional, a diferencia de las demas: ahora que getChildren filtra
-      // por rol, un resultado vacio es una respuesta real ("este especialista no
-      // tiene pacientes"). Caer a datos semilla ahi le mostraria todos los de
-      // demostracion en vez de ninguno.
+      // Incondicional, a diferencia de las demas: ahora que RLS aplica el
+      // alcance del rol, un resultado vacio es una respuesta real ("este
+      // especialista no tiene pacientes"). Caer a datos semilla ahi le
+      // mostraria todos los de demostracion en vez de ninguno.
       set({ children: dbChildren })
       if (dbObjectives.length > 0) set({ objectives: dbObjectives })
       if (dbSessions.length > 0) set({ sessions: dbSessions })

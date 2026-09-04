@@ -129,10 +129,12 @@ export const db = {
     }
     return data
   },
-  async getChildren(userRole, userId) {
-    let query = supabase.from('children').select('*').order('name')
-    if (userRole === 'specialist') query = query.contains('assigned_specialists', [userId])
-    const { data, error } = await query
+  // Sin filtro por rol: desde la fase 3 el alcance lo aplica RLS del lado del
+  // servidor, para cualquier rol y no solo para el que se llama 'specialist'.
+  // El filtro que habia aqui solo miraba ese nombre, asi que un rol nuevo con
+  // alcance 'asignados' no lo activaba — y era evadible con un curl.
+  async getChildren() {
+    const { data, error } = await supabase.from('children').select('*').order('name')
     if (error) throw error
     return data.map(dbChildToApp)
   },
