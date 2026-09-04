@@ -4,7 +4,7 @@ import { T } from "../theme.js";
 import { visibleChildren } from "../permissions.js";
 import { useDataStore } from "../store/dataStore.js";
 import { useAuthStore } from "../store/authStore.js";
-import { Avatar, Chip, Card } from "../ui/index.js";
+import { Avatar, Chip, Card, ListRow } from "../ui/index.js";
 import PageHeader from "../shell/PageHeader.jsx";
 
 // Listado completo de pacientes con busqueda y filtro por especialidad.
@@ -83,7 +83,7 @@ export default function PatientsList({ onOpenChild }) {
           </Card>
         ) : (
           <div style={{
-            display: "grid", gap: 12,
+            display: "grid", gap: 10,
             gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
           }}>
             {filtrados.map((c) => {
@@ -92,14 +92,11 @@ export default function PatientsList({ onOpenChild }) {
                 .map((id) => users.find((u) => u.id === id))
                 .filter(Boolean);
               return (
-                <button
+                <ListRow
                   key={c.id}
                   onClick={() => onOpenChild(c.id)}
-                  style={{
-                    textAlign: "left", cursor: "pointer", padding: 16, width: "100%",
-                    background: T.surface, border: `1px solid ${T.border}`,
-                    borderRadius: T.radius, boxShadow: T.shadow, fontFamily: T.font,
-                  }}
+                  align="stretch"
+                  style={{ flexDirection: "column", gap: 0, padding: 16 }}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: 11, marginBottom: 12 }}>
                     <Avatar name={`${c.name} ${c.lastName}`} bg={c.avatarBg} size={40} />
@@ -136,7 +133,7 @@ export default function PatientsList({ onOpenChild }) {
                     <span>{especialistas.map((u) => u.name.split(" ")[0]).join(", ") || "Sin asignar"}</span>
                     <span>{ultima ? `Últ. ${ultima.date}` : "Sin sesiones"}</span>
                   </div>
-                </button>
+                </ListRow>
               );
             })}
           </div>

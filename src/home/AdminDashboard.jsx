@@ -116,7 +116,7 @@ function AdminDashboard({ onOpenChild, onCalendarDateChange, onConnectGcal }) {
           </button>
 
           {alertsOpen && (
-            <List style={{ borderTop: `1px solid ${T.borderSoft}`, maxHeight: 260, overflowY: "auto" }}>
+            <List variant="lineas" style={{ borderTop: `1px solid ${T.borderSoft}`, maxHeight: 260, overflowY: "auto" }}>
               {[
                 { lista: childrenNoRecentSession, texto: "Sin sesiones en 7 días", tono: T.apoyo, fondo: T.apoyoTint },
                 { lista: childrenReadyForParentReport, texto: "Listo para reporte a padres", tono: T.proceso, fondo: T.procesoTint },

@@ -85,7 +85,7 @@ export default function Sidebar({ abierto, onAlternar }) {
         display: "flex", flexDirection: "column", alignItems: "center",
         padding: "14px 0", gap: 4,
       }}>
-        <div style={{ marginBottom: 10 }}><Logo size={26} /></div>
+        <div style={{ marginBottom: 12 }}><Logo width={40} /></div>
 
         {items.map((it) => {
           const on = activo(it.to) || location.pathname.startsWith(it.to.split("?")[0]) && it.to !== "/";

@@ -86,16 +86,16 @@ export default function SpecialistsList() {
           </button>
         )}
 
-        <Card style={{ padding: 0, overflow: "hidden" }}>
-          {equipo.length === 0 ? (
-            <div style={{ padding: "48px 20px", textAlign: "center", color: T.inkFaint, fontSize: 14 }}>
-              Ningún especialista coincide con la búsqueda.
-            </div>
-          ) : <List>{equipo.map((u) => {
+        {equipo.length === 0 ? (
+          <Card style={{ padding: "48px 20px", textAlign: "center", color: T.inkFaint, fontSize: 14 }}>
+            Ningún especialista coincide con la búsqueda.
+          </Card>
+        ) : (
+          <List>{equipo.map((u) => {
             const { pacientes, sesiones } = carga(u.id);
             const inactivo = u.activo === false;
             return (
-              <ListRow key={u.id} style={{ gap: 12, padding: "12px 18px", opacity: inactivo ? 0.55 : 1 }}>
+              <ListRow key={u.id} style={{ gap: 12, opacity: inactivo ? 0.55 : 1 }}>
                 <Avatar name={u.name} bg={u.avatarBg || T.brand} size={36} />
 
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -140,8 +140,9 @@ export default function SpecialistsList() {
                 )}
               </ListRow>
             );
-          })}</List>}
-        </Card>
+          })}
+          </List>
+        )}
 
         <div style={{ fontSize: 12, color: T.inkFaint, marginTop: 12, lineHeight: 1.5 }}>
           Desactivar conserva el historial: las sesiones y objetivos que registró

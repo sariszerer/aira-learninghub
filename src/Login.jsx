@@ -56,7 +56,7 @@ export default function Login() {
     }}>
       <div style={{ width: "100%", maxWidth: 380 }}>
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 26 }}>
-          <Logo size={38} />
+          <Logo width={104} />
         </div>
 
         <div style={{

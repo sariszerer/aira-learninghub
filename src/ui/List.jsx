@@ -1,56 +1,84 @@
 import React from "react";
 import { T } from "../theme.js";
 
-// Lista de filas separadas dentro de una tarjeta.
+// Lista de filas.
 //
-// Existe porque el separador se estaba resolviendo de tres formas distintas en
-// la misma aplicacion: borderTop en unas pantallas, borderBottom en otras, y en
-// algunas sobre TODAS las filas — lo que deja una linea colgando contra el
-// borde de la tarjeta.
+// Dos formas, y la que manda es la primera:
 //
-// La convencion es una sola: borde ARRIBA en todas menos la primera. Es la
-// unica que nunca deja linea suelta, ni arriba ni abajo, sin tener que saber
-// cuantas filas hay.
-export function List({ children, style }) {
+//   "tarjetas" (por defecto) — cada fila es una caja blanca separada sobre el
+//   fondo gris, como los elementos del menu lateral. Sin lineas divisorias:
+//   el hueco entre filas ya las separa, y una caja se puede resaltar al pasar
+//   el raton o al estar activa sin depender de bordes.
+//
+//   "lineas" — filas pegadas con un hilo entre ellas. Se conserva para tablas
+//   densas donde el hueco entre tarjetas gastaria demasiado alto.
+//
+// La convencion del separador en modo "lineas" es borde ARRIBA en todas menos
+// la primera: es la unica que nunca deja una linea colgando contra el borde del
+// contenedor, sin tener que saber cuantas filas hay.
+export function List({ children, variant = "tarjetas", style }) {
   const filas = React.Children.toArray(children).filter(Boolean);
   return (
-    <div style={style}>
+    <div style={{
+      display: "flex", flexDirection: "column",
+      gap: variant === "tarjetas" ? 8 : 0,
+      ...style,
+    }}>
       {filas.map((hijo, i) =>
         React.isValidElement(hijo)
-          ? React.cloneElement(hijo, { primera: i === 0, key: hijo.key ?? i })
+          ? React.cloneElement(hijo, { primera: i === 0, variant, key: hijo.key ?? i })
           : hijo,
       )}
     </div>
   );
 }
 
-// Una fila. `primera` la inyecta List: no se pasa a mano.
-export function ListRow({ children, onClick, primera, style, align = "center" }) {
+// Una fila. `primera` y `variant` los inyecta List: no se pasan a mano.
+export function ListRow({
+  children, onClick, primera, variant = "tarjetas", activa, style, align = "center",
+}) {
+  const tarjeta = variant === "tarjetas";
+
   // Los cuatro lados se declaran por separado y nunca junto al atajo `border`:
-  // mezclarlos hace que React avise de propiedades en conflicto al re-renderizar,
-  // y el resultado depende del orden en que se apliquen.
+  // mezclarlos hace que React avise de propiedades en conflicto al re-renderizar.
   const base = {
     display: "flex",
     alignItems: align,
     gap: 11,
-    padding: "11px 16px",
-    borderTopStyle: "solid",
-    borderTopWidth: primera ? 0 : 1,
-    borderTopColor: T.borderSoft,
-    borderRightWidth: 0,
-    borderBottomWidth: 0,
-    borderLeftWidth: 0,
-    fontFamily: T.font,
-    textAlign: "left",
     width: "100%",
-    background: "transparent",
+    textAlign: "left",
+    fontFamily: T.font,
+    padding: tarjeta ? "11px 14px" : "11px 16px",
+    borderRadius: tarjeta ? T.radiusSm : 0,
+    background: tarjeta ? T.surface : "transparent",
+    boxShadow: tarjeta ? T.shadow : "none",
+    borderStyle: "solid",
+    borderColor: tarjeta ? (activa ? T.brand : T.border) : T.borderSoft,
+    borderTopWidth: tarjeta ? 1 : (primera ? 0 : 1),
+    borderRightWidth: tarjeta ? 1 : 0,
+    borderBottomWidth: tarjeta ? 1 : 0,
+    borderLeftWidth: tarjeta ? 1 : 0,
     ...style,
   };
 
   if (!onClick) return <div style={base}>{children}</div>;
 
   return (
-    <button type="button" onClick={onClick} style={{ ...base, cursor: "pointer" }}>
+    <button
+      type="button"
+      onClick={onClick}
+      style={{ ...base, cursor: "pointer", transition: "box-shadow .15s ease, border-color .15s ease" }}
+      onMouseEnter={(e) => {
+        if (!tarjeta) return;
+        e.currentTarget.style.boxShadow = T.shadowLift;
+        e.currentTarget.style.borderColor = T.brand;
+      }}
+      onMouseLeave={(e) => {
+        if (!tarjeta) return;
+        e.currentTarget.style.boxShadow = T.shadow;
+        e.currentTarget.style.borderColor = activa ? T.brand : T.border;
+      }}
+    >
       {children}
     </button>
   );

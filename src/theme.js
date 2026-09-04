@@ -103,11 +103,20 @@ export function MobileStyles() {
   useEffect(() => {
     const style = document.createElement('style');
     style.textContent = `
+      /* El reset vivia solo en index.html, el entry de produccion. En
+         desarrollo se sirve index.dev.html, que no lo tenia: box-sizing caia a
+         content-box y cualquier caja con width:100% mas padding y borde se
+         desbordaba. La aplicacion se veia distinta segun el entry, asi que el
+         reset vive aqui y no en un HTML. */
+      *, *::before, *::after { box-sizing: border-box; }
+      body { margin: 0; overflow-x: hidden; }
+      #root { overflow-x: hidden; max-width: 100vw; }
+
       @media (max-width: 640px) {
         /* Child profile padding */
         .aira-profile { padding: 16px 12px 60px !important; }
         /* Tabs scroll horizontal */
-        .aira-tabs { overflow-x: auto !important; -webkit-overflow-scrolling: touch !important; white-space: nowrap !important; flex-wrap: nowrap !important; padding-bottom: 2px; }
+        .aira-tabs { overflow-x: auto !important; -webkit-overflow-scrolling: touch !important; white-space: nowrap !important; }
         .aira-tabs button { flex-shrink: 0 !important; }
         /* Objective columns stack */
         .aira-obj-grid { grid-template-columns: 1fr !important; }
