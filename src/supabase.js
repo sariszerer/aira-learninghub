@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { buildUser } from './permissions.js'
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://wxsxtevvxepgjfxphdxt.supabase.co'
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4c3h0ZXZ2eGVwZ2pmeHBoZHh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4MzQ5NDcsImV4cCI6MjEwMjQxMDk0N30.AlyZM8R9wMCYBaTvYV6QfDSJC5Y5l2m46OZ43P2Im0Y'
@@ -25,13 +26,18 @@ export const auth = {
 }
 
 export async function getAppUser(authUserId) {
+  // Trae el rol y sus permisos en la misma consulta. Si la fila no tiene
+  // role_id todavia, buildUser cae a la matriz del codigo: durante la
+  // transicion las dos fuentes conviven y la de codigo es el respaldo.
   const { data, error } = await supabase
     .from('users')
-    .select('*')
+    .select('*, roles(*, role_permissions(permission_key))')
     .eq('auth_id', authUserId)
     .single()
   if (error) return null
-  return dbUserToApp(data)
+  // buildUser adjunta permisos y alcance desde la matriz en código. En la Fase 2
+  // esto pasa a leerse de las tablas roles/role_permissions.
+  return buildUser(dbUserToApp(data), data.roles)
 }
 
 export function dbUserToApp(u) {
@@ -39,6 +45,15 @@ export function dbUserToApp(u) {
     id: u.id, name: u.name, email: u.email, role: u.role,
     specialty: u.specialty, title: u.title, avatarBg: u.avatar_bg,
     school: u.school, assignedChildId: u.assigned_child_id, authId: u.auth_id,
+    activo: u.activo !== false,
+  }
+}
+export function dbRoleToApp(r) {
+  return {
+    id: r.id, nombre: r.nombre, scope: r.scope, home: r.home,
+    esClinico: !!r.es_clinico, etiqueta: r.etiqueta, color: r.color,
+    esSistema: !!r.es_sistema,
+    permisos: (r.role_permissions || []).map((rp) => rp.permission_key),
   }
 }
 export function dbChildToApp(c) {
@@ -46,6 +61,9 @@ export function dbChildToApp(c) {
     id: c.id, name: c.name, lastName: c.last_name, birthDate: c.birth_date,
     admissionDate: c.admission_date, specialties: c.specialties || [],
     assignedSpecialists: c.assigned_specialists || [], avatarBg: c.avatar_bg,
+    // La columna existe desde siempre y nunca se mapeaba: la app trataba a los
+    // 44 pacientes como si no tuvieran estado.
+    status: c.status,
     nextSession: c.next_session, nextSessionTime: c.next_session_time,
     parentContact: c.parent_contact || {}, packageStart: c.package_start,
     packageNum: c.package_num || 1,
@@ -93,10 +111,84 @@ export const db = {
     if (error) throw error
     return data.map(dbUserToApp)
   },
-  async getChildren(userRole, userId) {
-    let query = supabase.from('children').select('*').order('name')
-    if (userRole === 'specialist') query = query.contains('assigned_specialists', [userId])
-    const { data, error } = await query
+  async updateUser(id, updates) {
+    const m = {}
+    if ('name' in updates) m.name = updates.name
+    if ('email' in updates) m.email = updates.email
+    if ('role' in updates) m.role = updates.role
+    if ('specialty' in updates) m.specialty = updates.specialty
+    if ('title' in updates) m.title = updates.title
+    if ('avatarBg' in updates) m.avatar_bg = updates.avatarBg
+    if ('school' in updates) m.school = updates.school
+    if ('assignedChildId' in updates) m.assigned_child_id = updates.assignedChildId
+    if ('activo' in updates) m.activo = updates.activo
+    const { error } = await supabase.from('users').update(m).eq('id', id)
+    if (error) throw error
+  },
+  // ── Roles ────────────────────────────────────────────────────────────────
+  async getRoles() {
+    const { data, error } = await supabase
+      .from('roles')
+      .select('*, role_permissions(permission_key)')
+      .order('es_sistema', { ascending: false })
+      .order('nombre')
+    if (error) throw error
+    return data.map(dbRoleToApp)
+  },
+
+  async insertRole(rol) {
+    const { error } = await supabase.from('roles').insert({
+      id: rol.id, nombre: rol.nombre, scope: rol.scope, home: rol.home,
+      es_clinico: rol.esClinico, etiqueta: rol.etiqueta, color: rol.color,
+      es_sistema: false,
+    })
+    if (error) throw error
+  },
+
+  async updateRole(id, rol) {
+    const { error } = await supabase.from('roles').update({
+      nombre: rol.nombre, scope: rol.scope, home: rol.home,
+      es_clinico: rol.esClinico, etiqueta: rol.etiqueta, color: rol.color,
+    }).eq('id', id)
+    if (error) throw error
+  },
+
+  async deleteRole(id) {
+    const { error } = await supabase.from('roles').delete().eq('id', id)
+    if (error) throw error
+  },
+
+  // Reemplaza el conjunto entero en vez de calcular altas y bajas: son 34
+  // claves como maximo y asi no hay forma de que el estado quede a medias si
+  // una de las dos operaciones falla.
+  async setRolePermissions(roleId, claves) {
+    const { error: errBorrar } = await supabase
+      .from('role_permissions').delete().eq('role_id', roleId)
+    if (errBorrar) throw errBorrar
+    if (!claves.length) return
+    const { error } = await supabase.from('role_permissions')
+      .insert(claves.map((k) => ({ role_id: roleId, permission_key: k })))
+    if (error) throw error
+  },
+
+  // El alta pasa por una Edge Function porque crear el usuario de auth exige la
+  // clave service_role, que no puede estar en el navegador.
+  async crearEspecialista(datos) {
+    const { data, error } = await supabase.functions.invoke('crear-especialista', { body: datos })
+    if (error) {
+      // El cuerpo del error trae el mensaje util; el de supabase-js es generico.
+      let detalle = null
+      try { detalle = (await error.context?.json())?.error } catch { /* sin cuerpo */ }
+      throw new Error(detalle || error.message)
+    }
+    return data
+  },
+  // Sin filtro por rol: desde la fase 3 el alcance lo aplica RLS del lado del
+  // servidor, para cualquier rol y no solo para el que se llama 'specialist'.
+  // El filtro que habia aqui solo miraba ese nombre, asi que un rol nuevo con
+  // alcance 'asignados' no lo activaba — y era evadible con un curl.
+  async getChildren() {
+    const { data, error } = await supabase.from('children').select('*').order('name')
     if (error) throw error
     return data.map(dbChildToApp)
   },
@@ -238,13 +330,14 @@ export const db = {
   // link with a random token stored inside the anamnesis document's fields;
   // the parent opens that link (no account needed) and signs there.
   async getDocumentByConsentToken(token) {
-    const { data, error } = await supabase
-      .from('documents')
-      .select('*')
-      .filter('fields->>consentToken', 'eq', token)
-      .maybeSingle()
+    // Security-definer RPC rather than a direct select: the previous public RLS
+    // policy matched every document with a consentToken, not just this one, so
+    // any anonymous caller could read all pending consent forms. The RPC narrows
+    // it to the exact token presented.
+    const { data, error } = await supabase.rpc('get_consent_by_token', { p_token: token })
     if (error) throw error
-    return data ? dbDocumentToApp(data) : null
+    const row = Array.isArray(data) ? data[0] : data
+    return row ? dbDocumentToApp(row) : null
   },
   async saveConsentSignature(token, signatureDataUrl) {
     // Runs through a security-definer RPC (not a direct table update): once the
