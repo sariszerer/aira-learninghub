@@ -11,6 +11,7 @@ import Sidebar, { ANCHO_SIDEBAR } from "./shell/Sidebar.jsx";
 import { SpecialistHome, ClinicalDirectorHome, TutorAiraHome, AdminDashboard } from "./home/index.js";
 import PatientRoute from "./patient/PatientRoute.jsx";
 import PatientsList from "./patients/PatientsList.jsx";
+import SpecialistsList from "./team/SpecialistsList.jsx";
 import GabinetePanel from "./gabinete/GabinetePanel.jsx";
 import FirmaConsentimientoPublic from "./consent/FirmaConsentimientoPublic.jsx";
 
@@ -138,6 +139,12 @@ export default function App() {
         <Route path="/paciente/:childId" element={<PatientRoute />} />
 
         <Route path="/pacientes" element={<PatientsList onOpenChild={openChild} />} />
+
+        <Route path="/especialistas" element={
+          can(currentUser, "user:manage")
+            ? <SpecialistsList />
+            : <Navigate to="/" replace />
+        } />
 
         <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

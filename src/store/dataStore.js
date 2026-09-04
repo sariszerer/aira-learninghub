@@ -235,6 +235,29 @@ export const useDataStore = create((set, get) => ({
     set((s) => ({ parentReports: [...s.parentReports, { id: `pr-${Date.now()}`, ...report }] }))
   },
 
+  // Los especialistas son filas de la misma tabla `users` que ya se carga al
+  // inicio, asi que la pantalla de gestion recarga esa lista tras cada cambio.
+  recargarUsuarios: async () => {
+    try { set({ users: await db.getUsers() }) } catch (e) { console.error('Reload users:', e) }
+  },
+
+  updateUser: async (id, updates) => {
+    set((s) => ({ users: s.users.map((u) => (u.id === id ? { ...u, ...updates } : u)) }))
+    try { await db.updateUser(id, updates) } catch (e) {
+      console.error('Update user:', e)
+      // A diferencia de las demas mutaciones, aqui se revierte: un cambio de rol
+      // que la base rechazo y la interfaz muestra como aplicado es enganoso.
+      await get().recargarUsuarios()
+      throw e
+    }
+  },
+
+  crearEspecialista: async (datos) => {
+    const res = await db.crearEspecialista(datos)
+    await get().recargarUsuarios()
+    return res
+  },
+
   addTutorReport: async (report) => {
     set((s) => ({ tutorReports: [...s.tutorReports, report] }))
     try { await db.insertTutorReport(report) } catch (e) { console.error('Add tutor report:', e) }

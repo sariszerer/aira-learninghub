@@ -181,74 +181,10 @@ function AdminDashboard({ onOpenChild, onCalendarDateChange, onConnectGcal }) {
         </div>
       )}
 
-      <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 20 }}>
-        <div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-            <Eyebrow style={{ margin: 0 }}>Todos los pacientes</Eyebrow>
-            {onAddChild && (
-              <Btn variant="amber" size="sm" icon={Plus} onClick={() => setShowAddPatient(true)}>Agregar paciente</Btn>
-            )}
-          </div>
-          <div style={{ position: "relative", marginBottom: 8 }}>
-            <input
-              type="text" placeholder="Buscar paciente..."
-              value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-              style={{ width: "100%", padding: "9px 12px 9px 34px", borderRadius: 10, border: `1px solid ${T.border}`, fontSize: 14, fontFamily: T.font, outline: "none", boxSizing: "border-box", color: T.ink, background: "#fff" }}
-              onFocus={(e) => e.target.style.borderColor = T.brand}
-              onBlur={(e) => e.target.style.borderColor = T.border}
-            />
-            <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: T.inkFaint, fontSize: 15, pointerEvents: "none" }}>🔍</span>
-          </div>
-          <Card style={{ padding: 6 }}>
-            {(() => {
-              const q = searchQuery.trim().toLowerCase();
-              const filtered = q ? children.filter(c =>
-                (c.name + " " + c.lastName).toLowerCase().includes(q) ||
-                c.lastName.toLowerCase().includes(q) ||
-                c.name.toLowerCase().includes(q)
-              ) : children;
-              if (filtered.length === 0) return <div style={{ padding: "16px 12px", color: T.inkFaint, fontSize: 13.5 }}>Sin resultados para "{searchQuery}"</div>;
-              return filtered.map((c, i) => {
-                const specs = c.assignedSpecialists.map((id) => users.find((u) => u.id === id)?.name.split(" ")[0]).join(", ");
-                return (
-                  <button key={c.id} onClick={() => onOpenChild(c.id)} style={{
-                    width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "12px 12px",
-                    border: "none", borderTop: i > 0 ? `1px solid ${T.borderSoft}` : "none", background: "transparent",
-                    cursor: "pointer", textAlign: "left",
-                  }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = T.surfaceSunk)}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                  >
-                    <Avatar name={c.name + " " + c.lastName} bg={c.avatarBg} size={38} />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 600, fontSize: 14.5, color: T.ink }}>{c.name} {c.lastName}</div>
-                      <div style={{ fontSize: 12, color: T.inkFaint }}>{specs}</div>
-                    </div>
-                    <ChevronRight size={16} color={T.inkFaint} />
-                  </button>
-                );
-              });
-            })()}
-          </Card>
-        </div>
-        <div>
-          <Eyebrow>Especialistas</Eyebrow>
-          <Card style={{ padding: 6 }}>
-            {specialists.map((u, i) => (
-              <div key={u.id} style={{
-                display: "flex", alignItems: "center", gap: 12, padding: "12px 12px",
-                borderTop: i > 0 ? `1px solid ${T.borderSoft}` : "none",
-              }}>
-                <Avatar name={u.name} bg={u.avatarBg} size={38} />
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: 14.5, color: T.ink }}>{u.name}</div>
-                  <div style={{ fontSize: 12, color: T.inkFaint }}>{u.specialty}</div>
-                </div>
-              </div>
-            ))}
-          </Card>
-        </div>
-      </div>
+      {/* El listado de pacientes y el de especialistas vivian aqui duplicados.
+          Ahora cada uno tiene su pantalla: /pacientes y /especialistas. El panel
+          se queda con lo que solo tiene sentido de un vistazo: cifras, agenda y
+          lo que requiere atencion. */}
 
       {showAddPatient && onAddChild && (
         <AddPatientWizard

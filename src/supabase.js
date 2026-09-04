@@ -42,6 +42,7 @@ export function dbUserToApp(u) {
     id: u.id, name: u.name, email: u.email, role: u.role,
     specialty: u.specialty, title: u.title, avatarBg: u.avatar_bg,
     school: u.school, assignedChildId: u.assigned_child_id, authId: u.auth_id,
+    activo: u.activo !== false,
   }
 }
 export function dbChildToApp(c) {
@@ -98,6 +99,32 @@ export const db = {
     const { data, error } = await supabase.from('users').select('*').order('name')
     if (error) throw error
     return data.map(dbUserToApp)
+  },
+  async updateUser(id, updates) {
+    const m = {}
+    if ('name' in updates) m.name = updates.name
+    if ('email' in updates) m.email = updates.email
+    if ('role' in updates) m.role = updates.role
+    if ('specialty' in updates) m.specialty = updates.specialty
+    if ('title' in updates) m.title = updates.title
+    if ('avatarBg' in updates) m.avatar_bg = updates.avatarBg
+    if ('school' in updates) m.school = updates.school
+    if ('assignedChildId' in updates) m.assigned_child_id = updates.assignedChildId
+    if ('activo' in updates) m.activo = updates.activo
+    const { error } = await supabase.from('users').update(m).eq('id', id)
+    if (error) throw error
+  },
+  // El alta pasa por una Edge Function porque crear el usuario de auth exige la
+  // clave service_role, que no puede estar en el navegador.
+  async crearEspecialista(datos) {
+    const { data, error } = await supabase.functions.invoke('crear-especialista', { body: datos })
+    if (error) {
+      // El cuerpo del error trae el mensaje util; el de supabase-js es generico.
+      let detalle = null
+      try { detalle = (await error.context?.json())?.error } catch { /* sin cuerpo */ }
+      throw new Error(detalle || error.message)
+    }
+    return data
   },
   async getChildren(userRole, userId) {
     let query = supabase.from('children').select('*').order('name')

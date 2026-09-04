@@ -24,6 +24,7 @@ const SECCIONES = [
       { to: "/",          label: "Inicio",    icon: LayoutGrid },
       { to: "/pacientes", label: "Pacientes", icon: Users, permiso: "patient:view" },
       { to: "/gabinete",  label: "Gabinete",  icon: ClipboardList, permiso: "gabinete:view" },
+      { to: "/especialistas", label: "Especialistas", icon: User, permiso: "user:manage" },
     ],
   },
 ];
@@ -50,10 +51,8 @@ export default function Sidebar() {
         padding: "20px 18px", display: "flex", alignItems: "center", gap: 10,
         borderBottom: `1px solid ${T.borderSoft}`,
       }}>
-        <Logo size={26} />
-        <div style={{ fontSize: 15.5, fontWeight: 700, color: T.ink, letterSpacing: "-0.01em" }}>
-          AIRA
-        </div>
+        {/* El logotipo ya incluye la palabra AIRA: repetirla al lado la duplica. */}
+        <Logo size={28} />
       </div>
 
       <nav style={{ flex: 1, overflowY: "auto", padding: "16px 12px" }}>
