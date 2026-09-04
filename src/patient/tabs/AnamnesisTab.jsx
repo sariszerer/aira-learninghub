@@ -125,7 +125,7 @@ function AnamnesisTab({ child, documents, users, currentUser, onAddDocument, onU
       {!showForm && (
         <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 16 }}>
           {canEdit && (
-            <Btn variant="amber" icon={Plus} onClick={() => {
+            <Btn icon={Plus} onClick={() => {
               if (anamnesisDoc?.fields) setForm(f => ({...f, ...anamnesisDoc.fields}));
               setShowForm(true);
             }}>

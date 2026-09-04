@@ -24,7 +24,7 @@ function DocumentsSection({ type, documents, users, onAdd, onUpdateDocument, cur
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
         <Eyebrow style={{ marginBottom: 0 }}>{meta.plural}</Eyebrow>
-        {canAdd && onAdd && <Btn variant="ghost" size="sm" icon={Plus} onClick={onAdd}>Agregar</Btn>}
+        {canAdd && onAdd && <Btn icon={Plus} onClick={onAdd}>Agregar</Btn>}
       </div>
       {docs.length === 0 ? (
         <EmptyNote text={`Todavía no hay ${meta.plural.toLowerCase()} registradas.`} />

@@ -43,7 +43,7 @@ function InterdisciplinaryTab({ child, meetings, users, onAddMeeting, currentUse
         <div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
             <Eyebrow style={{ marginBottom: 0 }}>Pautas de Crianza</Eyebrow>
-            <Btn variant="amber" icon={Plus} onClick={() => setAddingPautas(true)}>Registrar sesión</Btn>
+            <Btn icon={Plus} onClick={() => setAddingPautas(true)}>Registrar sesión</Btn>
           </div>
           {addingPautas && (
             <Card style={{ padding: 16, marginBottom: 12 }}>
@@ -85,7 +85,7 @@ function InterdisciplinaryTab({ child, meetings, users, onAddMeeting, currentUse
       <div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
             <Eyebrow style={{ marginBottom: 0 }}>Minutas interdisciplinarias</Eyebrow>
-          <Btn variant="amber" icon={Plus} onClick={() => setAdding(true)}>Registrar minuta</Btn>
+          <Btn icon={Plus} onClick={() => setAdding(true)}>Registrar minuta</Btn>
         </div>
         {childMeetings.length === 0 ? (
           <EmptyNote text="Aún no hay minutas registradas." />

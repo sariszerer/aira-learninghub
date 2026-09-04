@@ -118,7 +118,7 @@ function ObjectivesList({ objectives, compact, onUpdate, onAdd, onDelete, defaul
               </div>
             </div>
           ) : (
-            <Btn variant="subtle" size="sm" icon={Plus} onClick={() => setAdding(true)}>Agregar objetivo</Btn>
+            <Btn icon={Plus} onClick={() => setAdding(true)}>Agregar objetivo</Btn>
           )}
         </div>
       )}

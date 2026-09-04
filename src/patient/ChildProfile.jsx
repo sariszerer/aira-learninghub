@@ -105,7 +105,7 @@ function ChildProfile({ child, onOpenSessionForm, onViewReport, onGenerateFull, 
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8, flexShrink: 0 }}>
           {can(currentUser, "session:create") && child.assignedSpecialists.includes(currentUser.id) && (
-            <Btn variant="amber" size="lg" icon={Plus} onClick={onOpenSessionForm}>Registrar sesión</Btn>
+            <Btn size="lg" icon={Plus} onClick={onOpenSessionForm}>Registrar sesión</Btn>
           )}
           {can(currentUser, "patient:edit") && (
             <Btn variant="secondary" size="sm" icon={Pencil} onClick={() => setEditingProfile(true)}>Editar perfil</Btn>

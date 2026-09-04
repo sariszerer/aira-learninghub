@@ -57,7 +57,7 @@ function ParentReportModal({ child, sessions, objectives, parentReports, onClose
       <div style={{ padding: "14px 24px", borderTop: `1px solid ${T.border}`, display: "flex", justifyContent: "flex-end", gap: 10 }}>
         <Btn variant="ghost" icon={Printer} onClick={() => window.print()}>Imprimir</Btn>
         <Btn variant="ghost" onClick={() => handleSend("email")}>Enviar por correo</Btn>
-        <Btn variant="amber" onClick={() => handleSend("whatsapp")}>Enviar por WhatsApp</Btn>
+        <Btn onClick={() => handleSend("whatsapp")}>Enviar por WhatsApp</Btn>
       </div>
     </Modal>
   );
