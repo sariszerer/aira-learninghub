@@ -181,8 +181,31 @@ export const ROLES = {
 }
 
 // Convierte la fila de public.users en el objeto que consume can()/visibleChildren().
-// Un rol desconocido produce un usuario sin permisos ni alcance: falla cerrado.
-export function buildUser(dbUser) {
+//
+// `filaRol` es la fila de public.roles con sus permisos, tal como la devuelve
+// getAppUser. Cuando llega, MANDA ELLA: es la fuente que la fase 4 permitira
+// editar desde la aplicacion.
+//
+// La matriz ROLES de abajo queda como respaldo para el caso en que un usuario
+// aun no tenga role_id — durante la transicion las dos conviven, y sin ese
+// respaldo un usuario sin migrar se quedaria sin ver nada.
+//
+// Un rol que no esta en ninguna de las dos produce un usuario sin permisos ni
+// alcance: falla cerrado.
+export function buildUser(dbUser, filaRol) {
+  if (filaRol) {
+    const permisos = (filaRol.role_permissions || []).map((rp) => rp.permission_key)
+    return {
+      ...dbUser,
+      permissions: new Set(permisos),
+      scope: filaRol.scope,
+      home: filaRol.home,
+      esClinico: !!filaRol.es_clinico,
+      etiqueta: filaRol.etiqueta,
+      color: filaRol.color,
+    }
+  }
+
   const rol = ROLES[dbUser?.role]
   return {
     ...dbUser,

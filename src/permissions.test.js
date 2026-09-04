@@ -334,3 +334,41 @@ describe('buildUser', () => {
     expect(u.color).toBeNull()
   })
 })
+
+describe('buildUser con rol desde la base', () => {
+  const filaRol = {
+    id: 'suplente', nombre: 'Terapeuta suplente', scope: 'asignados',
+    home: 'especialista', es_clinico: true, etiqueta: 'Suplente', color: '#06B6D4',
+    role_permissions: [
+      { permission_key: 'patient:view' },
+      { permission_key: 'session:create' },
+      { permission_key: 'session:edit:own' },
+    ],
+  }
+
+  it('la fila de la base manda sobre la matriz del codigo', () => {
+    // `role` dice specialist, que en codigo trae 21 permisos; la fila trae 3.
+    const u = buildUser({ id: 'u-1', role: 'specialist' }, filaRol)
+    expect(u.permissions.size).toBe(3)
+    expect(u.etiqueta).toBe('Suplente')
+    expect(u.esClinico).toBe(true)
+  })
+
+  it('permite roles que no existen en el codigo', () => {
+    const u = buildUser({ id: 'u-1', role: 'suplente' }, filaRol)
+    expect(can(u, 'session:edit', { specialistId: 'u-1' })).toBe(true)
+    expect(can(u, 'session:edit', { specialistId: 'u-9' })).toBe(false)
+    expect(can(u, 'gabinete:view')).toBe(false)
+  })
+
+  it('sin fila cae a la matriz del codigo, para usuarios aun sin role_id', () => {
+    const u = buildUser({ id: 'u-1', role: 'specialist' }, null)
+    expect(u.permissions.size).toBe(ROLES.specialist.permisos.length)
+  })
+
+  it('un rol sin permisos en la base deja al usuario sin ninguno', () => {
+    const u = buildUser({ id: 'u-1', role: 'x' }, { ...filaRol, role_permissions: [] })
+    expect(u.permissions.size).toBe(0)
+    expect(can(u, 'patient:view')).toBe(false)
+  })
+})

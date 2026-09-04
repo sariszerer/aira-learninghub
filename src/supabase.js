@@ -26,15 +26,18 @@ export const auth = {
 }
 
 export async function getAppUser(authUserId) {
+  // Trae el rol y sus permisos en la misma consulta. Si la fila no tiene
+  // role_id todavia, buildUser cae a la matriz del codigo: durante la
+  // transicion las dos fuentes conviven y la de codigo es el respaldo.
   const { data, error } = await supabase
     .from('users')
-    .select('*')
+    .select('*, roles(*, role_permissions(permission_key))')
     .eq('auth_id', authUserId)
     .single()
   if (error) return null
   // buildUser adjunta permisos y alcance desde la matriz en código. En la Fase 2
   // esto pasa a leerse de las tablas roles/role_permissions.
-  return buildUser(dbUserToApp(data))
+  return buildUser(dbUserToApp(data), data.roles)
 }
 
 export function dbUserToApp(u) {
