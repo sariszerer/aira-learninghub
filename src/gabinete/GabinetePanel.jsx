@@ -44,7 +44,7 @@ function GabinetePanel({ onAddSession }) {
   );
 
   return (
-    <div style={{ maxWidth: 1060, margin: "0 auto", padding: "36px 20px 60px" }}>
+    <div style={{ padding: "24px 28px 48px" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28, flexWrap: "wrap", gap: 12 }}>
         <div>
           <div style={{ fontFamily: T.font, fontSize: 17, fontWeight: 700, color: T.ink }}>Gabinete Externo</div>

@@ -4,7 +4,7 @@ import { Plus, Pencil } from "lucide-react";
 import { T, SPECIALIST_COLORS, TODAY } from "../theme.js";
 import { fmtDate } from "../lib/format.js";
 import { can } from "../permissions.js";
-import { Avatar, Btn, Card } from "../ui/index.js";
+import { Avatar, Btn, Card, Tabs } from "../ui/index.js";
 import ResumenTab from "./tabs/ResumenTab.jsx";
 import SesionesTab from "./tabs/SesionesTab.jsx";
 import ObjetivosTab, { ObjectivesList } from "./tabs/ObjetivosTab.jsx";
@@ -70,7 +70,7 @@ function ChildProfile({ child, onOpenSessionForm, onViewReport, onGenerateFull, 
   const tabs = CHILD_TABS;
 
   return (
-    <div className="aira-profile" style={{ maxWidth: 860, margin: "0 auto", padding: "32px 20px 60px" }}>
+    <div style={{ padding: "24px 28px 48px" }}>
       <div style={{ display: "flex", gap: 20, alignItems: "flex-start", marginBottom: 30 }}>
         <Avatar name={child.name + " " + child.lastName} bg={child.avatarBg} size={72} />
         <div style={{ flex: 1 }}>
@@ -106,20 +106,8 @@ function ChildProfile({ child, onOpenSessionForm, onViewReport, onGenerateFull, 
 
       {editingProfile && <EditProfileModal child={child} onClose={() => setEditingProfile(false)} />}
 
-      <div style={{ display: "flex", gap: 4, borderBottom: `1px solid ${T.borderSoft}`, marginBottom: 26 }}>
-        {tabs.map((t) => (
-          <button key={t.id} onClick={() => setTab(t.id)} style={{
-            background: "none", border: "none", cursor: "pointer", padding: "8px 2px",
-            marginRight: 26, fontSize: 15.5, fontFamily: T.font,
-            fontWeight: tab === t.id ? 600 : 500,
-            color: tab === t.id ? T.brand : T.inkFaint,
-            borderBottom: tab === t.id ? `2px solid ${T.brand}` : "2px solid transparent",
-            transition: "color .15s ease",
-          }}>
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <Tabs tabs={tabs} activo={tab} onCambiar={setTab} />
+
 
       {tab === "resumen" && <ResumenTab child={child} objectives={objectives} sessions={sessions} users={users} onRenewPackage={onRenewPackage} onCloseProcess={onCloseProcess} currentUser={currentUser} />}
       {tab === "sesiones" && <SesionesTab child={child} sessions={sessions} objectives={objectives} users={users} currentUser={currentUser} onUpdateSession={onUpdateSession} />}

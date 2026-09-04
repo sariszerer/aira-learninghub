@@ -109,10 +109,14 @@ export function MobileStyles() {
          desbordaba. La aplicacion se veia distinta segun el entry, asi que el
          reset vive aqui y no en un HTML. */
       *, *::before, *::after { box-sizing: border-box; }
-      body { margin: 0; overflow-x: hidden; }
-      #root { overflow-x: hidden; max-width: 100vw; }
+      body { margin: 0; }
 
       @media (max-width: 640px) {
+        /* overflow-x solo en movil: en escritorio convierte a #root en
+           contenedor de scroll y eso rompe position:sticky del encabezado,
+           que deja de fijarse al hacer scroll. */
+        body { overflow-x: hidden; }
+        #root { overflow-x: hidden; max-width: 100vw; }
         /* Child profile padding */
         .aira-profile { padding: 16px 12px 60px !important; }
         /* Tabs scroll horizontal */

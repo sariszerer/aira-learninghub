@@ -4,14 +4,14 @@ import { T } from "../theme.js";
 import { visibleChildren } from "../permissions.js";
 import { useDataStore } from "../store/dataStore.js";
 import { useAuthStore } from "../store/authStore.js";
-import { Avatar, Chip, Card, ListRow } from "../ui/index.js";
+import { fmtDateShort } from "../lib/format.js";
+import { Avatar, Chip, Table } from "../ui/index.js";
 import PageHeader from "../shell/PageHeader.jsx";
 
-// Listado completo de pacientes con busqueda y filtro por especialidad.
+// Listado de pacientes.
 //
-// El alcance lo resuelve visibleChildren, no esta pantalla: un especialista ve
-// los suyos y direccion clinica los ve todos, sin que aqui haya un solo `if`
-// sobre el rol.
+// El alcance lo resuelve visibleChildren y no esta pantalla: un especialista ve
+// los suyos y direccion clinica los ve todos, sin un solo `if` sobre el rol.
 export default function PatientsList({ onOpenChild }) {
   const children = useDataStore((s) => s.children);
   const users = useDataStore((s) => s.users);
@@ -36,35 +36,97 @@ export default function PatientsList({ onOpenChild }) {
     [alcance],
   );
 
-  const filtrados = useMemo(() => alcance.filter((c) => {
-    const nombre = `${c.name} ${c.lastName}`.toLowerCase();
-    const coincide = nombre.includes(query.trim().toLowerCase());
+  // Se precalcula por paciente para no recorrer las 438 sesiones en cada celda
+  // ni, peor, en cada comparacion del ordenamiento.
+  const filas = useMemo(() => alcance.map((c) => {
+    const suyas = sessions.filter((s) => s.childId === c.id);
+    const ultima = suyas.length
+      ? suyas.reduce((a, b) => (a.date > b.date ? a : b)).date
+      : null;
+    return {
+      ...c,
+      nombre: `${c.name} ${c.lastName}`,
+      sesiones: suyas.length,
+      ultima,
+      equipo: c.assignedSpecialists
+        .map((id) => users.find((u) => u.id === id)?.name.split(" ")[0])
+        .filter(Boolean)
+        .join(", "),
+    };
+  }), [alcance, sessions, users]);
+
+  const filtradas = useMemo(() => filas.filter((c) => {
+    const coincide = c.nombre.toLowerCase().includes(query.trim().toLowerCase());
     const porEspecialidad = especialidad === "Todas" || c.specialties.includes(especialidad);
     const porEstado = !estado
       || (estado === "activo" && c.status !== "inactivo")
       || (estado === "inactivo" && c.status === "inactivo");
     return coincide && porEspecialidad && porEstado;
-  }), [alcance, query, especialidad, estado]);
+  }), [filas, query, especialidad, estado]);
 
-  const ultimaSesion = (childId) => {
-    const propias = sessions.filter((s) => s.childId === childId);
-    if (!propias.length) return null;
-    return propias.sort((a, b) => b.date.localeCompare(a.date))[0];
-  };
+  const columnas = [
+    {
+      clave: "nombre", titulo: "Paciente", ancho: "2fr",
+      celda: (c) => (
+        <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+          <Avatar name={c.nombre} bg={c.avatarBg} size={30} />
+          <div style={{ minWidth: 0 }}>
+            <div style={{
+              fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+            }}>
+              {c.nombre}
+            </div>
+            {c.status === "inactivo" && (
+              <div style={{ fontSize: 11.5, color: T.inkFaint }}>Inactivo</div>
+            )}
+          </div>
+        </div>
+      ),
+    },
+    {
+      clave: "age", titulo: "Edad", ancho: "70px",
+      celda: (c) => <span style={{ color: T.inkSoft }}>{c.age != null ? `${c.age} a` : "—"}</span>,
+    },
+    {
+      clave: "specialties", titulo: "Especialidad", ancho: "1.4fr",
+      valor: (c) => c.specialties.join(", "),
+      celda: (c) => (
+        <span style={{ color: T.inkSoft, fontSize: 12.5 }}>{c.specialties.join(" · ") || "—"}</span>
+      ),
+    },
+    {
+      clave: "equipo", titulo: "Equipo", ancho: "1.2fr",
+      celda: (c) => <span style={{ color: T.inkSoft, fontSize: 12.5 }}>{c.equipo || "Sin asignar"}</span>,
+    },
+    {
+      clave: "sesiones", titulo: "Sesiones", ancho: "90px", alinear: "derecha",
+      celda: (c) => <span style={{ fontWeight: 600 }}>{c.sesiones}</span>,
+    },
+    {
+      clave: "ultima", titulo: "Última sesión", ancho: "130px", alinear: "derecha",
+      celda: (c) => (
+        <span style={{ color: c.ultima ? T.inkSoft : T.inkFaint, fontSize: 12.5 }}>
+          {c.ultima ? fmtDateShort(c.ultima) : "Sin sesiones"}
+        </span>
+      ),
+    },
+  ];
+
+  const titulo = estado === "activo" ? "Pacientes activos"
+    : estado === "inactivo" ? "Pacientes inactivos"
+    : "Pacientes";
 
   return (
     <>
       <PageHeader
-        titulo={estado === "activo" ? "Pacientes activos"
-          : estado === "inactivo" ? "Pacientes inactivos"
-          : "Pacientes"}
-        subtitulo={`${filtrados.length} de ${alcance.length}`}
+        titulo={titulo}
+        subtitulo={`${filtradas.length} de ${alcance.length}`}
         buscar={query}
         onBuscar={setQuery}
       />
 
-      <div style={{ padding: "20px 28px 48px" }}>
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 18 }}>
+      <div style={{ padding: "24px 28px 48px" }}>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
           {especialidades.map((e) => (
             <Chip
               key={e}
@@ -75,69 +137,15 @@ export default function PatientsList({ onOpenChild }) {
           ))}
         </div>
 
-        {filtrados.length === 0 ? (
-          <Card style={{ padding: "48px 20px", textAlign: "center", color: T.inkFaint, fontSize: 14 }}>
-            {alcance.length === 0
-              ? "No tienes pacientes asignados."
-              : "Ningún paciente coincide con la búsqueda."}
-          </Card>
-        ) : (
-          <div style={{
-            display: "grid", gap: 10,
-            gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-          }}>
-            {filtrados.map((c) => {
-              const ultima = ultimaSesion(c.id);
-              const especialistas = c.assignedSpecialists
-                .map((id) => users.find((u) => u.id === id))
-                .filter(Boolean);
-              return (
-                <ListRow
-                  key={c.id}
-                  onClick={() => onOpenChild(c.id)}
-                  align="stretch"
-                  style={{ flexDirection: "column", gap: 0, padding: 16 }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: 11, marginBottom: 12 }}>
-                    <Avatar name={`${c.name} ${c.lastName}`} bg={c.avatarBg} size={40} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{
-                        fontSize: 14.5, fontWeight: 600, color: T.ink,
-                        overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                      }}>
-                        {c.name} {c.lastName}
-                      </div>
-                      <div style={{ fontSize: 12, color: T.inkFaint }}>
-                        {c.age != null ? `${c.age} años` : "Edad pendiente"}
-                      </div>
-                    </div>
-                    {c.status === "inactivo" && (
-                      <span style={{
-                        fontSize: 11, fontWeight: 600, color: T.inkSoft,
-                        background: T.surfaceSunk, borderRadius: 999, padding: "2px 9px",
-                      }}>
-                        Inactivo
-                      </span>
-                    )}
-                  </div>
-
-                  <div style={{ fontSize: 12, color: T.inkSoft, marginBottom: 8 }}>
-                    {c.specialties.join(" · ")}
-                  </div>
-
-                  <div style={{
-                    display: "flex", alignItems: "center", justifyContent: "space-between",
-                    borderTop: `1px solid ${T.borderSoft}`, paddingTop: 10,
-                    fontSize: 11.5, color: T.inkFaint,
-                  }}>
-                    <span>{especialistas.map((u) => u.name.split(" ")[0]).join(", ") || "Sin asignar"}</span>
-                    <span>{ultima ? `Últ. ${ultima.date}` : "Sin sesiones"}</span>
-                  </div>
-                </ListRow>
-              );
-            })}
-          </div>
-        )}
+        <Table
+          columnas={columnas}
+          filas={filtradas}
+          onFila={(c) => onOpenChild(c.id)}
+          ordenInicial={{ clave: "nombre", dir: "asc" }}
+          vacio={alcance.length === 0
+            ? "No tienes pacientes asignados."
+            : "Ningún paciente coincide con la búsqueda."}
+        />
       </div>
     </>
   );

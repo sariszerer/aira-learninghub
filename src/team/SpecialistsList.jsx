@@ -6,7 +6,7 @@ import { useDataStore } from "../store/dataStore.js";
 import { useAuthStore } from "../store/authStore.js";
 import PageHeader from "../shell/PageHeader.jsx";
 import SpecialistModal from "./SpecialistModal.jsx";
-import { Avatar, Btn, IconBtn, List, ListRow, Card } from "../ui/index.js";
+import { Avatar, Btn, Card, IconBtn, List, ListRow, Table } from "../ui/index.js";
 
 // Gestion del equipo. El alta pasa por una Edge Function porque crear un
 // usuario que pueda iniciar sesion exige service_role; editar y desactivar si
@@ -63,7 +63,7 @@ export default function SpecialistsList() {
         )}
       />
 
-      <div style={{ padding: "20px 28px 48px" }}>
+      <div style={{ padding: "24px 28px 48px" }}>
         {error && (
           <div style={{
             background: T.apoyoTint, color: T.apoyo, border: `1px solid ${T.apoyo}33`,
@@ -86,63 +86,75 @@ export default function SpecialistsList() {
           </button>
         )}
 
-        {equipo.length === 0 ? (
-          <Card style={{ padding: "48px 20px", textAlign: "center", color: T.inkFaint, fontSize: 14 }}>
-            Ningún especialista coincide con la búsqueda.
-          </Card>
-        ) : (
-          <List>{equipo.map((u) => {
-            const { pacientes, sesiones } = carga(u.id);
-            const inactivo = u.activo === false;
-            return (
-              <ListRow key={u.id} style={{ gap: 12, opacity: inactivo ? 0.55 : 1 }}>
-                <Avatar name={u.name} bg={u.avatarBg || T.brand} size={36} />
-
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontSize: 14, fontWeight: 600, color: T.ink }}>{u.name}</span>
-                    <span style={{
-                      fontSize: 10.5, fontWeight: 600, color: T.brand, background: T.brandTint,
-                      borderRadius: 999, padding: "1px 8px",
+        <Table
+          columnas={[
+            {
+              clave: "name", titulo: "Especialista", ancho: "1.8fr",
+              celda: (u) => (
+                <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                  <Avatar name={u.name} bg={u.avatarBg || T.brand} size={30} />
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{
+                      fontWeight: 600, overflow: "hidden",
+                      textOverflow: "ellipsis", whiteSpace: "nowrap",
                     }}>
-                      {ROLES[u.role]?.etiqueta || u.role}
-                    </span>
-                    {inactivo && (
-                      <span style={{
-                        fontSize: 10.5, fontWeight: 600, color: T.inkSoft,
-                        background: T.surfaceSunk, borderRadius: 999, padding: "1px 8px",
-                      }}>
-                        Inactivo
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ fontSize: 12, color: T.inkFaint, marginTop: 2 }}>
-                    {u.specialty || u.title || "Sin especialidad"} · {u.email || "sin correo"}
+                      {u.name}
+                    </div>
+                    <div style={{ fontSize: 11.5, color: T.inkFaint }}>
+                      {u.email || "sin correo"}
+                    </div>
                   </div>
                 </div>
-
-                <div style={{ textAlign: "right", fontSize: 12, color: T.inkSoft, minWidth: 110 }}>
-                  <div>{pacientes} paciente{pacientes === 1 ? "" : "s"}</div>
-                  <div style={{ color: T.inkFaint }}>{sesiones} sesion{sesiones === 1 ? "" : "es"}</div>
+              ),
+            },
+            {
+              clave: "role", titulo: "Rol", ancho: "130px",
+              valor: (u) => ROLES[u.role]?.etiqueta || u.role,
+              celda: (u) => (
+                <span style={{
+                  fontSize: 11, fontWeight: 600, color: T.brand, background: T.brandTint,
+                  borderRadius: 999, padding: "2px 9px", whiteSpace: "nowrap",
+                }}>
+                  {ROLES[u.role]?.etiqueta || u.role}
+                </span>
+              ),
+            },
+            {
+              clave: "specialty", titulo: "Especialidad", ancho: "1.4fr",
+              celda: (u) => (
+                <span style={{ color: T.inkSoft, fontSize: 12.5 }}>
+                  {u.specialty || u.title || "—"}
+                </span>
+              ),
+            },
+            {
+              clave: "pacientes", titulo: "Pacientes", ancho: "100px", alinear: "derecha",
+              celda: (u) => <span style={{ fontWeight: 600 }}>{u.pacientes}</span>,
+            },
+            {
+              clave: "sesiones", titulo: "Sesiones", ancho: "100px", alinear: "derecha",
+              celda: (u) => <span style={{ color: T.inkSoft }}>{u.sesiones}</span>,
+            },
+            {
+              clave: "acciones", titulo: "", ancho: "130px", alinear: "derecha", ordenable: false,
+              celda: (u) => puedeGestionar ? (
+                <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+                  <Btn variant="secondary" size="sm" onClick={() => setEditando(u)}>Editar</Btn>
+                  <IconBtn
+                    icon={u.activo === false ? Check : X}
+                    title={u.activo === false ? "Reactivar" : "Desactivar"}
+                    tone={u.activo === false ? "marca" : "neutro"}
+                    size="sm"
+                    onClick={() => alternarActivo(u)}
+                  />
                 </div>
-
-                {puedeGestionar && (
-                  <div style={{ display: "flex", gap: 6 }}>
-                    <Btn variant="secondary" size="sm" onClick={() => setEditando(u)}>Editar</Btn>
-                    <IconBtn
-                      icon={inactivo ? Check : X}
-                      title={inactivo ? "Reactivar" : "Desactivar"}
-                      tone={inactivo ? "marca" : "neutro"}
-                      size="sm"
-                      onClick={() => alternarActivo(u)}
-                    />
-                  </div>
-                )}
-              </ListRow>
-            );
-          })}
-          </List>
-        )}
+              ) : null,
+            },
+          ]}
+          filas={equipo.map((u) => ({ ...u, ...carga(u.id) }))}
+          ordenInicial={{ clave: "name", dir: "asc" }}
+          vacio="Ningún especialista coincide con la búsqueda."
+        />
 
         <div style={{ fontSize: 12, color: T.inkFaint, marginTop: 12, lineHeight: 1.5 }}>
           Desactivar conserva el historial: las sesiones y objetivos que registró
