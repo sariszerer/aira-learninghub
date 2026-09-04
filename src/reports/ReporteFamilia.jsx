@@ -4,7 +4,7 @@ import { T, TODAY } from "../theme.js";
 import { contar, fmtDate } from "../lib/format.js";
 import {
   resumenAsistencia, progresoParaFamilia, logrosDestacados,
-  sesionesEnRango, textoRango,
+  sesionesEnRango, textoRango, especialidadesDelPaciente,
 } from "../lib/reportes.js";
 import { Btn } from "../ui/index.js";
 import DocumentoAira, { CONTACTO_AIRA } from "./DocumentoAira.jsx";
@@ -146,7 +146,7 @@ export default function ReporteFamilia({
         subtitulo={`${child.name} ${child.lastName}`}
         meta={[
           { etiqueta: "Período", valor: textoRango(desde, hasta) },
-          { etiqueta: "Especialidad", valor: (child.specialties || []).join(", ") },
+          { etiqueta: "Especialidad", valor: especialidadesDelPaciente(child, sessions, objectives).join(", ") },
           { etiqueta: "Especialista", valor: especialista?.name },
           { etiqueta: "Fecha", valor: fmtDate(TODAY) },
         ]}

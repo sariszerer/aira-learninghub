@@ -4,6 +4,7 @@ import { contar, fmtDate, fmtDateShort } from "../lib/format.js";
 import {
   ASISTENCIA, resumenAsistencia, especialistasInvolucrados, evaluacionesIniciales,
   planesPorDisciplina, estadoDelPaciente, sesionesEnRango, textoRango,
+  especialidadesDelPaciente,
 } from "../lib/reportes.js";
 import DocumentoAira from "./DocumentoAira.jsx";
 import VisorReporte from "./VisorReporte.jsx";
@@ -27,6 +28,11 @@ export default function HistorialClinico({
   // "Al ser potencialmente extenso, conviene permitir filtrar... opcion de
   // incluir o excluir la bitacora detallada de sesiones (por su extension)."
   const [conBitacora, setConBitacora] = useState(true);
+
+  const especialidades = useMemo(
+    () => especialidadesDelPaciente(child, sessions, objectives),
+    [child, sessions, objectives]
+  );
 
   const todasDelNino = useMemo(
     () => sesionesEnRango(sessions, child.id, desde, hasta),
@@ -79,7 +85,7 @@ export default function HistorialClinico({
         desde={desde} setDesde={setDesde}
         hasta={hasta} setHasta={setHasta}
         especialidad={especialidad} setEspecialidad={setEspecialidad}
-        especialidades={child.specialties || []}
+        especialidades={especialidades}
         extra={
           <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: T.inkFaint, fontWeight: 600, cursor: "pointer" }}>
             <input type="checkbox" checked={conBitacora} onChange={(e) => setConBitacora(e.target.checked)} />
@@ -108,7 +114,7 @@ export default function HistorialClinico({
             <Dato k="Padre / tutor" v={contacto.name} />
             <Dato k="Contacto" v={[contacto.phone, contacto.email].filter(Boolean).join(" · ")} />
             <Dato k="Fecha de ingreso a AIRA" v={child.admissionDate && fmtDate(child.admissionDate)} />
-            <Dato k="Especialidades activas" v={(child.specialties || []).join(", ")} />
+            <Dato k="Especialidades activas" v={especialidades.join(", ")} />
           </div>
           <div style={{ marginTop: 8 }}>
             <Dato k="Motivo de consulta inicial" v={child.referralReason} bloque />

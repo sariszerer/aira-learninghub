@@ -4,7 +4,7 @@ import { T, TODAY } from "../theme.js";
 import { contar, fmtDate, fmtDateShort } from "../lib/format.js";
 import {
   resumenAsistencia, avancePorObjetivo, logrosDestacados, areasDeAtencion,
-  sesionesEnRango, textoRango,
+  sesionesEnRango, textoRango, especialidadesDelPaciente, especialidadPrincipal,
 } from "../lib/reportes.js";
 import { Btn } from "../ui/index.js";
 import DocumentoAira from "./DocumentoAira.jsx";
@@ -25,7 +25,15 @@ export default function ReporteEvolucion({
 }) {
   const [desde, setDesde] = useState(child.admissionDate || "");
   const [hasta, setHasta] = useState(TODAY);
-  const [especialidad, setEspecialidad] = useState(child.specialties?.[0] || "Todas");
+  // De los datos, no de children.specialties, que se desactualiza y dejaria
+  // fuera disciplinas con sesiones y objetivos registrados.
+  const especialidades = useMemo(
+    () => especialidadesDelPaciente(child, sessions, objectives),
+    [child, sessions, objectives]
+  );
+  const [especialidad, setEspecialidad] = useState(
+    () => especialidadPrincipal(child, sessions, objectives)
+  );
   const [ajustes, setAjustes] = useState("");
   const [recomendaciones, setRecomendaciones] = useState("");
   const [guardado, setGuardado] = useState(false);
@@ -54,6 +62,16 @@ export default function ReporteEvolucion({
     const id = Object.entries(conteo).sort((a, b) => b[1] - a[1])[0]?.[0];
     return users.find((u) => u.id === id) || null;
   }, [sesiones, users]);
+
+  // Ninguna sesion del periodo enlaza objetivos. Pasa con las 438 importadas
+  // del calendario, y cambia lo que el reporte puede afirmar: "0 veces
+  // trabajado" en once tarjetas y "sin logros" no describen al paciente, sino
+  // un hueco de registro. Decirlo una vez y explicar por que es mas honesto que
+  // repetir once veces un cero.
+  const hayVinculos = useMemo(
+    () => sesiones.some((s) => (s.objectivesWorked || []).length > 0),
+    [sesiones]
+  );
 
   const observacionesGenerales = useMemo(
     () => sesiones.filter((s) => (s.observation || "").trim()).slice(-6).reverse(),
@@ -97,7 +115,7 @@ export default function ReporteEvolucion({
         desde={desde} setDesde={setDesde}
         hasta={hasta} setHasta={setHasta}
         especialidad={especialidad} setEspecialidad={setEspecialidad}
-        especialidades={child.specialties || []}
+        especialidades={especialidades}
         minDate={child.admissionDate}
       />
 
@@ -108,7 +126,7 @@ export default function ReporteEvolucion({
           { etiqueta: "Expediente", valor: child.recordNo },
           { etiqueta: "Fecha de nacimiento", valor: child.birthDate ? fmtDate(child.birthDate) : null },
           { etiqueta: "Edad", valor: child.age != null ? `${child.age} años` : null },
-          { etiqueta: "Especialidad", valor: especialidad === "Todas" ? (child.specialties || []).join(", ") : especialidad },
+          { etiqueta: "Especialidad", valor: especialidad === "Todas" ? especialidades.join(", ") : especialidad },
           { etiqueta: "Especialista responsable", valor: responsable?.name },
           { etiqueta: "Período cubierto", valor: textoRango(desde, hasta) },
           { etiqueta: "Fecha de emisión", valor: fmtDate(TODAY) },
@@ -163,6 +181,12 @@ export default function ReporteEvolucion({
         >
           {avances.length === 0 ? (
             <SinDato>Sin objetivos que evaluar en este período.</SinDato>
+          ) : !hayVinculos ? (
+            <SinDato>
+              Ninguna de las {contar(sesiones.length, "sesión", "sesiones")} del período
+              tiene objetivos vinculados, así que no se puede documentar el avance de cada
+              uno. Los objetivos trabajados se marcan al registrar o editar la sesión.
+            </SinDato>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {avances.map((a) => (
@@ -224,7 +248,9 @@ export default function ReporteEvolucion({
         <SeccionDoc titulo="Logros destacados">
           <ListaDoc
             items={logros.map((o) => o.name)}
-            vacio="No se registraron objetivos alcanzados en este período."
+            vacio={hayVinculos
+              ? "No se registraron objetivos alcanzados en este período."
+              : "No se pueden atribuir logros a este período: las sesiones no tienen objetivos vinculados. Hay objetivos marcados como logrados en el plan, pero sin saber en qué sesión se alcanzaron no corresponde adjudicarlos a este corte."}
           />
         </SeccionDoc>
 

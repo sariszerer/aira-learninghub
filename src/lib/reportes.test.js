@@ -3,7 +3,8 @@ import {
   resumenAsistencia, progresoParaFamilia, etiquetaGas,
   avancePorObjetivo, logrosDestacados, areasDeAtencion,
   especialistasInvolucrados, evaluacionesIniciales, planesPorDisciplina,
-  estadoDelPaciente, textoRango, sesionesEnRango,
+  estadoDelPaciente, textoRango, sesionesEnRango, especialidadesDelPaciente,
+  especialidadPrincipal,
 } from './reportes.js'
 
 const ses = (o) => ({ childId: 'c1', date: '2026-01-01', attendance: 'asistio', objectivesWorked: [], ...o })
@@ -216,5 +217,75 @@ describe('sesionesEnRango y textoRango', () => {
     expect(textoRango('2026-01-01', null)).toMatch(/^Desde /)
     expect(textoRango(null, '2026-01-01')).toMatch(/^Hasta /)
     expect(textoRango('2026-01-01', '2026-06-01')).toContain('—')
+  })
+})
+
+describe('especialidadesDelPaciente', () => {
+  const child = { id: 'c1', specialties: ['Terapia Ocupacional'] }
+
+  it('incluye disciplinas que solo aparecen en las sesiones', () => {
+    // Caso real: la ficha de un paciente declaraba una sola disciplina y tenía
+    // sesiones de tres. El reporte arrancaba filtrado por la declarada y dejaba
+    // fuera un tercio del expediente.
+    const r = especialidadesDelPaciente(child, [
+      ses({ specialty: 'Funciones Ejecutivas' }),
+      ses({ specialty: 'Fonoaudiología' }),
+    ])
+    expect(r).toEqual(['Fonoaudiología', 'Funciones Ejecutivas', 'Terapia Ocupacional'])
+  })
+
+  it('incluye áreas que solo aparecen en los objetivos', () => {
+    const r = especialidadesDelPaciente(child, [], [{ childId: 'c1', area: 'Psicología' }])
+    expect(r).toContain('Psicología')
+  })
+
+  it('no mezcla datos de otros pacientes', () => {
+    const r = especialidadesDelPaciente(child,
+      [ses({ childId: 'otro', specialty: 'Kids Club' })],
+      [{ childId: 'otro', area: 'Kids Club' }])
+    expect(r).toEqual(['Terapia Ocupacional'])
+  })
+
+  it('no repite ni deja huecos', () => {
+    const r = especialidadesDelPaciente(
+      { id: 'c1', specialties: ['A', null, 'A'] },
+      [ses({ specialty: 'A' }), ses({ specialty: null })]
+    )
+    expect(r).toEqual(['A'])
+  })
+
+  it('con una ficha vacía devuelve lista vacía en vez de romper', () => {
+    expect(especialidadesDelPaciente(null)).toEqual([])
+    expect(especialidadesDelPaciente({ id: 'c1' })).toEqual([])
+  })
+})
+
+describe('especialidadPrincipal', () => {
+  const child = { id: 'c1', specialties: ['Terapia Ocupacional'] }
+
+  it('elige la de más sesiones, no la primera alfabéticamente', () => {
+    // Caso real: 27 sesiones de Terapia Ocupacional, 11 de Funciones Ejecutivas
+    // y 2 de Fonoaudiología. El reporte abría en la última, la de menos
+    // contenido, solo porque su nombre empieza por F.
+    const sesiones = [
+      ...Array(27).fill(0).map(() => ses({ specialty: 'Terapia Ocupacional' })),
+      ...Array(11).fill(0).map(() => ses({ specialty: 'Funciones Ejecutivas' })),
+      ...Array(2).fill(0).map(() => ses({ specialty: 'Fonoaudiología' })),
+    ]
+    expect(especialidadPrincipal(child, sesiones)).toBe('Terapia Ocupacional')
+  })
+
+  it('a igualdad de sesiones desempata por número de objetivos', () => {
+    const sesiones = [ses({ specialty: 'A' }), ses({ specialty: 'B' })]
+    const objetivos = [{ childId: 'c1', area: 'B' }, { childId: 'c1', area: 'B' }]
+    expect(especialidadPrincipal({ id: 'c1' }, sesiones, objetivos)).toBe('B')
+  })
+
+  it('con una sola disciplina la devuelve', () => {
+    expect(especialidadPrincipal(child, [])).toBe('Terapia Ocupacional')
+  })
+
+  it('sin ninguna cae a "Todas" en vez de dejar el filtro indefinido', () => {
+    expect(especialidadPrincipal({ id: 'c1' }, [], [])).toBe('Todas')
   })
 })

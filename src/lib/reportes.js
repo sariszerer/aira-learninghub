@@ -200,6 +200,44 @@ export function estadoDelPaciente(child) {
   return mapa[child?.status] || "Activo";
 }
 
+// ── Alcance del paciente ─────────────────────────────────────────────────────
+
+// Las disciplinas de un paciente, tomadas de lo que de verdad tiene registrado
+// y no solo de children.specialties.
+//
+// Esa columna se desactualiza: Haim la tiene con una sola disciplina y sin
+// embargo acumula sesiones de tres y objetivos de dos. Confiando en ella, el
+// Reporte de Evolucion arrancaba filtrado por la unica declarada y dejaba fuera
+// un tercio del expediente — y como el selector se esconde cuando hay una sola
+// opcion, no habia forma de corregirlo desde la pantalla.
+export function especialidadesDelPaciente(child, sesiones = [], objetivos = []) {
+  const set = new Set();
+  for (const e of child?.specialties || []) if (e) set.add(e);
+  for (const s of sesiones) if (s.childId === child?.id && s.specialty) set.add(s.specialty);
+  for (const o of objetivos) if (o.childId === child?.id && o.area) set.add(o.area);
+  return [...set].sort((a, b) => a.localeCompare(b, "es"));
+}
+
+// La disciplina con la que abrir un Reporte de Evolucion.
+//
+// Alfabetico no sirve: el primer paciente que se probo con datos reales tenia
+// 27 sesiones de Terapia Ocupacional, 11 de Funciones Ejecutivas y 2 de
+// Fonoaudiologia, y el reporte abria en la ultima — la de menos contenido —
+// solo porque su nombre empieza por F. Manda el volumen de sesiones, y a
+// igualdad, el numero de objetivos.
+export function especialidadPrincipal(child, sesiones = [], objetivos = []) {
+  const opciones = especialidadesDelPaciente(child, sesiones, objetivos);
+  if (opciones.length <= 1) return opciones[0] || "Todas";
+
+  const puntua = (esp) => ({
+    sesiones: sesiones.filter((s) => s.childId === child?.id && s.specialty === esp).length,
+    objetivos: objetivos.filter((o) => o.childId === child?.id && o.area === esp).length,
+  });
+  return opciones
+    .map((esp) => ({ esp, ...puntua(esp) }))
+    .sort((a, b) => b.sesiones - a.sesiones || b.objetivos - a.objetivos || a.esp.localeCompare(b.esp, "es"))[0].esp;
+}
+
 // ── Utilidades de rango ──────────────────────────────────────────────────────
 
 export function textoRango(desde, hasta) {
