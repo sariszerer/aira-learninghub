@@ -8,18 +8,23 @@ const CALENDAR_ID = "airalearninghub@gmail.com";
 let tokenClient = null;
 let _accessToken = null;
 
+// El token vive en localStorage, no en sessionStorage: el store lee de
+// localStorage para decidir si mostrar "conectado", y con almacenamientos
+// distintos ese indicador nunca coincidia con la realidad. Ademas la conexion
+// se perdia al cerrar la pestana.
+
 function getToken() {
-  return _accessToken || sessionStorage.getItem("gcal_token");
+  return _accessToken || localStorage.getItem("gcal_token");
 }
 
 function saveToken(token) {
   _accessToken = token;
-  sessionStorage.setItem("gcal_token", token);
+  localStorage.setItem("gcal_token", token);
 }
 
 export function clearToken() {
   _accessToken = null;
-  sessionStorage.removeItem("gcal_token");
+  localStorage.removeItem("gcal_token");
 }
 
 export function getStoredToken() {

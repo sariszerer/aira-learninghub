@@ -6,6 +6,7 @@ import { sessionsSinceLastParentReport } from "../../lib/reports.js";
 import { ReportCard } from "../../ui/index.js";
 import DocumentsSection from "../DocumentsSection.jsx";
 import AddDocumentModal from "../modals/AddDocumentModal.jsx";
+import { can } from "../../permissions.js";
 
 function ReportesTab({ child, documents, users, sessions, parentReports, currentUser, onAddDocument, onUpdateDocument, onGenerateFull, onGenerateEvolution, onGenerateParentReport }) {
   const [addingType, setAddingType] = useState(null);
@@ -46,7 +47,8 @@ function ReportesTab({ child, documents, users, sessions, parentReports, current
       <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
         {Object.keys(DOC_TYPES).filter(type => type !== "anamnesis").map((type) => (
           <DocumentsSection key={type} type={type} documents={childDocuments} users={users}
-            onAdd={() => setAddingType(type)} onUpdateDocument={onUpdateDocument} currentUser={currentUser} />
+            onAdd={() => setAddingType(type)} onUpdateDocument={onUpdateDocument} currentUser={currentUser}
+            canAdd={can(currentUser, "document:create")} />
         ))}
       </div>
 

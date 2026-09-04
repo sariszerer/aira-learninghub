@@ -10,6 +10,9 @@ import { T } from "../theme.js";
 export default function PageHeader({ titulo, subtitulo, buscar, onBuscar, acciones }) {
   return (
     <div style={{
+      // Fijo al hacer scroll: el buscador y el titulo son la referencia de la
+      // pantalla y perderlos al bajar obliga a subir para saber donde estas.
+      position: "sticky", top: 0, zIndex: 10,
       background: T.surface, borderBottom: `1px solid ${T.border}`,
       padding: "14px 28px 0",
     }}>

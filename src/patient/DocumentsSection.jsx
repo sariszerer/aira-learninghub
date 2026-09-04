@@ -6,7 +6,11 @@ import { fmtDateShort } from "../lib/format.js";
 import { can } from "../permissions.js";
 import { Eyebrow, Btn, Card } from "../ui/index.js";
 
-function DocumentsSection({ type, documents, users, onAdd, onUpdateDocument, currentUser }) {
+// `canAdd` llega desde quien la usa y no se decide aqui: cada tab tiene su
+// propio permiso (workplan:create para el plan, document:create para reportes).
+// Antes el boton se pintaba siempre, lo que duplicaba el del tab y ademas se
+// saltaba su comprobacion.
+function DocumentsSection({ type, documents, users, onAdd, onUpdateDocument, currentUser, canAdd = false }) {
   const meta = DOC_TYPES[type];
   const docs = documents.filter((d) => d.type === type).sort((a, b) => b.date.localeCompare(a.date));
   const [editingId, setEditingId] = useState(null);
@@ -20,7 +24,7 @@ function DocumentsSection({ type, documents, users, onAdd, onUpdateDocument, cur
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
         <Eyebrow style={{ marginBottom: 0 }}>{meta.plural}</Eyebrow>
-        <Btn variant="ghost" size="sm" icon={Plus} onClick={onAdd}>Agregar</Btn>
+        {canAdd && onAdd && <Btn variant="ghost" size="sm" icon={Plus} onClick={onAdd}>Agregar</Btn>}
       </div>
       {docs.length === 0 ? (
         <Card style={{ padding: 16 }}>
