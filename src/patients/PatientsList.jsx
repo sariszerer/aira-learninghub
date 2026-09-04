@@ -3,7 +3,7 @@ import { T } from "../theme.js";
 import { visibleChildren } from "../permissions.js";
 import { useDataStore } from "../store/dataStore.js";
 import { useAuthStore } from "../store/authStore.js";
-import { Avatar } from "../ui/index.js";
+import { Avatar, Chip } from "../ui/index.js";
 import PageHeader from "../shell/PageHeader.jsx";
 
 // Listado completo de pacientes con busqueda y filtro por especialidad.
@@ -55,20 +55,12 @@ export default function PatientsList({ onOpenChild }) {
       <div style={{ padding: "20px 28px 48px" }}>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 18 }}>
           {especialidades.map((e) => (
-            <button
+            <Chip
               key={e}
+              label={e}
+              selected={especialidad === e}
               onClick={() => setEspecialidad(e)}
-              style={{
-                padding: "6px 12px", borderRadius: 999, cursor: "pointer",
-                fontFamily: T.font, fontSize: 12.5,
-                fontWeight: especialidad === e ? 600 : 500,
-                border: `1px solid ${especialidad === e ? T.brand : T.border}`,
-                background: especialidad === e ? T.brandTint : T.surface,
-                color: especialidad === e ? T.brand : T.inkSoft,
-              }}
-            >
-              {e}
-            </button>
+            />
           ))}
         </div>
 

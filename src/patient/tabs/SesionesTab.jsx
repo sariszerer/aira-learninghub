@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { T, SPECIALIST_COLORS } from "../../theme.js";
 import { fmtDateShort } from "../../lib/format.js";
 import { can } from "../../permissions.js";
-import { Card } from "../../ui/index.js";
+import { Card, Chip, Btn } from "../../ui/index.js";
 import EditSessionModal from "../modals/EditSessionModal.jsx";
 
 function SesionesTab({ child, sessions, objectives, users, currentUser, onUpdateSession }) {
@@ -26,10 +26,7 @@ function SesionesTab({ child, sessions, objectives, users, currentUser, onUpdate
         />
       )}
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
-        <button onClick={() => setFilterSpec(null)}
-          style={{ padding: "5px 12px", borderRadius: 20, border: `1.5px solid ${filterSpec === null ? T.ink : T.border}`, background: filterSpec === null ? T.ink : "#fff", color: filterSpec === null ? "#fff" : T.inkSoft, fontSize: 12, fontWeight: 500, fontFamily: T.font, cursor: "pointer" }}>
-          Todas ({childSessions.length})
-        </button>
+        <Chip label={`Todas (${childSessions.length})`} selected={filterSpec === null} onClick={() => setFilterSpec(null)} />
         {specs.map(sp => {
           // Get the specialist for this specialty to use their color
           const specForColor = childSessions.find(s => s.specialty === sp);
@@ -37,10 +34,7 @@ function SesionesTab({ child, sessions, objectives, users, currentUser, onUpdate
           const count = childSessions.filter(s => s.specialty === sp).length;
           const active = filterSpec === sp;
           return (
-            <button key={sp} onClick={() => setFilterSpec(active ? null : sp)}
-              style={{ padding: "5px 12px", borderRadius: 20, border: `1.5px solid ${active ? color : T.border}`, background: active ? color : "#fff", color: active ? "#fff" : color, fontSize: 12, fontWeight: 500, fontFamily: T.font, cursor: "pointer" }}>
-              {sp} ({count})
-            </button>
+            <Chip key={sp} label={`${sp} (${count})`} selected={active} onClick={() => setFilterSpec(active ? null : sp)} />
           );
         })}
       </div>
@@ -66,10 +60,7 @@ function SesionesTab({ child, sessions, objectives, users, currentUser, onUpdate
                   {s.nextSteps && <div style={{ fontSize: 12.5, color: T.inkSoft, marginTop: 4, fontStyle: "italic" }}>→ {s.nextSteps}</div>}
                 </div>
                 {canEdit(s) && (
-                  <button onClick={() => setEditingSession(s)}
-                    style={{ fontSize: 12, padding: "4px 10px", borderRadius: 6, border: `0.5px solid ${T.border}`, background: "#fff", color: T.inkSoft, cursor: "pointer", fontFamily: T.font, flexShrink: 0 }}>
-                    Editar
-                  </button>
+                  <Btn variant="secondary" size="sm" onClick={() => setEditingSession(s)}>Editar</Btn>
                 )}
               </div>
             </Card>

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { T } from "../../theme.js";
 import { fmtDate } from "../../lib/format.js";
-import { Card, Field } from "../../ui/index.js";
+import { Card, Field, Btn } from "../../ui/index.js";
 
 function ResumenTab({ child, objectives, sessions, users, onRenewPackage, onCloseProcess, currentUser }) {
   const PAQUETE = 8;
@@ -61,12 +61,7 @@ function ResumenTab({ child, objectives, sessions, users, onRenewPackage, onClos
                 </div>
               </div>
               {onCloseProcess && (
-                <button onClick={() => setShowCloseProcess(true)} style={{
-                  background: "none", border: `1px solid ${T.apoyo}`, borderRadius: 10, color: T.apoyo,
-                  padding: "8px 16px", fontSize: 13, cursor: "pointer", fontFamily: T.font, fontWeight: 600, flexShrink: 0,
-                }}>
-                  Cerrar proceso
-                </button>
+                <Btn variant="danger" onClick={() => setShowCloseProcess(true)}>Cerrar proceso</Btn>
               )}
             </div>
           </Card>

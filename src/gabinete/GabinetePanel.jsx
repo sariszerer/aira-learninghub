@@ -2,9 +2,10 @@ import React, { useState } from "react";
 import { T, TODAY } from "../theme.js";
 import { fmtDate } from "../lib/format.js";
 import { ROLES } from "../permissions.js";
-import { Eyebrow, Card } from "../ui/index.js";
+import { Eyebrow, Card, Chip } from "../ui/index.js";
 import { useDataStore } from "../store/dataStore.js";
 import { Btn } from "../ui/index.js";
+import { Plus } from "lucide-react";
 
 function GabinetePanel({ onAddSession }) {
   const schools = useDataStore((s) => s.schools);
@@ -49,10 +50,7 @@ function GabinetePanel({ onAddSession }) {
           <div style={{ fontFamily: T.font, fontSize: 17, fontWeight: 700, color: T.ink }}>Gabinete Externo</div>
           <div style={{ fontSize: 13.5, color: T.inkSoft, marginTop: 4 }}>{schools.length} escuela{schools.length !== 1 ? "s" : ""} con contrato activo</div>
         </div>
-        <button onClick={() => setAddingSchool(true)} style={{
-          background: T.brand, color: "#fff", border: "none", borderRadius: 12, padding: "11px 20px",
-          fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: T.font,
-        }}>+ Agregar escuela</button>
+        <Btn icon={Plus} onClick={() => setAddingSchool(true)}>Agregar escuela</Btn>
       </div>
 
       {/* Add school modal */}
@@ -74,10 +72,15 @@ function GabinetePanel({ onAddSession }) {
               {allSpecialists.map((sp) => {
                 const sel = newSchool.assignedSpecialists.includes(sp.id);
                 return (
-                  <button key={sp.id} onClick={() => setNewSchool({ ...newSchool, assignedSpecialists: sel ? newSchool.assignedSpecialists.filter((x) => x !== sp.id) : [...newSchool.assignedSpecialists, sp.id] })}
-                    style={{ padding: "6px 14px", borderRadius: 20, fontSize: 13, border: "none", cursor: "pointer", fontFamily: T.font, fontWeight: 600, background: sel ? T.brand : T.bg, color: sel ? "#fff" : T.inkSoft }}>
-                    {sp.name.split(" ")[0]}
-                  </button>
+                  <Chip
+                    key={sp.id}
+                    label={sp.name.split(" ")[0]}
+                    selected={sel}
+                    casilla
+                    onClick={() => setNewSchool({ ...newSchool, assignedSpecialists: sel
+                      ? newSchool.assignedSpecialists.filter((x) => x !== sp.id)
+                      : [...newSchool.assignedSpecialists, sp.id] })}
+                  />
                 );
               })}
             </div>
@@ -166,10 +169,7 @@ function GabinetePanel({ onAddSession }) {
               {/* Sessions */}
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
                 <Eyebrow>Sesiones de gabinete</Eyebrow>
-                <button onClick={() => setSessionForm(emptySession())} style={{
-                  background: T.brand, color: "#fff", border: "none", borderRadius: 10, padding: "8px 16px",
-                  fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: T.font,
-                }}>+ Registrar sesión</button>
+                <Btn icon={Plus} onClick={() => setAddingSession(true)}>Registrar sesión</Btn>
               </div>
 
               {sessionForm && (

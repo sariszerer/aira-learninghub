@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Calendar } from "lucide-react";
 import { T, SPECIALIST_COLORS } from "../theme.js";
-import { Eyebrow, Card } from "../ui/index.js";
+import { Eyebrow, Card, Btn } from "../ui/index.js";
 
 function CalendarAgenda({ events, loading, error, date, onDateChange, children, onOpenChild, onConnectGcal }) {
   const [links, setLinks] = useState({}); // eventIndex -> childId
@@ -63,13 +63,7 @@ function CalendarAgenda({ events, loading, error, date, onDateChange, children, 
           <span style={{ fontSize: 13, color: T.inkSoft }}>
             Conecta Google Calendar para ver la agenda
           </span>
-          <button onClick={onConnectGcal} style={{
-            background: T.brand, color: "#fff", border: "none", borderRadius: T.radiusSm,
-            padding: "7px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer",
-            fontFamily: T.font,
-          }}>
-            Conectar
-          </button>
+          <Btn size="sm" onClick={onConnectGcal}>Conectar</Btn>
         </div>
       ) : error ? (
         <div style={{ fontSize: 13, color: "#B56060", padding: "10px 14px", background: "#FFF0F0", borderRadius: 10, marginBottom: 12 }}>⚠ {error}</div>

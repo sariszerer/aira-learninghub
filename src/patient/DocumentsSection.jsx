@@ -56,7 +56,7 @@ function DocumentsSection({ type, documents, users, onAdd, onUpdateDocument, cur
                       </a>
                     )}
                     {canEdit && !isEditing && (
-                      <button onClick={() => startEdit(d)} style={{ fontSize: 12, color: T.inkSoft, background: "none", border: `1px solid ${T.border}`, borderRadius: 6, padding: "4px 8px", cursor: "pointer" }}>Editar</button>
+                      <Btn variant="secondary" size="sm" onClick={() => startEdit(d)}>Editar</Btn>
                     )}
                     {d.notes && !isEditing && (
                       <button onClick={() => setExpandedId(isExpanded ? null : d.id)} style={{ fontSize: 12, color: T.brand, background: "none", border: "none", cursor: "pointer", padding: "4px 0" }}>

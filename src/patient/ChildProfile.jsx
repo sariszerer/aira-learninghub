@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Plus } from "lucide-react";
+import { Plus, Pencil } from "lucide-react";
 import { T, SPECIALIST_COLORS, TODAY } from "../theme.js";
 import { fmtDate } from "../lib/format.js";
 import { can } from "../permissions.js";
@@ -99,13 +99,7 @@ function ChildProfile({ child, onOpenSessionForm, onViewReport, onGenerateFull, 
             <Btn variant="amber" size="lg" icon={Plus} onClick={onOpenSessionForm}>Registrar sesión</Btn>
           )}
           {can(currentUser, "patient:edit") && (
-            <button onClick={() => setEditingProfile(true)} style={{
-              display: "flex", alignItems: "center", gap: 6, background: "none",
-              border: `1px solid ${T.border}`, borderRadius: 10, padding: "7px 14px",
-              fontSize: 13, color: T.inkSoft, cursor: "pointer", fontFamily: T.font,
-            }}>
-              ✎ Editar perfil
-            </button>
+            <Btn variant="secondary" size="sm" icon={Pencil} onClick={() => setEditingProfile(true)}>Editar perfil</Btn>
           )}
         </div>
       </div>

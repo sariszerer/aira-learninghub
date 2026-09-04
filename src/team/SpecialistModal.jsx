@@ -3,7 +3,7 @@ import { T } from "../theme.js";
 import { ROLES } from "../permissions.js";
 import { useDataStore } from "../store/dataStore.js";
 import { useAuthStore } from "../store/authStore.js";
-import { Btn } from "../ui/index.js";
+import { Btn, Chip } from "../ui/index.js";
 
 // Alta y edicion de un miembro del equipo.
 //
@@ -143,23 +143,12 @@ export default function SpecialistModal({ usuario, onClose }) {
           </div>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
             {ROLES_ASIGNABLES.map((r) => (
-              <button
+              <Chip
                 key={r}
-                disabled={esUnoMismo}
-                onClick={() => set("role", r)}
-                style={{
-                  padding: "6px 12px", borderRadius: 999,
-                  cursor: esUnoMismo ? "not-allowed" : "pointer",
-                  fontFamily: T.font, fontSize: 12.5,
-                  fontWeight: form.role === r ? 600 : 500,
-                  border: `1px solid ${form.role === r ? T.brand : T.border}`,
-                  background: form.role === r ? T.brandTint : T.surface,
-                  color: form.role === r ? T.brand : T.inkSoft,
-                  opacity: esUnoMismo ? 0.6 : 1,
-                }}
-              >
-                {ROLES[r]?.etiqueta || r}
-              </button>
+                label={ROLES[r]?.etiqueta || r}
+                selected={form.role === r}
+                onClick={() => { if (!esUnoMismo) set("role", r); }}
+              />
             ))}
           </div>
           {esUnoMismo && (

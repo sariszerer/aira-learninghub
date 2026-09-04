@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { T, TODAY } from "../theme.js";
 import { fmtDate } from "../lib/format.js";
-import { Eyebrow, Card } from "../ui/index.js";
+import { Eyebrow, Card, Btn } from "../ui/index.js";
 import { useDataStore } from "../store/dataStore.js";
+import { Plus } from "lucide-react";
 
 function TutorAiraHome({ user, onOpenChild }) {
   const children = useDataStore((s) => s.children);
@@ -159,10 +160,7 @@ function TutorAiraHome({ user, onOpenChild }) {
       {/* Button to open form if not due */}
       {!dueAlert && !form && (
         <div style={{ marginBottom: 22 }}>
-          <button onClick={() => setForm(emptyForm())} style={{
-            background: T.brand, color: "#fff", border: "none", borderRadius: 12, padding: "11px 20px",
-            fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: T.font,
-          }}>+ Nuevo reporte quincenal</button>
+          <Btn icon={Plus} onClick={() => setForm(emptyForm())}>Nuevo reporte quincenal</Btn>
         </div>
       )}
 
