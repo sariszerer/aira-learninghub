@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { T } from "../theme.js";
 import { useDataStore } from "../store/dataStore.js";
+import { Btn } from "../ui/index.js";
 
 // Modal de edicion del perfil del paciente. Estaba en linea dentro de
 // ChildProfile, que ya cargaba con el encabezado, los tabs y su enrutado.
@@ -88,9 +89,7 @@ function EditProfileModal({ child, onClose }) {
               <button onClick={() => setEditingProfile(false)} style={{ padding: "10px 18px", borderRadius: 10, border: `1px solid ${T.border}`, background: "#fff", color: T.inkSoft, fontSize: 14, fontFamily: T.font, cursor: "pointer" }}>
                 Cancelar
               </button>
-              <button onClick={handleSaveProfile} disabled={!editForm.name.trim() || !editForm.lastName.trim()} style={{ padding: "10px 22px", borderRadius: 10, border: "none", background: T.brand, color: "#fff", fontSize: 14, fontWeight: 600, fontFamily: T.font, cursor: "pointer", opacity: (!editForm.name.trim() || !editForm.lastName.trim()) ? 0.5 : 1 }}>
-                Guardar cambios
-              </button>
+              <Btn onClick={handleSaveProfile} disabled={!editForm.name.trim() || !editForm.lastName.trim()}>Guardar cambios</Btn>
             </div>
           </div>
         </div>

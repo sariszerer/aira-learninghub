@@ -4,6 +4,7 @@ import { fmtDate } from "../lib/format.js";
 import { ROLES } from "../permissions.js";
 import { Eyebrow, Card } from "../ui/index.js";
 import { useDataStore } from "../store/dataStore.js";
+import { Btn } from "../ui/index.js";
 
 function GabinetePanel({ onAddSession }) {
   const schools = useDataStore((s) => s.schools);
@@ -87,8 +88,8 @@ function GabinetePanel({ onAddSession }) {
               style={{ width: "100%", padding: "9px 12px", borderRadius: 10, border: `1px solid ${T.border}`, fontSize: 14, fontFamily: T.font, resize: "vertical", boxSizing: "border-box", outline: "none" }} />
           </div>
           <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-            <button onClick={() => setAddingSchool(false)} style={{ padding: "9px 16px", borderRadius: 10, border: `1px solid ${T.border}`, background: "#fff", color: T.inkSoft, fontSize: 13.5, fontFamily: T.font, cursor: "pointer" }}>Cancelar</button>
-            <button onClick={handleSaveSchool} disabled={!newSchool.name.trim()} style={{ padding: "9px 18px", borderRadius: 10, border: "none", background: T.brand, color: "#fff", fontSize: 13.5, fontWeight: 600, fontFamily: T.font, cursor: "pointer", opacity: !newSchool.name.trim() ? 0.5 : 1 }}>Guardar escuela</button>
+            <Btn variant="secondary" onClick={() => setAddingSchool(false)}>Cancelar</Btn>
+            <Btn onClick={handleSaveSchool} disabled={!newSchool.name.trim()}>Guardar escuela</Btn>
           </div>
         </Card>
       )}
@@ -206,7 +207,7 @@ function GabinetePanel({ onAddSession }) {
                   </div>
                   <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
                     <button onClick={() => setSessionForm(null)} style={{ padding: "9px 16px", borderRadius: 10, border: `1px solid ${T.border}`, background: "#fff", color: T.inkSoft, fontSize: 13.5, fontFamily: T.font, cursor: "pointer" }}>Cancelar</button>
-                    <button onClick={handleSaveSession} disabled={!sessionForm.date || !sessionForm.specialistId} style={{ padding: "9px 18px", borderRadius: 10, border: "none", background: T.brand, color: "#fff", fontSize: 13.5, fontWeight: 600, fontFamily: T.font, cursor: "pointer", opacity: (!sessionForm.date || !sessionForm.specialistId) ? 0.5 : 1 }}>Guardar sesión</button>
+                    <Btn onClick={handleSaveSession} disabled={!sessionForm.date || !sessionForm.specialistId}>Guardar sesión</Btn>
                   </div>
                 </Card>
               )}

@@ -4,6 +4,7 @@ import { StatusPill, StatusRing, Card } from "../../ui/index.js";
 import { useDataStore } from "../../store/dataStore.js";
 import { useAuthStore } from "../../store/authStore.js";
 import { can } from "../../permissions.js";
+import { Btn } from "../../ui/index.js";
 
 function ObjectivesList({ objectives, compact, onUpdate, onAdd, onDelete, defaultArea }) {
   const [editing, setEditing] = useState(null); // obj id being edited
@@ -111,8 +112,8 @@ function ObjectivesList({ objectives, compact, onUpdate, onAdd, onDelete, defaul
                 />
               </div>
               <div style={{ display: "flex", gap: 6 }}>
-                <button onClick={handleAdd} disabled={!newName.trim()} style={{ background: T.brand, color: "#fff", border: "none", borderRadius: 8, padding: "7px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: T.font, opacity: !newName.trim() ? 0.5 : 1 }}>Agregar</button>
-                <button onClick={() => { setAdding(false); setNewName(""); setNewArea(""); }} style={{ background: T.bg, color: T.inkSoft, border: `1px solid ${T.border}`, borderRadius: 8, padding: "7px 10px", fontSize: 13, cursor: "pointer", fontFamily: T.font }}>Cancelar</button>
+                <Btn size="sm" onClick={handleAdd} disabled={!newName.trim()}>Agregar</Btn>
+                <Btn size="sm" variant="secondary" onClick={() => { setAdding(false); setNewName(""); setNewArea(""); }}>Cancelar</Btn>
               </div>
             </div>
           ) : (

@@ -3,6 +3,7 @@ import { T } from "../theme.js";
 import { ROLES } from "../permissions.js";
 import { useDataStore } from "../store/dataStore.js";
 import { useAuthStore } from "../store/authStore.js";
+import { Btn } from "../ui/index.js";
 
 // Alta y edicion de un miembro del equipo.
 //
@@ -210,29 +211,8 @@ export default function SpecialistModal({ usuario, onClose }) {
         )}
 
         <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-          <button
-            onClick={onClose}
-            style={{
-              border: `1px solid ${T.border}`, background: T.surface, color: T.inkSoft,
-              borderRadius: T.radiusSm, padding: "9px 16px", fontSize: 13.5,
-              cursor: "pointer", fontFamily: T.font,
-            }}
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={guardar}
-            disabled={!valido || guardando}
-            style={{
-              border: "none", borderRadius: T.radiusSm, padding: "9px 18px",
-              fontSize: 13.5, fontWeight: 600, fontFamily: T.font,
-              cursor: valido && !guardando ? "pointer" : "not-allowed",
-              background: valido && !guardando ? T.brand : T.border,
-              color: valido && !guardando ? "#fff" : T.inkFaint,
-            }}
-          >
-            {guardando ? "Guardando…" : esNuevo ? "Crear e invitar" : "Guardar"}
-          </button>
+          <Btn variant="secondary" size="md" onClick={onClose}>Cancelar</Btn>
+          <Btn variant="primary" size="md" onClick={guardar} disabled={!valido || guardando}>{guardando ? "Guardando…" : esNuevo ? "Crear e invitar" : "Guardar"}</Btn>
         </div>
       </div>
     </div>

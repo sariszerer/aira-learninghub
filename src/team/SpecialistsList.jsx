@@ -4,9 +4,9 @@ import { T } from "../theme.js";
 import { ROLES } from "../permissions.js";
 import { useDataStore } from "../store/dataStore.js";
 import { useAuthStore } from "../store/authStore.js";
-import { Avatar } from "../ui/index.js";
 import PageHeader from "../shell/PageHeader.jsx";
 import SpecialistModal from "./SpecialistModal.jsx";
+import { Avatar, Btn, IconBtn } from "../ui/index.js";
 
 // Gestion del equipo. El alta pasa por una Edge Function porque crear un
 // usuario que pueda iniciar sesion exige service_role; editar y desactivar si
@@ -59,17 +59,7 @@ export default function SpecialistsList() {
         buscar={query}
         onBuscar={setQuery}
         acciones={puedeGestionar && (
-          <button
-            onClick={() => setEditando("nuevo")}
-            style={{
-              display: "flex", alignItems: "center", gap: 6,
-              background: T.brand, color: "#fff", border: "none",
-              borderRadius: T.radiusSm, padding: "8px 14px",
-              fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: T.font,
-            }}
-          >
-            <Plus size={15} /> Nuevo especialista
-          </button>
+          <Btn variant="primary" size="sm" onClick={() => setEditando("nuevo")} icon={Plus}>Nuevo especialista</Btn>
         )}
       />
 
@@ -148,27 +138,14 @@ export default function SpecialistsList() {
 
                 {puedeGestionar && (
                   <div style={{ display: "flex", gap: 6 }}>
-                    <button
-                      onClick={() => setEditando(u)}
-                      style={{
-                        border: `1px solid ${T.border}`, background: T.surface,
-                        borderRadius: T.radiusSm, padding: "6px 12px", cursor: "pointer",
-                        fontSize: 12.5, color: T.inkSoft, fontFamily: T.font,
-                      }}
-                    >
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => alternarActivo(u)}
+                    <Btn variant="secondary" size="sm" onClick={() => setEditando(u)}>Editar</Btn>
+                    <IconBtn
+                      icon={inactivo ? Check : X}
                       title={inactivo ? "Reactivar" : "Desactivar"}
-                      style={{
-                        border: `1px solid ${T.border}`, background: T.surface,
-                        borderRadius: T.radiusSm, padding: "6px 9px", cursor: "pointer",
-                        color: inactivo ? T.logrado : T.inkFaint, display: "grid", placeItems: "center",
-                      }}
-                    >
-                      {inactivo ? <Check size={14} /> : <X size={14} />}
-                    </button>
+                      tone={inactivo ? "marca" : "neutro"}
+                      size="sm"
+                      onClick={() => alternarActivo(u)}
+                    />
                   </div>
                 )}
               </div>
