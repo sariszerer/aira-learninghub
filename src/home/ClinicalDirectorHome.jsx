@@ -177,7 +177,7 @@ function ClinicalDirectorHome({ user, onOpenChild, onCalendarDateChange, onConne
           )}
 
           {/* Alertas clínicas con tabs */}
-          <Card style={{ borderLeft: `4px solid ${T.amber}` }}>
+          <Card style={{ }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
               <Eyebrow>Alertas clínicas</Eyebrow>
               <span style={{

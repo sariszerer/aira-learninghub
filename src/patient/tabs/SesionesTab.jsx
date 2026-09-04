@@ -45,11 +45,14 @@ function SesionesTab({ child, sessions, objectives, users, currentUser, onUpdate
           const objs = (s.objectivesWorked || []).map(ow => objectives.find(o => o.id === ow.objectiveId)?.name).filter(Boolean);
           const acts = Array.isArray(s.activities) ? s.activities : [];
           return (
-            <Card key={s.id} style={{ padding: "14px 16px", borderLeft: `3px solid ${color}` }}>
+            <Card key={s.id} style={{ padding: "14px 16px" }}>
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: T.amberDeep }}>{fmtDateShort(s.date)}</span>
+                    <span style={{
+                      width: 7, height: 7, borderRadius: "50%", background: color, flexShrink: 0,
+                    }} />
+                    <span style={{ fontSize: 12, fontWeight: 700, color: T.ink }}>{fmtDateShort(s.date)}</span>
                     <span style={{ fontSize: 12, fontWeight: 600, color }}>{s.specialty}</span>
                     <span style={{ fontSize: 12, color, opacity: 0.8 }}>{specialist?.name?.split(" ")[0]}</span>
                     {s.duration && <span style={{ fontSize: 11, color: T.inkFaint }}>{s.duration} min</span>}
@@ -57,7 +60,7 @@ function SesionesTab({ child, sessions, objectives, users, currentUser, onUpdate
                   {objs.length > 0 && <div style={{ fontSize: 12.5, color: T.inkSoft, marginBottom: 3 }}><b>Objetivos:</b> {objs.join(" · ")}</div>}
                   {acts.length > 0 && <div style={{ fontSize: 12.5, color: T.inkSoft, marginBottom: 3 }}><b>Actividades:</b> {acts.join(" · ")}</div>}
                   {s.observation && <div style={{ fontSize: 13, color: T.ink, lineHeight: 1.5, marginTop: 5, whiteSpace: "pre-wrap" }}>{s.observation}</div>}
-                  {s.nextSteps && <div style={{ fontSize: 12.5, color: T.inkSoft, marginTop: 4, fontStyle: "italic" }}>→ {s.nextSteps}</div>}
+                  {s.nextSteps && <div style={{ fontSize: 12.5, color: T.inkSoft, marginTop: 4, }}>→ {s.nextSteps}</div>}
                 </div>
                 {canEdit(s) && (
                   <Btn variant="secondary" size="sm" onClick={() => setEditingSession(s)}>Editar</Btn>

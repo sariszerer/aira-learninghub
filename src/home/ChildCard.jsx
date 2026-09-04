@@ -29,7 +29,7 @@ function ChildCard({ child, users, sessions, onOpen }) {
             <Calendar size={13} />
             {child.nextSession ? fmtDate(child.nextSession) : "Sin sesión programada"}
           </div>
-          <span style={{ display: "flex", alignItems: "center", gap: 4, color: T.brand, fontSize: 13, fontFamily: T.font, fontStyle: "italic", fontWeight: 500 }}>
+          <span style={{ display: "flex", alignItems: "center", gap: 4, color: T.brand, fontSize: 13, fontFamily: T.font, fontWeight: 500 }}>
             Ver perfil <ArrowRight size={13} />
           </span>
         </div>

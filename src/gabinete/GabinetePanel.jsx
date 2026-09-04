@@ -55,7 +55,7 @@ function GabinetePanel({ onAddSession }) {
 
       {/* Add school modal */}
       {addingSchool && (
-        <Card style={{ marginBottom: 24, borderLeft: `4px solid ${T.brand}` }}>
+        <Card style={{ marginBottom: 24 }}>
           <div style={{ fontFamily: T.font, fontSize: 18, color: T.ink, marginBottom: 18 }}>Nueva escuela</div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 20px" }}>
             <Field2 label="Nombre del colegio" value={newSchool.name} onChange={(v) => setNewSchool({ ...newSchool, name: v })} />
@@ -163,7 +163,7 @@ function GabinetePanel({ onAddSession }) {
                     })}
                   </div>
                 </div>
-                {school.notes && <div style={{ fontSize: 13.5, color: T.inkSoft, marginTop: 10, fontStyle: "italic" }}>{school.notes}</div>}
+                {school.notes && <div style={{ fontSize: 13.5, color: T.inkSoft, marginTop: 10, }}>{school.notes}</div>}
               </Card>
 
               {/* Sessions */}
@@ -173,7 +173,7 @@ function GabinetePanel({ onAddSession }) {
               </div>
 
               {sessionForm && (
-                <Card style={{ marginBottom: 16, borderLeft: `3px solid ${T.brand}` }}>
+                <Card style={{ marginBottom: 16 }}>
                   <div style={{ fontFamily: T.font, fontSize: 16, color: T.ink, marginBottom: 16 }}>Nueva sesión — {school.name}</div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 16px" }}>
                     <div style={{ marginBottom: 12 }}>

@@ -5,6 +5,7 @@ import { useDataStore } from "../../store/dataStore.js";
 import { useAuthStore } from "../../store/authStore.js";
 import { can } from "../../permissions.js";
 import { Btn } from "../../ui/index.js";
+import { Plus } from "lucide-react";
 
 function ObjectivesList({ objectives, compact, onUpdate, onAdd, onDelete, defaultArea }) {
   const [editing, setEditing] = useState(null); // obj id being edited
@@ -117,9 +118,7 @@ function ObjectivesList({ objectives, compact, onUpdate, onAdd, onDelete, defaul
               </div>
             </div>
           ) : (
-            <button onClick={() => setAdding(true)} style={{ background: "none", border: `1.5px dashed ${T.border}`, borderRadius: 10, padding: "8px 16px", fontSize: 13, color: T.inkSoft, cursor: "pointer", fontFamily: T.font, width: "100%", textAlign: "center" }}>
-              + Agregar objetivo
-            </button>
+            <Btn variant="subtle" size="sm" icon={Plus} onClick={() => setAdding(true)}>Agregar objetivo</Btn>
           )}
         </div>
       )}
@@ -252,7 +251,7 @@ function ObjetivosTab({ child }) {
                   <div style={{ padding: "12px 14px 10px" }}>
                     <div style={{ fontSize: 13, fontWeight: 700, color: `${color}90`, marginBottom: 2 }}>{area}</div>
                     <div style={{ fontSize: 12, color: T.inkSoft, marginBottom: 10 }}>{spec.name}</div>
-                    <div style={{ fontSize: 12, color: T.inkFaint, fontStyle: "italic", padding: "8px 0" }}>Sin objetivos definidos.</div>
+                    <div style={{ fontSize: 12, color: T.inkFaint, padding: "8px 0" }}>Sin objetivos definidos.</div>
                   </div>
             {canEditThis && (
                     <div style={{ borderTop: `1px solid ${T.borderSoft}`, padding: "6px 14px 10px" }}>

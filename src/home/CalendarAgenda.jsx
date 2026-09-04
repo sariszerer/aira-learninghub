@@ -87,7 +87,6 @@ function CalendarAgenda({ events, loading, error, date, onDateChange, children, 
                   display: "flex", alignItems: "center", gap: 12, padding: "10px 14px",
                   borderRadius: isLinking ? "11px 11px 0 0" : 11,
                   background: isLinking ? T.bg : T.surfaceSunk,
-                  borderLeft: `3px solid ${spColor}`,
                   border: isLinking ? `1.5px solid ${T.brand}` : undefined,
                 }}>
                   {/* Time */}

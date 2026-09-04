@@ -34,7 +34,7 @@ function HistorialTab({ child, sessions, objectives, users, onViewReport, onUpda
           const color = AREA_COLORS[s.specialty] || T.inkSoft;
           const activities = Array.isArray(s.activities) ? s.activities : [];
           return (
-            <Card key={s.id} style={{ padding: 18, borderLeft: `3px solid ${color}` }}>
+            <Card key={s.id} style={{ padding: 18 }}>
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
@@ -54,7 +54,7 @@ function HistorialTab({ child, sessions, objectives, users, onViewReport, onUpda
                     </div>
                   )}
                   {s.observation && <div style={{ fontSize: 13.5, color: T.ink, lineHeight: 1.5, marginTop: 6, whiteSpace: "pre-wrap" }}>{s.observation}</div>}
-                  {s.nextSteps && <div style={{ fontSize: 13, color: T.inkSoft, marginTop: 4, fontStyle: "italic" }}>→ {s.nextSteps}</div>}
+                  {s.nextSteps && <div style={{ fontSize: 13, color: T.inkSoft, marginTop: 4, }}>→ {s.nextSteps}</div>}
                 </div>
                 <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
                   {canEdit(s) && <Btn variant="ghost" size="sm" onClick={() => setEditingSession(s)}>Editar</Btn>}

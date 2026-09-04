@@ -78,7 +78,7 @@ function EvolutionReportModal({ child, sessions, objectives, users, onClose }) {
               ) : <EmptyNote text="No hay recomendaciones registradas aún." />}
             </Section>
 
-            <div style={{ fontSize: 12, color: T.inkFaint, fontStyle: "italic", marginTop: 4 }}>
+            <div style={{ fontSize: 12, color: T.inkFaint, marginTop: 4 }}>
               Este reporte se genera únicamente a partir de la información registrada por las especialistas. No incluye interpretaciones adicionales.
             </div>
           </>
