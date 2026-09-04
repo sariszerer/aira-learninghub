@@ -113,8 +113,11 @@ export const ROLES = {
     permisos: [
       ...TODAS_LAS_LECTURAS,
       'patient:create', 'patient:edit', 'patient:close', 'patient:renew_package',
-      // sin session:create — App.jsx:3850 excluye a admin del botón "Registrar sesión"
-      'session:edit:any',
+      // Admin SI registra sesiones. La exclusion venia de App.jsx:3850 y era un
+      // supuesto equivocado sobre esta clinica: la directora ha impartido 19
+      // sesiones de Funciones Ejecutivas. Sin este permiso no podia registrar
+      // su propio trabajo.
+      'session:create', 'session:edit:any',
       'objective:create', 'objective:edit:any',
       'document:create', 'document:edit:any',
       'anamnesis:edit', 'workplan:create',

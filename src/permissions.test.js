@@ -163,8 +163,14 @@ describe('ROLES — matriz semilla', () => {
   })
 
   // Contratos que preservan el comportamiento actual, derivados de los checks de App.jsx
-  it('admin NO registra sesiones (App.jsx:3850 lo excluye)', () => {
-    expect(ROLES.admin.permisos).not.toContain('session:create')
+  it('los cuatro roles clínicos registran sesiones, admin incluido', () => {
+    // Lo contrario era el contrato hasta que se miraron los datos: la directora
+    // habia impartido 19 sesiones y no podia registrarlas. El supuesto venia de
+    // un check de App.jsx, no de como trabaja la clinica.
+    for (const r of ['admin', 'clinical_director', 'specialist']) {
+      expect(ROLES[r].permisos).toContain('session:create')
+    }
+    expect(ROLES.shadow.permisos).not.toContain('session:create')
   })
 
   it('solo admin da de alta pacientes (onAddChild solo en AdminDashboard)', () => {
@@ -257,7 +263,7 @@ describe('ROLES — matriz semilla', () => {
       'report:evolution:generate', 'report:history:generate', 'report:parent:generate', 'report:view',
       'role:manage',
       'school:create',
-      'session:edit:any', 'session:view',
+      'session:create', 'session:edit:any', 'session:view',
       'user:manage',
       'workplan:create', 'workplan:view',
     ].sort())
