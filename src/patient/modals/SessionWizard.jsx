@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { inputStyle, TODAY } from "../../theme.js";
 import { can } from "../../permissions.js";
-import { Btn, Modal, ModalHeader } from "../../ui/index.js";
+import { Btn, EmptyNote, Modal, ModalHeader } from "../../ui/index.js";
 import { useAuthStore } from "../../store/authStore.js";
 import { T } from "../../theme.js";
 import { Check } from "lucide-react";
@@ -96,7 +96,7 @@ function SessionWizard({ child, objectives, onClose, onSave }) {
               })}
             </div>
           ) : (
-            <div style={{ fontSize: 13, color: "#aaa", padding: "8px 0" }}>No hay objetivos definidos para esta disciplina aún.</div>
+            <EmptyNote text="No hay objetivos definidos para esta disciplina aún." dentroDeCaja />
           )}
           <div style={{ marginTop: 8 }}>
             <input value={customObjText} onChange={e => setCustomObjText(e.target.value)}

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { T } from "../../theme.js";
 import { fmtDateShort } from "../../lib/format.js";
 import { can } from "../../permissions.js";
-import { Btn, Card } from "../../ui/index.js";
+import { Btn, Card, EmptyNote } from "../../ui/index.js";
 import EditSessionModal from "../modals/EditSessionModal.jsx";
 
 function HistorialTab({ child, sessions, objectives, users, onViewReport, onUpdateSession, currentUser }) {
@@ -10,7 +10,7 @@ function HistorialTab({ child, sessions, objectives, users, onViewReport, onUpda
   const [editingSession, setEditingSession] = useState(null);
 
   if (childSessions.length === 0) {
-    return <div style={{ color: T.inkFaint, fontSize: 14, textAlign: "center", padding: 40 }}>Aún no hay sesiones registradas para este paciente.</div>;
+    return <EmptyNote text="Aún no hay sesiones registradas para este paciente." />;
   }
 
   const canEdit = (s) => can(currentUser, "session:edit", s);

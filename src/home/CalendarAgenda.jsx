@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Calendar, X } from "lucide-react";
 import { T, SPECIALIST_COLORS } from "../theme.js";
-import { Eyebrow, Card, Btn } from "../ui/index.js";
+import { Btn, Card, EmptyNote, Eyebrow } from "../ui/index.js";
 
 function CalendarAgenda({ events, loading, error, date, onDateChange, children, onOpenChild, onConnectGcal }) {
   const [links, setLinks] = useState({}); // eventIndex -> childId
@@ -70,7 +70,7 @@ function CalendarAgenda({ events, loading, error, date, onDateChange, children, 
       ) : null}
 
       {!loading && !error && events.length === 0 && (
-        <div style={{ fontSize: 13.5, color: T.inkFaint, textAlign: "center", padding: "24px 0" }}>No hay eventos en el calendario para este día.</div>
+        <EmptyNote text="No hay eventos en el calendario para este día." dentroDeCaja />
       )}
 
       {events.length > 0 && (

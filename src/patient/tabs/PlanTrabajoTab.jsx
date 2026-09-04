@@ -13,9 +13,6 @@ function PlanTrabajoTab({ child, documents, users, currentUser, onAddDocument, o
     <div>
       {/* El boton de agregar vive en DocumentsSection, no aqui: tener los dos
           mostraba dos controles para la misma accion con etiquetas distintas. */}
-      <div style={{ fontSize: 13.5, color: T.inkSoft, marginBottom: 14 }}>
-        Plan terapéutico por disciplina — objetivos, metodología y metas del proceso.
-      </div>
       {adding && (
         <AddDocumentModal type="plan_trabajo" onClose={() => setAdding(false)}
           onSave={(d) => { onAddDocument({ ...d, childId: child.id, authorId: currentUser.id, id: `d-plan-${Date.now()}` }); setAdding(false); }}

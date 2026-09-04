@@ -3,12 +3,16 @@ import { Users, FileText, TrendingUp } from "lucide-react";
 import { T } from "../../theme.js";
 import { DOC_TYPES } from "../../constants.js";
 import { sessionsSinceLastParentReport } from "../../lib/reports.js";
-import { ReportCard } from "../../ui/index.js";
+import { Eyebrow, ReportCard, Tabs } from "../../ui/index.js";
 import DocumentsSection from "../DocumentsSection.jsx";
 import AddDocumentModal from "../modals/AddDocumentModal.jsx";
 import { can } from "../../permissions.js";
 
 function ReportesTab({ child, documents, users, sessions, parentReports, currentUser, onAddDocument, onUpdateDocument, onGenerateFull, onGenerateEvolution, onGenerateParentReport }) {
+  const TIPOS = Object.keys(DOC_TYPES).filter((t) => t !== "anamnesis");
+  const [tipoActivo, setTipoActivo] = useState(TIPOS[0]);
+  const cuenta = (t) => childDocuments.filter((d) => d.type === t).length;
+
   const [addingType, setAddingType] = useState(null);
   const sinceLast = sessionsSinceLastParentReport(child.id, sessions, parentReports);
   const readyForParentReport = sinceLast.length >= 8;
@@ -44,12 +48,24 @@ function ReportesTab({ child, documents, users, sessions, parentReports, current
         />
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
-        {Object.keys(DOC_TYPES).filter(type => type !== "anamnesis").map((type) => (
-          <DocumentsSection key={type} type={type} documents={childDocuments} users={users}
-            onAdd={() => setAddingType(type)} onUpdateDocument={onUpdateDocument} currentUser={currentUser}
-            canAdd={can(currentUser, "document:create")} />
-        ))}
+      {/* Los documentos guardados van en sub-pestañas y no apilados: eran cinco
+          secciones, casi siempre vacias, que hacian que generar un reporte y
+          consultar los ya hechos se leyeran como una sola cosa. */}
+      <div style={{ marginTop: 28 }}>
+        <Eyebrow>Documentos guardados</Eyebrow>
+        <Tabs
+          tabs={TIPOS.map((t) => ({
+            id: t,
+            label: `${DOC_TYPES[t].plural}${cuenta(t) ? ` (${cuenta(t)})` : ""}`,
+          }))}
+          activo={tipoActivo}
+          onCambiar={setTipoActivo}
+        />
+        <DocumentsSection
+          type={tipoActivo} documents={childDocuments} users={users}
+          onAdd={() => setAddingType(tipoActivo)} onUpdateDocument={onUpdateDocument}
+          currentUser={currentUser} canAdd={can(currentUser, "document:create")}
+        />
       </div>
 
       {addingType && (

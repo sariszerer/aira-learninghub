@@ -4,7 +4,7 @@ import { T } from "../theme.js";
 import { DOC_TYPES } from "../constants.js";
 import { fmtDateShort } from "../lib/format.js";
 import { can } from "../permissions.js";
-import { Eyebrow, Btn, Card } from "../ui/index.js";
+import { Btn, Card, EmptyNote, Eyebrow } from "../ui/index.js";
 
 // `canAdd` llega desde quien la usa y no se decide aqui: cada tab tiene su
 // propio permiso (workplan:create para el plan, document:create para reportes).
@@ -27,9 +27,7 @@ function DocumentsSection({ type, documents, users, onAdd, onUpdateDocument, cur
         {canAdd && onAdd && <Btn variant="ghost" size="sm" icon={Plus} onClick={onAdd}>Agregar</Btn>}
       </div>
       {docs.length === 0 ? (
-        <Card style={{ padding: 16 }}>
-          <div style={{ fontSize: 13, color: T.inkFaint }}>Todavía no hay {meta.plural.toLowerCase()} registradas.</div>
-        </Card>
+        <EmptyNote text={`Todavía no hay ${meta.plural.toLowerCase()} registradas.`} />
       ) : (
         <Card style={{ padding: 6 }}>
           {docs.map((d, i) => {

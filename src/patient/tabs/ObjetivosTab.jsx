@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { T, TODAY } from "../../theme.js";
-import { Card, StatusIcon, StatusPill, StatusRing } from "../../ui/index.js";
+import { Card, EmptyNote, StatusIcon, StatusPill, StatusRing } from "../../ui/index.js";
 import { useDataStore } from "../../store/dataStore.js";
 import { useAuthStore } from "../../store/authStore.js";
 import { can } from "../../permissions.js";
@@ -251,7 +251,7 @@ function ObjetivosTab({ child }) {
                   <div style={{ padding: "12px 14px 10px" }}>
                     <div style={{ fontSize: 13, fontWeight: 700, color: T.brand, marginBottom: 2 }}>{area}</div>
                     <div style={{ fontSize: 12, color: T.inkSoft, marginBottom: 10 }}>{spec.name}</div>
-                    <div style={{ fontSize: 12, color: T.inkFaint, padding: "8px 0" }}>Sin objetivos definidos.</div>
+                    <EmptyNote text="Sin objetivos definidos." dentroDeCaja />
                   </div>
             {canEditThis && (
                     <div style={{ borderTop: `1px solid ${T.borderSoft}`, padding: "6px 14px 10px" }}>

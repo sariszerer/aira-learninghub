@@ -2,7 +2,7 @@ import React, { useState, useMemo } from "react";
 import { Printer } from "lucide-react";
 import { T, TODAY } from "../../theme.js";
 import { sessionsSinceLastParentReport, buildParentReportText } from "../../lib/reports.js";
-import { Btn, Modal, ModalHeader, DateRangeBar } from "../../ui/index.js";
+import { Btn, DateRangeBar, EmptyNote, Modal, ModalHeader } from "../../ui/index.js";
 
 function ParentReportModal({ child, sessions, objectives, parentReports, onClose, onGenerated }) {
   const sinceLastSessions = useMemo(
@@ -39,7 +39,7 @@ function ParentReportModal({ child, sessions, objectives, parentReports, onClose
       <DateRangeBar fromDate={fromDate} setFromDate={setFromDate} minDate={child.admissionDate} presets={presets} />
       <div style={{ padding: 24, maxHeight: "50vh", overflowY: "auto" }}>
         {rangeSessions.length === 0 ? (
-          <div style={{ color: T.inkFaint, textAlign: "center", padding: 30 }}>No hay sesiones en el rango seleccionado.</div>
+          <EmptyNote text="No hay sesiones en el rango seleccionado." dentroDeCaja />
         ) : (
           <div style={{
             background: T.surfaceSunk, borderRadius: 14, padding: 18, fontSize: 13.5,

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { T } from "../../theme.js";
 import { fmtDate } from "../../lib/format.js";
-import { Btn, Card, Field, StatusIcon } from "../../ui/index.js";
+import { Btn, Card, EmptyNote, Field, StatusIcon } from "../../ui/index.js";
 
 function ResumenTab({ child, objectives, sessions, users, onRenewPackage, onCloseProcess, currentUser }) {
   const PAQUETE = 8;
@@ -133,7 +133,7 @@ function ResumenTab({ child, objectives, sessions, users, onRenewPackage, onClos
           </div>
         </Card>
       ) : (
-        <div style={{ color: T.inkFaint, fontSize: 14, textAlign: "center", padding: 30 }}>Aún no hay sesiones registradas.</div>
+        <EmptyNote text="Aún no hay sesiones registradas." />
       )}
     </div>
   );

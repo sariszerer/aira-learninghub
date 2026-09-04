@@ -3,7 +3,7 @@ import { Plus } from "lucide-react";
 import { T, TODAY } from "../../theme.js";
 import { fmtDate } from "../../lib/format.js";
 import { can } from "../../permissions.js";
-import { Btn, Card } from "../../ui/index.js";
+import { Btn, Card, EmptyNote, Eyebrow } from "../../ui/index.js";
 import MeetingCard from "../MeetingCard.jsx";
 import AddMeetingModal from "../modals/AddMeetingModal.jsx";
 
@@ -41,11 +41,8 @@ function InterdisciplinaryTab({ child, meetings, users, onAddMeeting, currentUse
       {/* Pautas de Crianza — restricted */}
       {canSeePautas && (
         <div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-            <div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: T.ink }}>Pautas de Crianza</div>
-              <div style={{ fontSize: 12.5, color: T.inkSoft, marginTop: 2 }}>Sesiones con padres · Confidencial — solo visible para Sarita e Idaira</div>
-            </div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+            <Eyebrow style={{ marginBottom: 0 }}>Pautas de Crianza</Eyebrow>
             <Btn variant="amber" icon={Plus} onClick={() => setAddingPautas(true)}>Registrar sesión</Btn>
           </div>
           {addingPautas && (
@@ -66,7 +63,7 @@ function InterdisciplinaryTab({ child, meetings, users, onAddMeeting, currentUse
             </Card>
           )}
           {pautasSessions.length === 0 && !addingPautas ? (
-            <div style={{ color: T.inkFaint, fontSize: 13.5, padding: "12px 0" }}>Aún no hay sesiones de Pautas de Crianza registradas.</div>
+            <EmptyNote text="Aún no hay sesiones de Pautas de Crianza registradas." />
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {pautasSessions.map(d => (
@@ -86,17 +83,12 @@ function InterdisciplinaryTab({ child, meetings, users, onAddMeeting, currentUse
 
       {/* Interdisciplinary minutes */}
       <div>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: T.ink }}>Minutas interdisciplinarias</div>
-            <div style={{ fontSize: 12.5, color: T.inkSoft, marginTop: 2 }}>
-              Comunicación con escuela, especialistas externos u otros actores.
-            </div>
-          </div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+            <Eyebrow style={{ marginBottom: 0 }}>Minutas interdisciplinarias</Eyebrow>
           <Btn variant="amber" icon={Plus} onClick={() => setAdding(true)}>Registrar minuta</Btn>
         </div>
         {childMeetings.length === 0 ? (
-          <div style={{ color: T.inkFaint, fontSize: 14, textAlign: "center", padding: 24 }}>Aún no hay minutas registradas.</div>
+          <EmptyNote text="Aún no hay minutas registradas." />
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {childMeetings.map((m) => <MeetingCard key={m.id} meeting={m} users={users} />)}
