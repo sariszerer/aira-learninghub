@@ -56,3 +56,12 @@ export function daysAgoISO(n) {
   d.setDate(d.getDate() - n);
   return d.toISOString().slice(0, 10);
 }
+
+// Cuenta con su sustantivo concordado.
+//
+// El patron `sesión${n === 1 ? "" : "es"}` estaba repetido en cinco sitios y
+// producia "3 sesiónes": el plural de sesion pierde la tilde. Uno de esos cinco
+// era el texto que se le manda por correo a los padres.
+export function contar(n, singular, plural) {
+  return `${n} ${n === 1 ? singular : plural}`;
+}

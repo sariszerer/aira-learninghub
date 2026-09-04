@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { readableTextOn, contrasteWCAG } from './format.js'
+import { readableTextOn, contrasteWCAG, contar } from './format.js'
 import { SPECIALIST_COLORS } from '../theme.js'
 
 // Referencias verificables contra la formula WCAG 2.1, no contra la salida de
@@ -64,5 +64,22 @@ describe('SPECIALIST_COLORS', () => {
     for (const hex of Object.values(SPECIALIST_COLORS)) {
       expect(readableTextOn(hex)).toBe('#fff')
     }
+  })
+})
+
+describe('contar', () => {
+  it('concuerda el sustantivo con el número', () => {
+    expect(contar(1, 'sesión', 'sesiones')).toBe('1 sesión')
+    expect(contar(3, 'sesión', 'sesiones')).toBe('3 sesiones')
+  })
+
+  it('cero va en plural', () => {
+    expect(contar(0, 'ausencia', 'ausencias')).toBe('0 ausencias')
+  })
+
+  it('el plural no es el singular con "es" pegado', () => {
+    // El patrón que reemplaza producía "3 sesiónes" en cinco sitios, uno de
+    // ellos el correo que se le manda a los padres.
+    expect(contar(3, 'sesión', 'sesiones')).not.toContain('sesiónes')
   })
 })
