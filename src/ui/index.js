@@ -1,6 +1,7 @@
 // Primitivas de interfaz. Sin logica de dominio: solo presentacion.
 
 export { default as Logo } from "./Logo.jsx";
+export { default as CargandoAira } from "./CargandoAira.jsx";
 export { default as Eyebrow } from "./Eyebrow.jsx";
 export { default as StatusPill } from "./StatusPill.jsx";
 export { default as StatusRing } from "./StatusRing.jsx";

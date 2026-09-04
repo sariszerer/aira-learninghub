@@ -271,6 +271,12 @@ export const useDataStore = create((set, get) => ({
     }
   },
 
+  cambiarCorreo: async (id, email) => {
+    const res = await db.cambiarCorreo(id, email)
+    await get().recargarUsuarios()
+    return res
+  },
+
   crearEspecialista: async (datos) => {
     const res = await db.crearEspecialista(datos)
     await get().recargarUsuarios()

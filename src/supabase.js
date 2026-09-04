@@ -186,6 +186,18 @@ export const db = {
 
   // El alta pasa por una Edge Function porque crear el usuario de auth exige la
   // clave service_role, que no puede estar en el navegador.
+  // El correo es la credencial de acceso y vive tambien en auth.users, que solo
+  // se toca con service_role. Por eso pasa por una funcion edge y no por un
+  // update normal.
+  async cambiarCorreo(id, email) {
+    const { data, error } = await supabase.functions.invoke('cambiar-correo', { body: { id, email } })
+    if (error) {
+      let detalle = null
+      try { detalle = (await error.context?.json())?.error } catch { /* sin cuerpo */ }
+      throw new Error(detalle || error.message)
+    }
+    return data
+  },
   async crearEspecialista(datos) {
     const { data, error } = await supabase.functions.invoke('crear-especialista', { body: datos })
     if (error) {
