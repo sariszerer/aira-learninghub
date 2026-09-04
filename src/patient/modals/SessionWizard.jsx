@@ -27,13 +27,22 @@ function SessionWizard({ child, objectives, onClose, onSave }) {
 
   const handleSave = () => {
     if (!date) return;
+    // El objetivo puntual se recogia en customObjText y no se enviaba a ninguna
+    // parte: se escribia en el campo y desaparecia al guardar. saveSession ya
+    // sabia crearlo — espera el nombre en _newObjectiveNames y una referencia
+    // "new-<indice>" en objectivesWorked, que remapea al id real.
+    const objetivoPuntual = customObjText.trim();
     onSave({
       childId: child.id,
       specialistId: currentUser.id,
       specialty: currentUser.specialty,
       date,
       duration,
-      objectivesWorked: selectedObjIds.map(id => ({ objectiveId: id, status: "proceso" })),
+      _newObjectiveNames: objetivoPuntual ? [objetivoPuntual] : [],
+      objectivesWorked: [
+        ...selectedObjIds.map(id => ({ objectiveId: id, status: "proceso" })),
+        ...(objetivoPuntual ? [{ objectiveId: "new-0", status: "proceso" }] : []),
+      ],
       activities: activities.split("\n").map(a => a.trim()).filter(Boolean),
       observation: observation.trim(),
       nextSteps: nextSteps.trim(),
@@ -108,7 +117,7 @@ function SessionWizard({ child, objectives, onClose, onSave }) {
         {/* Actividades realizadas */}
         <div>
           <div style={{ fontSize: 12, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>Actividades realizadas</div>
-          <textarea value={activities} onChange={e => setActivities(e.target.value)} rows={3}
+          <textarea value={activities} onChange={e => setActivities(e.target.value)} rows={4}
             placeholder={"Una por línea, ej:\nColor Code\nJuego de turnos\nMasilla"}
             style={{ ...inputStyle, width: "100%", boxSizing: "border-box", resize: "vertical", lineHeight: 1.6 }} />
         </div>
