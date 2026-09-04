@@ -104,7 +104,13 @@ function ChildProfile({ child, onOpenSessionForm, onViewReport, onGenerateFull, 
           </div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8, flexShrink: 0 }}>
-          {can(currentUser, "session:create") && child.assignedSpecialists.includes(currentUser.id) && (
+          {/* Antes exigia ademas figurar en assignedSpecialists. Eso bloqueaba
+              trabajo real: 44 de las 438 sesiones de la clinica, en 9 pacientes,
+              las dio alguien que no estaba en esa lista. Y era redundante para
+              quien si deberia estar limitado — un rol con alcance "asignados" no
+              llega siquiera a ver la ficha, porque RLS se lo impide en la base.
+              El permiso mas el alcance ya son la puerta correcta. */}
+          {can(currentUser, "session:create") && (
             <Btn size="lg" icon={Plus} onClick={onOpenSessionForm}>Registrar sesión</Btn>
           )}
           {can(currentUser, "patient:edit") && (

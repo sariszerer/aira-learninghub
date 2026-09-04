@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { inputStyle, TODAY } from "../../theme.js";
 import { can } from "../../permissions.js";
-import { Btn, EmptyNote, Modal, ModalHeader, SelectorAsistencia } from "../../ui/index.js";
+import { Btn, Chip, EmptyNote, Modal, ModalHeader, SelectorAsistencia } from "../../ui/index.js";
 import { useAuthStore } from "../../store/authStore.js";
 import { T } from "../../theme.js";
 import { Check } from "lucide-react";
@@ -11,6 +11,24 @@ function SessionWizard({ child, objectives, onClose, onSave }) {
   const [date, setDate] = useState(TODAY);
   const [duration, setDuration] = useState(45);
   const [attendance, setAttendance] = useState("asistio");
+
+  // La especialidad se elige, no se deduce del perfil.
+  //
+  // Estaba fijada a currentUser.specialty, y la de la administradora es nula:
+  // sus sesiones se habrian guardado sin disciplina y la cabecera habria dicho
+  // "null". Sus 19 sesiones reales son de Funciones Ejecutivas, que no es
+  // ninguna especialidad declarada en su perfil.
+  //
+  // Las opciones salen de lo que el paciente ya tiene registrado, con la
+  // especialidad de quien registra al frente si la tiene.
+  const disciplinas = useMemo(() => {
+    const set = new Set();
+    if (currentUser.specialty) set.add(currentUser.specialty);
+    for (const e of child.specialties || []) if (e) set.add(e);
+    for (const o of objectives) if (o.childId === child.id && o.area) set.add(o.area);
+    return [...set];
+  }, [currentUser.specialty, child, objectives]);
+  const [specialty, setSpecialty] = useState(disciplinas[0] || "");
   const [selectedObjIds, setSelectedObjIds] = useState([]);
   const [customObjText, setCustomObjText] = useState("");
   const [activities, setActivities] = useState("");
@@ -27,7 +45,7 @@ function SessionWizard({ child, objectives, onClose, onSave }) {
   const toggleObj = (id) => setSelectedObjIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
 
   const handleSave = () => {
-    if (!date) return;
+    if (!date || !specialty.trim()) return;
     // El objetivo puntual se recogia en customObjText y no se enviaba a ninguna
     // parte: se escribia en el campo y desaparecia al guardar. saveSession ya
     // sabia crearlo — espera el nombre en _newObjectiveNames y una referencia
@@ -36,7 +54,7 @@ function SessionWizard({ child, objectives, onClose, onSave }) {
     onSave({
       childId: child.id,
       specialistId: currentUser.id,
-      specialty: currentUser.specialty,
+      specialty,
       date,
       duration,
       attendance,
@@ -52,11 +70,11 @@ function SessionWizard({ child, objectives, onClose, onSave }) {
   };
 
   const AREA_COLORS = {"Terapia Ocupacional":"#175FAF","Fonoaudiologia":"#7A9E7E","Funciones Ejecutivas":"#C79A6B","Psicologia":"#A6779A","Desarrollo (DVLP)":"#B8860B","Kids Club":"#82A166"};
-  const color = AREA_COLORS[currentUser.specialty] || "#888";
+  const color = AREA_COLORS[specialty] || "#888";
 
   return (
     <Modal onClose={onClose} width={600}>
-      <ModalHeader title="Registro de sesión" subtitle={`${child.name} ${child.lastName} · ${currentUser.specialty}`} onClose={onClose} />
+      <ModalHeader title="Registro de sesión" subtitle={`${child.name} ${child.lastName}`} onClose={onClose} />
       <div style={{ padding: 24, maxHeight: "72vh", overflowY: "auto", display: "flex", flexDirection: "column", gap: 20 }}>
 
         {/* Fecha + Duración */}
@@ -78,6 +96,24 @@ function SessionWizard({ child, objectives, onClose, onSave }) {
               ))}
             </div>
           </div>
+        </div>
+
+        {/* Disciplina */}
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>Disciplina</div>
+          {disciplinas.length > 0 ? (
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {disciplinas.map((d) => (
+                <Chip key={d} label={d} selected={specialty === d} onClick={() => setSpecialty(d)} />
+              ))}
+            </div>
+          ) : (
+            <input
+              value={specialty} onChange={(e) => setSpecialty(e.target.value)}
+              placeholder="Ej: Terapia Ocupacional"
+              style={{ ...inputStyle, width: "100%", boxSizing: "border-box" }}
+            />
+          )}
         </div>
 
         {/* Asistencia. Va antes que los objetivos porque si no asistio, lo de
@@ -149,10 +185,10 @@ function SessionWizard({ child, objectives, onClose, onSave }) {
 
       </div>
       <div style={{ padding: "14px 24px", borderTop: "1px solid #eee", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div style={{ fontSize: 13, color: "#aaa" }}>{currentUser.name} · {currentUser.specialty}</div>
+        <div style={{ fontSize: 13, color: "#aaa" }}>{currentUser.name}{specialty ? ` · ${specialty}` : ""}</div>
         <div style={{ display: "flex", gap: 10 }}>
           <Btn variant="ghost" onClick={onClose}>Cancelar</Btn>
-          <Btn variant="primary" disabled={!date} onClick={handleSave}>Guardar sesión</Btn>
+          <Btn variant="primary" disabled={!date || !specialty.trim()} onClick={handleSave}>Guardar sesión</Btn>
         </div>
       </div>
     </Modal>
