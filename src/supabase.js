@@ -48,6 +48,14 @@ export function dbUserToApp(u) {
     activo: u.activo !== false,
   }
 }
+export function dbRoleToApp(r) {
+  return {
+    id: r.id, nombre: r.nombre, scope: r.scope, home: r.home,
+    esClinico: !!r.es_clinico, etiqueta: r.etiqueta, color: r.color,
+    esSistema: !!r.es_sistema,
+    permisos: (r.role_permissions || []).map((rp) => rp.permission_key),
+  }
+}
 export function dbChildToApp(c) {
   return {
     id: c.id, name: c.name, lastName: c.last_name, birthDate: c.birth_date,
@@ -117,6 +125,52 @@ export const db = {
     const { error } = await supabase.from('users').update(m).eq('id', id)
     if (error) throw error
   },
+  // ── Roles ────────────────────────────────────────────────────────────────
+  async getRoles() {
+    const { data, error } = await supabase
+      .from('roles')
+      .select('*, role_permissions(permission_key)')
+      .order('es_sistema', { ascending: false })
+      .order('nombre')
+    if (error) throw error
+    return data.map(dbRoleToApp)
+  },
+
+  async insertRole(rol) {
+    const { error } = await supabase.from('roles').insert({
+      id: rol.id, nombre: rol.nombre, scope: rol.scope, home: rol.home,
+      es_clinico: rol.esClinico, etiqueta: rol.etiqueta, color: rol.color,
+      es_sistema: false,
+    })
+    if (error) throw error
+  },
+
+  async updateRole(id, rol) {
+    const { error } = await supabase.from('roles').update({
+      nombre: rol.nombre, scope: rol.scope, home: rol.home,
+      es_clinico: rol.esClinico, etiqueta: rol.etiqueta, color: rol.color,
+    }).eq('id', id)
+    if (error) throw error
+  },
+
+  async deleteRole(id) {
+    const { error } = await supabase.from('roles').delete().eq('id', id)
+    if (error) throw error
+  },
+
+  // Reemplaza el conjunto entero en vez de calcular altas y bajas: son 34
+  // claves como maximo y asi no hay forma de que el estado quede a medias si
+  // una de las dos operaciones falla.
+  async setRolePermissions(roleId, claves) {
+    const { error: errBorrar } = await supabase
+      .from('role_permissions').delete().eq('role_id', roleId)
+    if (errBorrar) throw errBorrar
+    if (!claves.length) return
+    const { error } = await supabase.from('role_permissions')
+      .insert(claves.map((k) => ({ role_id: roleId, permission_key: k })))
+    if (error) throw error
+  },
+
   // El alta pasa por una Edge Function porque crear el usuario de auth exige la
   // clave service_role, que no puede estar en el navegador.
   async crearEspecialista(datos) {

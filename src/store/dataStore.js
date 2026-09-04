@@ -29,6 +29,7 @@ export const useDataStore = create((set, get) => ({
   gabineteSessions: seedGabineteSessions,
   tutorReports: seedTutorReports,
   activityLog: [],
+  rolesDisponibles: [],
 
   appLoading: false,
   // Distinto de appLoading: sigue en false hasta que la primera carga termina.
@@ -255,6 +256,26 @@ export const useDataStore = create((set, get) => ({
     const res = await db.crearEspecialista(datos)
     await get().recargarUsuarios()
     return res
+  },
+
+  // ── Roles ──────────────────────────────────────────────────────────────
+  // Se cargan bajo demanda: solo los necesita la pantalla de administracion,
+  // y meterlos en loadAll haria una consulta mas en cada inicio de sesion.
+  cargarRoles: async () => {
+    try { set({ rolesDisponibles: await db.getRoles() }) }
+    catch (e) { console.error('Load roles:', e); throw e }
+  },
+
+  guardarRol: async (rol, esNuevo) => {
+    if (esNuevo) await db.insertRole(rol)
+    else await db.updateRole(rol.id, rol)
+    await db.setRolePermissions(rol.id, rol.permisos)
+    await get().cargarRoles()
+  },
+
+  borrarRol: async (id) => {
+    await db.deleteRole(id)
+    await get().cargarRoles()
   },
 
   addTutorReport: async (report) => {

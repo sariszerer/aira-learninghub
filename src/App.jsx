@@ -12,6 +12,8 @@ import { SpecialistHome, ClinicalDirectorHome, TutorAiraHome, AdminDashboard } f
 import PatientRoute from "./patient/PatientRoute.jsx";
 import PatientsList from "./patients/PatientsList.jsx";
 import SpecialistsList from "./team/SpecialistsList.jsx";
+import RolesList from "./team/RolesList.jsx";
+import RoleEditor from "./team/RoleEditor.jsx";
 import GabinetePanel from "./gabinete/GabinetePanel.jsx";
 import FirmaConsentimientoPublic from "./consent/FirmaConsentimientoPublic.jsx";
 
@@ -152,6 +154,13 @@ export default function App() {
           can(currentUser, "user:manage")
             ? <SpecialistsList />
             : <Navigate to="/" replace />
+        } />
+
+        <Route path="/roles" element={
+          can(currentUser, "role:manage") ? <RolesList /> : <Navigate to="/" replace />
+        } />
+        <Route path="/roles/:roleId" element={
+          can(currentUser, "role:manage") ? <RoleEditor /> : <Navigate to="/" replace />
         } />
 
         <Route path="*" element={<Navigate to="/" replace />} />

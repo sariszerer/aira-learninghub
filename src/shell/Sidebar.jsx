@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutGrid, Users, ClipboardList, User, LogOut,
-  PanelLeftClose, PanelLeftOpen, ChevronDown,
+  PanelLeftClose, PanelLeftOpen, ChevronDown, ShieldCheck,
 } from "lucide-react";
 import { T } from "../theme.js";
 import { can, visibleChildren } from "../permissions.js";
@@ -52,6 +52,7 @@ export default function Sidebar({ abierto, onAlternar }) {
     },
     { to: "/gabinete", label: "Gabinete", icon: ClipboardList, permiso: "gabinete:view" },
     { to: "/especialistas", label: "Especialistas", icon: User, permiso: "user:manage" },
+    { to: "/roles", label: "Roles", icon: ShieldCheck, permiso: "role:manage" },
   ].filter((i) => !i.permiso || can(currentUser, i.permiso));
 
   const rutaActual = location.pathname + location.search;
