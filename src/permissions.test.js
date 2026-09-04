@@ -6,10 +6,10 @@ const usuario = (perms, extra = {}) => ({
 })
 
 describe('PERMISSIONS', () => {
-  it('tiene 34 claves únicas', () => {
+  it('tiene 35 claves únicas', () => {
     const keys = PERMISSIONS.map(p => p.key)
-    expect(keys).toHaveLength(34)
-    expect(new Set(keys).size).toBe(34)
+    expect(keys).toHaveLength(35)
+    expect(new Set(keys).size).toBe(35)
   })
 
   it('cada permiso declara grupo y descripción no vacíos', () => {
@@ -206,7 +206,7 @@ describe('ROLES — matriz semilla', () => {
   it('shadow NO cierra procesos, ni renueva paquetes, ni genera reportes, ni sube documentos, ni crea planes o reuniones', () => {
     for (const key of [
       'patient:close', 'patient:renew_package',
-      'report:generate', 'report:parent:generate',
+      'report:evolution:generate', 'report:history:generate', 'report:parent:generate',
       'document:create', 'document:edit:own',
       'workplan:create', 'meeting:create',
     ]) {
@@ -254,7 +254,7 @@ describe('ROLES — matriz semilla', () => {
       'meeting:create', 'meeting:view',
       'objective:create', 'objective:edit:any', 'objective:view',
       'patient:close', 'patient:create', 'patient:edit', 'patient:renew_package', 'patient:view',
-      'report:generate', 'report:parent:generate', 'report:view',
+      'report:evolution:generate', 'report:history:generate', 'report:parent:generate', 'report:view',
       'role:manage',
       'school:create',
       'session:edit:any', 'session:view',
@@ -272,7 +272,7 @@ describe('ROLES — matriz semilla', () => {
       'meeting:create', 'meeting:view',
       'objective:create', 'objective:edit:any', 'objective:view',
       'patient:close', 'patient:edit', 'patient:renew_package', 'patient:view',
-      'report:generate', 'report:parent:generate', 'report:view',
+      'report:evolution:generate', 'report:history:generate', 'report:parent:generate', 'report:view',
       'school:create',
       'session:create', 'session:edit:any', 'session:view',
       'tutorreport:view',
@@ -287,7 +287,7 @@ describe('ROLES — matriz semilla', () => {
       'meeting:create', 'meeting:view',
       'objective:create', 'objective:edit:own', 'objective:view',
       'patient:close', 'patient:renew_package', 'patient:view',
-      'report:generate', 'report:parent:generate', 'report:view',
+      'report:evolution:generate', 'report:parent:generate', 'report:view',
       'session:create', 'session:edit:own', 'session:view',
       'workplan:create', 'workplan:view',
     ].sort())
