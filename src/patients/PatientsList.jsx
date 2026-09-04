@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { T } from "../theme.js";
 import { visibleChildren } from "../permissions.js";
 import { useDataStore } from "../store/dataStore.js";
@@ -17,6 +18,11 @@ export default function PatientsList({ onOpenChild }) {
   const sessions = useDataStore((s) => s.sessions);
   const currentUser = useAuthStore((s) => s.currentUser);
 
+  // El menu lateral enlaza a ?estado=activo|inactivo, asi que el filtro vive en
+  // la URL y no en estado local: de otro modo esos enlaces no harian nada.
+  const [searchParams] = useSearchParams();
+  const estado = searchParams.get("estado");
+
   const [query, setQuery] = useState("");
   const [especialidad, setEspecialidad] = useState("Todas");
 
@@ -34,8 +40,11 @@ export default function PatientsList({ onOpenChild }) {
     const nombre = `${c.name} ${c.lastName}`.toLowerCase();
     const coincide = nombre.includes(query.trim().toLowerCase());
     const porEspecialidad = especialidad === "Todas" || c.specialties.includes(especialidad);
-    return coincide && porEspecialidad;
-  }), [alcance, query, especialidad]);
+    const porEstado = !estado
+      || (estado === "activo" && c.status !== "inactivo")
+      || (estado === "inactivo" && c.status === "inactivo");
+    return coincide && porEspecialidad && porEstado;
+  }), [alcance, query, especialidad, estado]);
 
   const ultimaSesion = (childId) => {
     const propias = sessions.filter((s) => s.childId === childId);
@@ -46,7 +55,9 @@ export default function PatientsList({ onOpenChild }) {
   return (
     <>
       <PageHeader
-        titulo="Pacientes"
+        titulo={estado === "activo" ? "Pacientes activos"
+          : estado === "inactivo" ? "Pacientes inactivos"
+          : "Pacientes"}
         subtitulo={`${filtrados.length} de ${alcance.length}`}
         buscar={query}
         onBuscar={setQuery}

@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from "react";
+import React, { useEffect, useCallback, useState } from "react";
 import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { auth, getAppUser } from "./supabase.js";
 import { can } from "./permissions.js";
@@ -7,7 +7,7 @@ import { T, FONTS, MobileStyles } from "./theme.js";
 import { useAuthStore } from "./store/authStore.js";
 import { useDataStore } from "./store/dataStore.js";
 import { useCalendarStore } from "./store/calendarStore.js";
-import Sidebar, { ANCHO_SIDEBAR } from "./shell/Sidebar.jsx";
+import Sidebar, { RIEL, PANEL } from "./shell/Sidebar.jsx";
 import { SpecialistHome, ClinicalDirectorHome, TutorAiraHome, AdminDashboard } from "./home/index.js";
 import PatientRoute from "./patient/PatientRoute.jsx";
 import PatientsList from "./patients/PatientsList.jsx";
@@ -87,6 +87,10 @@ export default function App() {
 
   const onCalendarDateChange = (d) => { setCalendarDate(d); fetchCalendarEvents(d); };
 
+  // El plegado del menu vive aqui porque el area de trabajo necesita el ancho
+  // para su margen: si viviera dentro del Sidebar, App no podria seguirlo.
+  const [menuAbierto, setMenuAbierto] = useState(true);
+
   if (consentToken) {
     return <FirmaConsentimientoPublic token={consentToken} />;
   }
@@ -114,9 +118,13 @@ export default function App() {
       <style>{FONTS}</style>
       <MobileStyles />
 
-      <Sidebar />
+      <Sidebar abierto={menuAbierto} onAlternar={() => setMenuAbierto((a) => !a)} />
 
-      <main style={{ marginLeft: ANCHO_SIDEBAR, minHeight: "100vh" }}>
+      <main style={{
+        marginLeft: menuAbierto ? RIEL + PANEL : RIEL,
+        minHeight: "100vh",
+        transition: "margin-left .18s ease",
+      }}>
       <Routes>
         <Route path="/" element={
           currentUser.home === "tutor" ? (
