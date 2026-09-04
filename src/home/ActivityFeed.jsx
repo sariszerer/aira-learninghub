@@ -42,7 +42,6 @@ function ActivityFeed({ activityLog, users, onMarkSeen }) {
             return (
               <div key={act.id} style={{
                 display:"flex", alignItems:"flex-start", gap:10, padding:"9px 0",
-                borderBottom: i < recent.length-1 ? `1px solid ${T.borderSoft}` : "none",
                 opacity: act.seen ? 0.6 : 1,
               }}>
                 <div style={{ fontSize:16, flexShrink:0, marginTop:1 }}>{TYPE_ICON[act.type] || "📌"}</div>

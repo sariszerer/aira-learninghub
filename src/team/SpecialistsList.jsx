@@ -6,7 +6,7 @@ import { useDataStore } from "../store/dataStore.js";
 import { useAuthStore } from "../store/authStore.js";
 import PageHeader from "../shell/PageHeader.jsx";
 import SpecialistModal from "./SpecialistModal.jsx";
-import { Avatar, Btn, IconBtn } from "../ui/index.js";
+import { Avatar, Btn, IconBtn, List, ListRow, Card } from "../ui/index.js";
 
 // Gestion del equipo. El alta pasa por una Edge Function porque crear un
 // usuario que pueda iniciar sesion exige service_role; editar y desactivar si
@@ -86,26 +86,16 @@ export default function SpecialistsList() {
           </button>
         )}
 
-        <div style={{
-          background: T.surface, border: `1px solid ${T.border}`,
-          borderRadius: T.radius, boxShadow: T.shadow, overflow: "hidden",
-        }}>
+        <Card style={{ padding: 0, overflow: "hidden" }}>
           {equipo.length === 0 ? (
             <div style={{ padding: "48px 20px", textAlign: "center", color: T.inkFaint, fontSize: 14 }}>
               Ningún especialista coincide con la búsqueda.
             </div>
-          ) : equipo.map((u, i) => {
+          ) : <List>{equipo.map((u) => {
             const { pacientes, sesiones } = carga(u.id);
             const inactivo = u.activo === false;
             return (
-              <div
-                key={u.id}
-                style={{
-                  display: "flex", alignItems: "center", gap: 12, padding: "12px 18px",
-                  borderTop: i > 0 ? `1px solid ${T.borderSoft}` : "none",
-                  opacity: inactivo ? 0.55 : 1,
-                }}
-              >
+              <ListRow key={u.id} style={{ gap: 12, padding: "12px 18px", opacity: inactivo ? 0.55 : 1 }}>
                 <Avatar name={u.name} bg={u.avatarBg || T.brand} size={36} />
 
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -148,10 +138,10 @@ export default function SpecialistsList() {
                     />
                   </div>
                 )}
-              </div>
+              </ListRow>
             );
-          })}
-        </div>
+          })}</List>}
+        </Card>
 
         <div style={{ fontSize: 12, color: T.inkFaint, marginTop: 12, lineHeight: 1.5 }}>
           Desactivar conserva el historial: las sesiones y objetivos que registró

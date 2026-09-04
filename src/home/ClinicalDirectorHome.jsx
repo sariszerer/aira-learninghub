@@ -44,7 +44,7 @@ function ClinicalDirectorHome({ user, onOpenChild, onCalendarDateChange, onConne
   // ── Shared mini row ────────────────────────────────────────────────────────
   const AlertRow = ({ child, sub, subColor }) => (
     <div onClick={() => onOpenChild(child.id)}
-      style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 0", cursor: "pointer", borderBottom: `1px solid ${T.borderSoft}` }}>
+      style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 0", cursor: "pointer", borderTop: `1px solid ${T.borderSoft}` }}>
       <div style={{ width: 30, height: 30, borderRadius: 9, background: child.avatarBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#fff", flexShrink: 0 }}>
         {child.name[0]}
       </div>
@@ -163,7 +163,7 @@ function ClinicalDirectorHome({ user, onOpenChild, onCalendarDateChange, onConne
               <Eyebrow style={{ marginBottom: 12 }}>Mis sesiones hoy</Eyebrow>
               {myToday.map((c) => (
                 <div key={c.id} onClick={() => onOpenChild(c.id)}
-                  style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", cursor: "pointer", borderBottom: `1px solid ${T.borderSoft}` }}>
+                  style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", cursor: "pointer", borderTop: `1px solid ${T.borderSoft}` }}>
                   <div style={{ width: 34, height: 34, borderRadius: 10, background: c.avatarBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "#fff", flexShrink: 0 }}>
                     {c.name[0]}
                   </div>
@@ -232,7 +232,7 @@ function ClinicalDirectorHome({ user, onOpenChild, onCalendarDateChange, onConne
                     const barColor = c.enPaquete >= 6 ? T.amberDeep : c.enPaquete >= 4 ? T.amber : "#81C784";
                     return (
                       <div key={c.id} onClick={() => onOpenChild(c.id)}
-                        style={{ padding: "9px 0", cursor: "pointer", borderBottom: `1px solid ${T.borderSoft}` }}>
+                        style={{ padding: "9px 0", cursor: "pointer", borderTop: `1px solid ${T.borderSoft}` }}>
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 5 }}>
                           <div style={{ fontSize: 13, fontWeight: 600, color: T.ink }}>{c.name} {c.lastName}</div>
                           <div style={{ fontSize: 12.5, fontWeight: 700, color: barColor }}>{c.enPaquete}/{PAQUETE_SIZE}</div>
@@ -280,7 +280,7 @@ function ClinicalDirectorHome({ user, onOpenChild, onCalendarDateChange, onConne
                   if (!child) return null;
                   return (
                     <div key={o.id} onClick={() => onOpenChild(child.id)}
-                      style={{ padding: "7px 0", cursor: "pointer", borderBottom: `1px solid ${T.borderSoft}` }}>
+                      style={{ padding: "7px 0", cursor: "pointer", borderTop: `1px solid ${T.borderSoft}` }}>
                       <div style={{ fontSize: 13, fontWeight: 600, color: T.ink }}>{child.name} {child.lastName}</div>
                       <div style={{ fontSize: 11.5, color: "#B56060" }}>"{o.name}" — sin avance en últimas sesiones</div>
                     </div>
@@ -292,7 +292,7 @@ function ClinicalDirectorHome({ user, onOpenChild, onCalendarDateChange, onConne
               tutorsVencidos.length === 0
                 ? <div style={{ fontSize: 13, color: T.inkFaint, padding: "8px 0" }}>✓ Todos los tutors al día</div>
                 : tutorsVencidos.map(({ sh, childObj, daysSince }) => (
-                  <div key={sh.id} style={{ padding: "8px 0", borderBottom: `1px solid ${T.borderSoft}` }}>
+                  <div key={sh.id} style={{ padding: "8px 0", borderTop: `1px solid ${T.borderSoft}` }}>
                     <div style={{ fontSize: 13, fontWeight: 600, color: T.ink }}>{sh.name}</div>
                     <div style={{ fontSize: 12, color: T.inkSoft }}>{childObj ? `${childObj.name} ${childObj.lastName}` : "—"} · {sh.school}</div>
                     <div style={{ fontSize: 11.5, color: T.amberDeep, marginTop: 2 }}>
@@ -309,7 +309,7 @@ function ClinicalDirectorHome({ user, onOpenChild, onCalendarDateChange, onConne
             {allSpecialistsAndDir.map((sp) => {
               const count = children.filter((c) => c.assignedSpecialists.includes(sp.id)).length;
               return (
-                <div key={sp.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 0", borderBottom: `1px solid ${T.borderSoft}` }}>
+                <div key={sp.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 0", borderTop: `1px solid ${T.borderSoft}` }}>
                   <div style={{ width: 30, height: 30, borderRadius: "50%", background: sp.avatarBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#fff", flexShrink: 0 }}>
                     {sp.name[0]}
                   </div>

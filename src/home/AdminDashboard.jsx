@@ -3,7 +3,7 @@ import { ChevronRight, Plus, Clock, AlertTriangle, TrendingUp, Users, User, Cale
 import { T, TODAY } from "../theme.js";
 import { sessionsSinceLastParentReport } from "../lib/reports.js";
 import { ROLES } from "../permissions.js";
-import { Eyebrow, Avatar, Btn, Card, StatStrip } from "../ui/index.js";
+import { Avatar, Btn, Card, Eyebrow, List, ListRow, StatStrip } from "../ui/index.js";
 import CalendarAgenda from "./CalendarAgenda.jsx";
 import { useDataStore } from "../store/dataStore.js";
 import { useCalendarStore } from "../store/calendarStore.js";
@@ -116,24 +116,12 @@ function AdminDashboard({ onOpenChild, onCalendarDateChange, onConnectGcal }) {
           </button>
 
           {alertsOpen && (
-            <div style={{
-              borderTop: `1px solid ${T.borderSoft}`,
-              maxHeight: 260, overflowY: "auto",
-            }}>
+            <List style={{ borderTop: `1px solid ${T.borderSoft}`, maxHeight: 260, overflowY: "auto" }}>
               {[
                 { lista: childrenNoRecentSession, texto: "Sin sesiones en 7 días", tono: T.apoyo, fondo: T.apoyoTint },
                 { lista: childrenReadyForParentReport, texto: "Listo para reporte a padres", tono: T.proceso, fondo: T.procesoTint },
-              ].map(({ lista, texto, tono, fondo }) => lista.map((c) => (
-                <button
-                  key={texto + c.id}
-                  onClick={() => onOpenChild(c.id)}
-                  style={{
-                    width: "100%", display: "flex", alignItems: "center", gap: 10,
-                    padding: "9px 18px", background: "none", border: "none",
-                    borderBottom: `1px solid ${T.borderSoft}`, cursor: "pointer",
-                    fontFamily: T.font, textAlign: "left",
-                  }}
-                >
+              ].flatMap(({ lista, texto, tono, fondo }) => lista.map((c) => (
+                <ListRow key={texto + c.id} onClick={() => onOpenChild(c.id)}>
                   <Avatar name={`${c.name} ${c.lastName}`} bg={c.avatarBg} size={26} />
                   <span style={{ fontSize: 13.5, color: T.ink, flex: 1 }}>
                     {c.name} {c.lastName}
@@ -144,9 +132,9 @@ function AdminDashboard({ onOpenChild, onCalendarDateChange, onConnectGcal }) {
                   }}>
                     {texto}
                   </span>
-                </button>
+                </ListRow>
               )))}
-            </div>
+            </List>
           )}
         </Card>
       )}

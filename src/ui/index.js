@@ -7,6 +7,7 @@ export { default as StatusRing } from "./StatusRing.jsx";
 export { default as Avatar } from "./Avatar.jsx";
 export { default as Btn } from "./Btn.jsx";
 export { default as IconBtn } from "./IconBtn.jsx";
+export { List, ListRow } from "./List.jsx";
 export { default as Chip } from "./Chip.jsx";
 export { default as Card } from "./Card.jsx";
 export { default as Modal } from "./Modal.jsx";

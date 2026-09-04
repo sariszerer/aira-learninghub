@@ -3,7 +3,7 @@ import { T } from "../theme.js";
 import { visibleChildren } from "../permissions.js";
 import { useDataStore } from "../store/dataStore.js";
 import { useAuthStore } from "../store/authStore.js";
-import { Avatar, Chip } from "../ui/index.js";
+import { Avatar, Chip, Card } from "../ui/index.js";
 import PageHeader from "../shell/PageHeader.jsx";
 
 // Listado completo de pacientes con busqueda y filtro por especialidad.
@@ -65,14 +65,11 @@ export default function PatientsList({ onOpenChild }) {
         </div>
 
         {filtrados.length === 0 ? (
-          <div style={{
-            background: T.surface, border: `1px solid ${T.border}`, borderRadius: T.radius,
-            padding: "48px 20px", textAlign: "center", color: T.inkFaint, fontSize: 14,
-          }}>
+          <Card style={{ padding: "48px 20px", textAlign: "center", color: T.inkFaint, fontSize: 14 }}>
             {alcance.length === 0
               ? "No tienes pacientes asignados."
               : "Ningún paciente coincide con la búsqueda."}
-          </div>
+          </Card>
         ) : (
           <div style={{
             display: "grid", gap: 12,
@@ -88,7 +85,7 @@ export default function PatientsList({ onOpenChild }) {
                   key={c.id}
                   onClick={() => onOpenChild(c.id)}
                   style={{
-                    textAlign: "left", cursor: "pointer", padding: 16,
+                    textAlign: "left", cursor: "pointer", padding: 16, width: "100%",
                     background: T.surface, border: `1px solid ${T.border}`,
                     borderRadius: T.radius, boxShadow: T.shadow, fontFamily: T.font,
                   }}

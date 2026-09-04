@@ -204,9 +204,9 @@ function ObjetivosTab({ child }) {
                     </div>
                   </div>
                   {/* Objectives */}
-                  <div style={{ borderTop: `0.5px solid ${T.border}`, padding: "6px 14px 10px" }}>
+                  <div style={{ borderTop: `1px solid ${T.borderSoft}`, padding: "6px 14px 10px" }}>
                     {objs.map((o) => (
-                      <div key={o.id} style={{ padding: "7px 0", borderBottom: `0.5px solid ${T.borderSoft}` }}>
+                      <div key={o.id} style={{ padding: "7px 0", borderTop: `1px solid ${T.borderSoft}` }}>
                         <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
                           <span style={{ fontSize: 14, flexShrink: 0, marginTop: 1 }}>{o.status === "logrado" ? "✅" : o.status === "apoyo" ? "🔴" : "🟡"}</span>
                           <span style={{ fontSize: 12.5, color: o.status === "logrado" ? "#2E7D32" : T.ink, lineHeight: 1.4, flex: 1 }}>{o.name}</span>
@@ -255,7 +255,7 @@ function ObjetivosTab({ child }) {
                     <div style={{ fontSize: 12, color: T.inkFaint, fontStyle: "italic", padding: "8px 0" }}>Sin objetivos definidos.</div>
                   </div>
             {canEditThis && (
-                    <div style={{ borderTop: `0.5px solid ${T.border}`, padding: "6px 14px 10px" }}>
+                    <div style={{ borderTop: `1px solid ${T.borderSoft}`, padding: "6px 14px 10px" }}>
                       <ObjectivesList
                         objectives={[]}
                         defaultArea={area}

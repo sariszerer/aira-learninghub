@@ -113,8 +113,8 @@ function ChildProfile({ child, onOpenSessionForm, onViewReport, onGenerateFull, 
             marginRight: 26, fontSize: 15.5, fontFamily: T.font,
             fontWeight: tab === t.id ? 600 : 500,
             fontStyle: tab === t.id ? "normal" : "italic",
-            color: tab === t.id ? T.ink : T.inkFaint,
-            borderBottom: tab === t.id ? `2px solid ${T.amber}` : "2px solid transparent",
+            color: tab === t.id ? T.brand : T.inkFaint,
+            borderBottom: tab === t.id ? `2px solid ${T.brand}` : "2px solid transparent",
             transition: "color .15s ease",
           }}>
             {t.label}
