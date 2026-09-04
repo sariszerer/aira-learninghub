@@ -1,6 +1,6 @@
 // Utilidades de formato y color. Funciones puras, sin dependencias de React.
 
-import { T, TODAY } from "../theme.js";
+import { TODAY } from "../theme.js";
 
 export function fmtDate(iso) {
   const d = new Date(iso + "T00:00:00");
@@ -17,9 +17,32 @@ export function readableTextOn(hex) {
   const h = hex.length === 4
     ? "#" + [...hex.slice(1)].map((c) => c + c).join("")
     : hex;
-  const r = parseInt(h.slice(1, 3), 16), g = parseInt(h.slice(3, 5), 16), b = parseInt(h.slice(5, 7), 16);
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.62 ? T.brandDeep : "#fff";
+  // Antes decidia con brillo percibido (0.299/0.587/0.114) y un umbral de 0.62.
+  // Ese umbral elegia BLANCO sobre colores medios donde el oscuro contrastaba el
+  // doble: sobre #7FA88A daba 2.67 pudiendo dar 6.65. Ahora se calcula el
+  // contraste WCAG real contra las dos tintas y gana la mayor — sin umbral que
+  // ajustar, y ningun color puede volver a recibir la peor de las dos.
+  return contrasteWCAG("#FFFFFF", h) >= contrasteWCAG(TINTA_OSCURA, h)
+    ? "#fff"
+    : TINTA_OSCURA;
+}
+
+const TINTA_OSCURA = "#1B2A3A";
+
+// Luminancia relativa WCAG 2.1: linealiza cada canal antes de ponderar. Es lo
+// que distingue esta cuenta de la del brillo percibido, que pondera el valor
+// sRGB crudo y por eso sobreestima los tonos medios.
+function luminancia(h) {
+  const canal = (v) => {
+    const c = parseInt(v, 16) / 255;
+    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  };
+  return 0.2126 * canal(h.slice(1, 3)) + 0.7152 * canal(h.slice(3, 5)) + 0.0722 * canal(h.slice(5, 7));
+}
+
+export function contrasteWCAG(a, b) {
+  const [alta, baja] = [luminancia(a), luminancia(b)].sort((x, y) => y - x);
+  return (alta + 0.05) / (baja + 0.05);
 }
 
 export function slugifyName(s) {

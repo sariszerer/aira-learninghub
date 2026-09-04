@@ -15,7 +15,10 @@ import { Btn, Chip } from "../ui/index.js";
 // Colores de avatar. Se eligen a mano y no de los tokens porque tienen que
 // distinguirse ENTRE SI de un vistazo: son la forma de reconocer a una persona
 // en una lista, no de comunicar marca.
-const PALETA = ["#1E79E2", "#06B6D4", "#818CF8", "#10B981", "#F59E0B", "#EF4444", "#0E7490", "#7C3AED"];
+// Todos con contraste >= 4.6 contra texto blanco (WCAG AA). El selector no
+// puede ofrecer un color que produzca un avatar ilegible: los anteriores
+// (#06B6D4, #F59E0B, #10B981) daban 2.4, 2.1 y 2.5.
+const PALETA = ["#1C74DA", "#048096", "#5564F6", "#0C855D", "#A26807", "#E81414", "#0E7490", "#7C3AED"];
 
 const ROLES_ASIGNABLES = ["specialist", "clinical_director", "admin"];
 

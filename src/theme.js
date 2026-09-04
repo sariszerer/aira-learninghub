@@ -82,16 +82,20 @@ export const inputStyle = {
   background: "#fff",
 };
 
+// Color por especialista. Debe coincidir con users.avatar_bg en la base: la
+// misma persona sale de aqui en el perfil del paciente y de la base en el
+// resto, y si divergen aparece de dos colores distintos segun la vista.
+// Todos con contraste >= 4.6 contra texto blanco (WCAG AA).
 export const SPECIALIST_COLORS = {
-  "u-admin":        "#7FA88A",  // Sarita — verde sage
-  "u-idaira":       "#C0392B",  // Idaira — rojo
-  "u-celilia":      "#9B7EC8",  // Celilia — lila
-  "u-neyma":        "#D4A843",  // Neyma — amarillo
-  "u-milagros":     "#4A90B8",  // Milagros — azul
-  "u-ingrid":       "#E07A3A",  // Ingrid — naranja
-  "u-daniella":     "#7B5EA7",  // Daniella — morado
-  "u-mariavirginia":"#E8856A",  // Mavi — salmon
-  "u-laura":        "#9B6B9B",  // Laura — lila
+  "u-admin":        "#175FAF",  // Sarita — azul
+  "u-idaira":       "#567E61",  // Idaira — verde
+  "u-celilia":      "#597990",  // Celilia — azul acero
+  "u-neyma":        "#99648C",  // Neyma — ciruela
+  "u-milagros":     "#637C4C",  // Milagros — oliva
+  "u-ingrid":       "#6473A5",  // Ingrid — indigo
+  "u-daniella":     "#9A6B3A",  // Daniella — terracota
+  "u-mariavirginia":"#995DB2",  // Mavi — morado
+  "u-laura":        "#5C7D5F",  // Laura — verde salvia
   "u-claudia":      "#C0392B",  // Claudia — rojo
 };
 
