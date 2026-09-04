@@ -5,7 +5,7 @@ import { ROLES } from "../permissions.js";
 import { Eyebrow, Card, Chip } from "../ui/index.js";
 import { useDataStore } from "../store/dataStore.js";
 import { Btn } from "../ui/index.js";
-import { Plus } from "lucide-react";
+import { Plus, School } from "lucide-react";
 
 function GabinetePanel({ onAddSession }) {
   const schools = useDataStore((s) => s.schools);
@@ -99,7 +99,7 @@ function GabinetePanel({ onAddSession }) {
 
       {schools.length === 0 ? (
         <div style={{ textAlign: "center", padding: "60px 20px", color: T.inkFaint }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>🏫</div>
+          <School size={38} color={T.inkFaint} style={{ marginBottom: 12 }} />
           <div style={{ fontSize: 16, fontWeight: 600, color: T.inkSoft, marginBottom: 8 }}>Ninguna escuela registrada aún</div>
           <div style={{ fontSize: 13.5 }}>Agrega la primera escuela con el botón de arriba</div>
         </div>
@@ -132,8 +132,8 @@ function GabinetePanel({ onAddSession }) {
                     <div style={{ fontSize: 13, color: T.inkSoft, marginTop: 3 }}>{school.contact}</div>
                   </div>
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    {school.phone && <a href={`tel:${school.phone}`} style={{ fontSize: 12.5, color: T.brand, textDecoration: "none", fontWeight: 600 }}>📞 {school.phone}</a>}
-                    {school.email && <a href={`mailto:${school.email}`} style={{ fontSize: 12.5, color: T.brand, textDecoration: "none", fontWeight: 600 }}>✉ {school.email}</a>}
+                    {school.phone && <a href={`tel:${school.phone}`} style={{ fontSize: 12.5, color: T.brand, textDecoration: "none", fontWeight: 600 }}>{school.phone}</a>}
+                    {school.email && <a href={`mailto:${school.email}`} style={{ fontSize: 12.5, color: T.brand, textDecoration: "none", fontWeight: 600 }}>{school.email}</a>}
                   </div>
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 14 }}>

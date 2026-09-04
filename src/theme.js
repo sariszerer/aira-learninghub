@@ -1,6 +1,6 @@
 // Tokens de diseno de AIRA Learning Hub.
 //
-// Lenguaje visual: panel de gestion moderno. Violeta como color de marca, cian
+// Lenguaje visual: panel de gestion moderno. Azul como color de marca, cian
 // como acento, y todo sobre un gris muy claro con tarjetas blancas de borde
 // suave. Sin serif: una sola familia sans en toda la aplicacion.
 //
@@ -24,21 +24,21 @@ export const T = {
   border: "#E5E7EB",
   borderSoft: "#F1F3F7",
 
-  // marca: violeta
-  brand: "#7C3AED",
-  brandBright: "#8B5CF6",
-  brandDeep: "#6D28D9",
-  brandTint: "#F3EEFF",
+  // marca: azul
+  brand: "#1E79E2",
+  brandBright: "#4A95EA",
+  brandDeep: "#1560B8",
+  brandTint: "#E9F2FD",
 
   // acento: cian (ocupa el lugar del ambar del tema anterior)
   amber: "#06B6D4",
   amberTint: "#E0F7FB",
   amberDeep: "#0E7490",
 
-  // terciario: violeta claro
-  pink: "#A78BFA",
-  pinkTint: "#EDE9FE",
-  pinkDeep: "#6D28D9",
+  // terciario: indigo, que acompana al azul sin competir con el
+  pink: "#818CF8",
+  pinkTint: "#EEF0FE",
+  pinkDeep: "#4338CA",
 
   // semaforo de estado
   logrado: "#10B981",

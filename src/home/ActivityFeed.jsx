@@ -1,12 +1,15 @@
 import React from "react";
 import { T } from "../theme.js";
 import { Eyebrow, Card } from "../ui/index.js";
+import { ClipboardList, FileText, Target, Users, Pin } from "lucide-react";
 
 function ActivityFeed({ activityLog, users, onMarkSeen }) {
   const recent = activityLog.slice(0, 20);
   const unseen = activityLog.filter(a => !a.seen).length;
 
-  const TYPE_ICON = { session: "🗒", document: "📄", objective: "🎯", meeting: "🤝" };
+  // Un emoji lo dibuja el sistema operativo y cambia de forma entre plataformas;
+// un icono vectorial hereda color y tamano del texto que acompana.
+const TYPE_ICON = { session: ClipboardList, document: FileText, objective: Target, meeting: Users };
 
   const timeAgo = (ts) => {
     const mins = Math.floor((new Date() - new Date(ts)) / 60000);
@@ -44,7 +47,9 @@ function ActivityFeed({ activityLog, users, onMarkSeen }) {
                 display:"flex", alignItems:"flex-start", gap:10, padding:"9px 0",
                 opacity: act.seen ? 0.6 : 1,
               }}>
-                <div style={{ fontSize:16, flexShrink:0, marginTop:1 }}>{TYPE_ICON[act.type] || "📌"}</div>
+                <div style={{ display: "flex", flexShrink: 0, marginTop: 2, color: T.inkFaint }}>
+                  {React.createElement(TYPE_ICON[act.type] || Pin, { size: 15 })}
+                </div>
                 <div style={{ flex:1, minWidth:0 }}>
                   <div style={{ fontSize:13, fontWeight:600, color:T.ink }}>
                     {act.childName}

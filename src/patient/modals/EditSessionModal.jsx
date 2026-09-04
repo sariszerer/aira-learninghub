@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { T } from "../../theme.js";
 import { fmtDate } from "../../lib/format.js";
-import { Btn, Modal, ModalHeader, Field } from "../../ui/index.js";
+import { Btn, Field, Modal, ModalHeader, StatusIcon } from "../../ui/index.js";
 
 function EditSessionModal({ session, objectives, users, onClose, onSave }) {
   const specialist = users.find(u => u.id === session.specialistId);
@@ -30,7 +30,7 @@ function EditSessionModal({ session, objectives, users, onClose, onSave }) {
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {objs.map((o, i) => (
                 <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 10px", background: "#fff", border: `1px solid ${T.border}`, borderRadius: 20, fontSize: 13 }}>
-                  <span>{o.status === "logrado" ? "✅" : o.status === "apoyo" ? "🔴" : "🟡"}</span>
+                  <StatusIcon status={o.status} size={14} />
                   <span style={{ color: T.ink }}>{o.name}</span>
                 </div>
               ))}

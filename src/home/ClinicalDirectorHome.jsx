@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Search, X, Check } from "lucide-react";
+import { Check, CheckCircle2, Search, X } from "lucide-react";
 import { T, TODAY } from "../theme.js";
 import { ROLES } from "../permissions.js";
 import { Eyebrow, Card } from "../ui/index.js";
@@ -206,7 +206,7 @@ function ClinicalDirectorHome({ user, onOpenChild, onCalendarDateChange, onConne
 
             {alertTab === "inactivos" && (
               inactivosPorEsp.length === 0
-                ? <div style={{ fontSize: 13, color: T.inkFaint, padding: "8px 0" }}>✓ Todos activos</div>
+                ? <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: T.inkFaint, padding: "8px 0" }}><CheckCircle2 size={14} color={T.logrado} />Todos activos</div>
                 : inactivosPorEsp.map(({ sp, inactive }) => (
                   <div key={sp.id} style={{ marginBottom: 12 }}>
                     <div style={{ fontSize: 11.5, fontWeight: 700, color: T.inkSoft, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>
@@ -223,10 +223,10 @@ function ClinicalDirectorHome({ user, onOpenChild, onCalendarDateChange, onConne
             {alertTab === "paquete" && (
               <div>
                 {proximosPaquete.length > 0 && (
-                  <div style={{ fontSize: 11.5, fontWeight: 700, color: T.amberDeep, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>⚠ Por vencer</div>
+                  <div style={{ fontSize: 11.5, fontWeight: 700, color: T.amberDeep, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>Por vencer</div>
                 )}
                 {todosConPaquete.length === 0
-                  ? <div style={{ fontSize: 13, color: T.inkFaint, padding: "8px 0" }}>✓ Sin paquetes activos</div>
+                  ? <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: T.inkFaint, padding: "8px 0" }}><CheckCircle2 size={14} color={T.logrado} />Sin paquetes activos</div>
                   : todosConPaquete.map((c) => {
                     const pct = (c.enPaquete / PAQUETE_SIZE) * 100;
                     const barColor = c.enPaquete >= 6 ? T.amberDeep : c.enPaquete >= 4 ? T.amber : "#81C784";
@@ -253,7 +253,7 @@ function ClinicalDirectorHome({ user, onOpenChild, onCalendarDateChange, onConne
 
             {alertTab === "reportes" && (
               sinReportePadres.length === 0
-                ? <div style={{ fontSize: 13, color: T.inkFaint, padding: "8px 0" }}>✓ Al día</div>
+                ? <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: T.inkFaint, padding: "8px 0" }}><CheckCircle2 size={14} color={T.logrado} />Al día</div>
                 : sinReportePadres.map((c) => {
                   const count = sessions.filter((s) => s.childId === c.id).length;
                   return (
@@ -266,7 +266,7 @@ function ClinicalDirectorHome({ user, onOpenChild, onCalendarDateChange, onConne
 
             {alertTab === "objetivos" && (
               sinObjetivos.length === 0
-                ? <div style={{ fontSize: 13, color: T.inkFaint, padding: "8px 0" }}>✓ Todos tienen objetivos</div>
+                ? <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: T.inkFaint, padding: "8px 0" }}><CheckCircle2 size={14} color={T.logrado} />Todos tienen objetivos</div>
                 : sinObjetivos.map((c) => (
                   <AlertRow key={c.id} child={c} sub="Sin objetivos definidos" subColor={T.amberDeep} />
                 ))
@@ -274,7 +274,7 @@ function ClinicalDirectorHome({ user, onOpenChild, onCalendarDateChange, onConne
 
             {alertTab === "estancados" && (
               objetivosEstancados.length === 0
-                ? <div style={{ fontSize: 13, color: T.inkFaint, padding: "8px 0" }}>✓ Sin objetivos estancados</div>
+                ? <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: T.inkFaint, padding: "8px 0" }}><CheckCircle2 size={14} color={T.logrado} />Sin objetivos estancados</div>
                 : objetivosEstancados.map((o) => {
                   const child = children.find((c) => c.id === o.childId);
                   if (!child) return null;
@@ -290,7 +290,7 @@ function ClinicalDirectorHome({ user, onOpenChild, onCalendarDateChange, onConne
 
             {alertTab === "tutors" && (
               tutorsVencidos.length === 0
-                ? <div style={{ fontSize: 13, color: T.inkFaint, padding: "8px 0" }}>✓ Todos los tutors al día</div>
+                ? <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: T.inkFaint, padding: "8px 0" }}><CheckCircle2 size={14} color={T.logrado} />Todos los tutors al día</div>
                 : tutorsVencidos.map(({ sh, childObj, daysSince }) => (
                   <div key={sh.id} style={{ padding: "8px 0", borderTop: `1px solid ${T.borderSoft}` }}>
                     <div style={{ fontSize: 13, fontWeight: 600, color: T.ink }}>{sh.name}</div>

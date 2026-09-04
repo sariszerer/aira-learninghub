@@ -12,7 +12,10 @@ import { Btn, Chip } from "../ui/index.js";
 // correo y el rol solo se piden al crear — cambiar el correo de alguien que ya
 // entra requiere mover tambien su cuenta de auth, y eso es otra operacion.
 
-const PALETA = ["#7C3AED", "#06B6D4", "#A78BFA", "#10B981", "#F59E0B", "#EF4444", "#0E7490", "#6D28D9"];
+// Colores de avatar. Se eligen a mano y no de los tokens porque tienen que
+// distinguirse ENTRE SI de un vistazo: son la forma de reconocer a una persona
+// en una lista, no de comunicar marca.
+const PALETA = ["#1E79E2", "#06B6D4", "#818CF8", "#10B981", "#F59E0B", "#EF4444", "#0E7490", "#7C3AED"];
 
 const ROLES_ASIGNABLES = ["specialist", "clinical_director", "admin"];
 

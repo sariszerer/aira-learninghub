@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { T, TODAY } from "../../theme.js";
-import { StatusPill, StatusRing, Card } from "../../ui/index.js";
+import { Card, StatusIcon, StatusPill, StatusRing } from "../../ui/index.js";
 import { useDataStore } from "../../store/dataStore.js";
 import { useAuthStore } from "../../store/authStore.js";
 import { can } from "../../permissions.js";
 import { Btn } from "../../ui/index.js";
-import { Plus } from "lucide-react";
+import { Check, Pencil, Plus, Trash2, X } from "lucide-react";
 
 function ObjectivesList({ objectives, compact, onUpdate, onAdd, onDelete, defaultArea }) {
   const [editing, setEditing] = useState(null); // obj id being edited
@@ -15,9 +15,9 @@ function ObjectivesList({ objectives, compact, onUpdate, onAdd, onDelete, defaul
   const [newArea, setNewArea] = useState(defaultArea || "");
 
   const STATUS_OPTS = [
-    { val: "logrado", label: "✅ Logrado" },
-    { val: "proceso", label: "🟡 En proceso" },
-    { val: "apoyo", label: "🔴 Necesita apoyo" },
+    { val: "logrado", label: "Logrado" },
+    { val: "proceso", label: "En proceso" },
+    { val: "apoyo", label: "Necesita apoyo" },
   ];
 
   const startEdit = (o) => { setEditing(o.id); setEditName(o.name); };
@@ -61,11 +61,11 @@ function ObjectivesList({ objectives, compact, onUpdate, onAdd, onDelete, defaul
                     title={s.label}
                     style={{
                       width: 22, height: 22, borderRadius: 6, border: "none", cursor: "pointer",
-                      background: o.status === s.val ? (s.val === "logrado" ? "#81C784" : s.val === "proceso" ? T.amber : "#E57373") : T.bg,
+                      background: o.status === s.val ? (s.val === "logrado" ? T.logrado : s.val === "proceso" ? T.amber : T.apoyo) : T.bg,
                       fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center",
                       outline: o.status === s.val ? `2px solid ${s.val === "logrado" ? "#43A047" : s.val === "proceso" ? T.amberDeep : "#C62828"}` : "none",
                     }}>
-                    {s.val === "logrado" ? "✅" : s.val === "proceso" ? "🟡" : "🔴"}
+                    <StatusIcon status={s.val} size={13} />
                   </button>
                 ))}
               </div>
@@ -75,13 +75,13 @@ function ObjectivesList({ objectives, compact, onUpdate, onAdd, onDelete, defaul
               <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
                 {editing === o.id ? (
                   <>
-                    <button onClick={() => saveEdit(o)} style={{ background: T.brand, color: "#fff", border: "none", borderRadius: 7, padding: "3px 8px", fontSize: 11.5, cursor: "pointer", fontFamily: T.font }}>✓</button>
-                    <button onClick={() => setEditing(null)} style={{ background: T.bg, color: T.inkSoft, border: `1px solid ${T.border}`, borderRadius: 7, padding: "3px 8px", fontSize: 11.5, cursor: "pointer", fontFamily: T.font }}>✕</button>
+                    <button onClick={() => saveEdit(o)} style={{ background: T.brand, color: "#fff", border: "none", borderRadius: 7, padding: "3px 8px", fontSize: 11.5, cursor: "pointer", fontFamily: T.font }}><Check size={13} /></button>
+                    <button onClick={() => setEditing(null)} style={{ background: T.bg, color: T.inkSoft, border: `1px solid ${T.border}`, borderRadius: 7, padding: "3px 8px", fontSize: 11.5, cursor: "pointer", fontFamily: T.font }}><X size={13} /></button>
                   </>
                 ) : (
                   <>
-                    <button onClick={() => startEdit(o)} style={{ background: "none", border: "none", color: T.inkFaint, cursor: "pointer", fontSize: 13, padding: "2px 4px" }} title="Editar nombre">✎</button>
-                    {onDelete && <button onClick={() => onDelete(o.id)} style={{ background: "none", border: "none", color: T.inkFaint, cursor: "pointer", fontSize: 13, padding: "2px 4px" }} title="Eliminar">🗑</button>}
+                    <button onClick={() => startEdit(o)} style={{ background: "none", border: "none", color: T.inkFaint, cursor: "pointer", fontSize: 13, padding: "2px 4px" }} title="Editar nombre"><Pencil size={13} /></button>
+                    {onDelete && <button onClick={() => onDelete(o.id)} style={{ background: "none", border: "none", color: T.inkFaint, cursor: "pointer", fontSize: 13, padding: "2px 4px" }} title="Eliminar"><Trash2 size={13} /></button>}
                   </>
                 )}
               </div>
@@ -189,10 +189,10 @@ function ObjetivosTab({ child }) {
               const bg = AREA_BG[area] || T.surfaceSunk;
               const pct = objs.length > 0 ? (logrados / objs.length) * 100 : 0;
               return (
-                <div key={`${specId}__${area}`} style={{ background: "#fff", border: `0.5px solid ${T.border}`, borderTop: `3px solid ${color}`, borderRadius: "0 0 12px 12px" }}>
+                <div key={`${specId}__${area}`} style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: "0 0 12px 12px" }}>
                   {/* Column header */}
                   <div style={{ padding: "12px 14px 10px" }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color, marginBottom: 2 }}>{area}</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: T.brand, marginBottom: 2 }}>{area}</div>
                     <div style={{ fontSize: 12, color: T.inkSoft, marginBottom: 10 }}>{spec ? spec.name : "—"}</div>
                     <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 6 }}>
                       <span style={{ fontFamily: T.font, fontSize: 22, fontWeight: 500, color }}>{logrados}</span>
@@ -207,8 +207,8 @@ function ObjetivosTab({ child }) {
                     {objs.map((o) => (
                       <div key={o.id} style={{ padding: "7px 0", borderTop: `1px solid ${T.borderSoft}` }}>
                         <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
-                          <span style={{ fontSize: 14, flexShrink: 0, marginTop: 1 }}>{o.status === "logrado" ? "✅" : o.status === "apoyo" ? "🔴" : "🟡"}</span>
-                          <span style={{ fontSize: 12.5, color: o.status === "logrado" ? "#2E7D32" : T.ink, lineHeight: 1.4, flex: 1 }}>{o.name}</span>
+                          <span style={{ display: "flex", flexShrink: 0, marginTop: 2 }}><StatusIcon status={o.status} size={14} /></span>
+                          <span style={{ fontSize: 12.5, color: o.status === "logrado" ? T.logrado : T.ink, lineHeight: 1.4, flex: 1 }}>{o.name}</span>
                         </div>
                         {canEditThis && (
                           <div style={{ display: "flex", gap: 4, marginTop: 5, marginLeft: 22 }}>
@@ -217,10 +217,10 @@ function ObjetivosTab({ child }) {
                                 style={{ fontSize: 11, padding: "2px 8px", borderRadius: 6, cursor: "pointer", fontFamily: T.font,
                                   border: o.status === st ? "none" : `0.5px solid ${T.border}`,
                                   background: o.status === st ? (st === "logrado" ? "#E8F5E9" : st === "apoyo" ? "#FFEBEE" : "#FFF8E1") : "#fff",
-                                  color: o.status === st ? (st === "logrado" ? "#2E7D32" : st === "apoyo" ? "#C62828" : "#F57F17") : T.inkSoft,
+                                  color: o.status === st ? (st === "logrado" ? T.logrado : st === "apoyo" ? "#C62828" : "#F57F17") : T.inkSoft,
                                   fontWeight: o.status === st ? 600 : 400,
                                 }}>
-                                {st === "logrado" ? "✅ Logrado" : st === "proceso" ? "🟡 En proceso" : "🔴 Apoyo"}
+                                {st === "logrado" ? "Logrado" : st === "proceso" ? "En proceso" : "Apoyo"}
                               </button>
                             ))}
                           </div>
@@ -247,9 +247,9 @@ function ObjetivosTab({ child }) {
               const color = AREA_COLORS[area] || T.inkSoft;
               const canEditThis = canEdit(sid);
               return (
-                <div key={`empty-${sid}`} style={{ background: "#fff", border: `0.5px solid ${T.border}`, borderTop: `3px solid ${color}40`, borderRadius: "0 0 12px 12px" }}>
+                <div key={`empty-${sid}`} style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: "0 0 12px 12px" }}>
                   <div style={{ padding: "12px 14px 10px" }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: `${color}90`, marginBottom: 2 }}>{area}</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: T.brand, marginBottom: 2 }}>{area}</div>
                     <div style={{ fontSize: 12, color: T.inkSoft, marginBottom: 10 }}>{spec.name}</div>
                     <div style={{ fontSize: 12, color: T.inkFaint, padding: "8px 0" }}>Sin objetivos definidos.</div>
                   </div>

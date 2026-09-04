@@ -40,9 +40,9 @@ function TutorAiraHome({ user, onOpenChild }) {
   };
 
   const STATUS_OPTS = [
-    { val: "logrado", label: "✅ Logrado" },
-    { val: "proceso", label: "🟡 En proceso" },
-    { val: "apoyo", label: "🔴 Necesita apoyo" },
+    { val: "logrado", label: "Logrado" },
+    { val: "proceso", label: "En proceso" },
+    { val: "apoyo", label: "Necesita apoyo" },
   ];
 
   return (
@@ -92,7 +92,7 @@ function TutorAiraHome({ user, onOpenChild }) {
 
       {sent && (
         <div style={{ background: "#E8F5E9", border: "1.5px solid #81C784", borderRadius: 14, padding: "14px 20px", marginBottom: 20, color: "#2E7D32", fontWeight: 600, fontSize: 14 }}>
-          ✓ Reporte enviado correctamente. Gracias.
+          Reporte enviado correctamente. Gracias.
         </div>
       )}
 

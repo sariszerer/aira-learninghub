@@ -70,9 +70,18 @@ function ChildProfile({ child, onOpenSessionForm, onViewReport, onGenerateFull, 
   const tabs = CHILD_TABS;
 
   return (
-    <div style={{ padding: "24px 28px 48px" }}>
-      <div style={{ display: "flex", gap: 20, alignItems: "flex-start", marginBottom: 30 }}>
-        <Avatar name={child.name + " " + child.lastName} bg={child.avatarBg} size={72} />
+    <div>
+      {/* Cabecera fija: identidad del paciente y pestañas. Se queda arriba al
+          hacer scroll porque en una ficha con siete pestañas y listas largas,
+          perder de vista de quien es el expediente es el peor sitio donde
+          perderlo. */}
+      <div style={{
+        position: "sticky", top: 0, zIndex: 10,
+        background: T.bg, padding: "20px 28px 14px",
+      }}>
+      <Card style={{ padding: "18px 20px 0" }}>
+      <div style={{ display: "flex", gap: 18, alignItems: "flex-start", marginBottom: 16 }}>
+        <Avatar name={child.name + " " + child.lastName} bg={child.avatarBg} size={56} />
         <div style={{ flex: 1 }}>
           <div style={{ fontFamily: T.font, fontSize: 21, fontWeight: 700, color: T.ink, letterSpacing: "-0.01em" }}>
             {child.name} {child.lastName}
@@ -106,8 +115,13 @@ function ChildProfile({ child, onOpenSessionForm, onViewReport, onGenerateFull, 
 
       {editingProfile && <EditProfileModal child={child} onClose={() => setEditingProfile(false)} />}
 
-      <Tabs tabs={tabs} activo={tab} onCambiar={setTab} />
+        <div style={{ marginLeft: -3, marginRight: -3 }}>
+          <Tabs tabs={tabs} activo={tab} onCambiar={setTab} />
+        </div>
+      </Card>
+      </div>
 
+      <div style={{ padding: "0 28px 48px" }}>
 
       {tab === "resumen" && <ResumenTab child={child} objectives={objectives} sessions={sessions} users={users} onRenewPackage={onRenewPackage} onCloseProcess={onCloseProcess} currentUser={currentUser} />}
       {tab === "sesiones" && <SesionesTab child={child} sessions={sessions} objectives={objectives} users={users} currentUser={currentUser} onUpdateSession={onUpdateSession} />}
@@ -131,6 +145,7 @@ function ChildProfile({ child, onOpenSessionForm, onViewReport, onGenerateFull, 
       {tab === "interdisciplinario" && (
         <InterdisciplinaryTab child={child} meetings={meetings} users={users} onAddMeeting={onAddMeeting} currentUser={currentUser} documents={documents} onAddDocument={onAddDocument} />
       )}
+      </div>
     </div>
   );
 }

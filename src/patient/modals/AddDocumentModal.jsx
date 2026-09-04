@@ -2,6 +2,7 @@ import React, { useState, useRef } from "react";
 import { T, inputStyle, TODAY } from "../../theme.js";
 import { DOC_TYPES } from "../../constants.js";
 import { Btn, Modal, ModalHeader, FieldLabel } from "../../ui/index.js";
+import { FileText, Upload } from "lucide-react";
 
 function AddDocumentModal({ type, onClose, onSave }) {
   const meta = DOC_TYPES[type] || { label: type, plural: type };
@@ -35,10 +36,10 @@ function AddDocumentModal({ type, onClose, onSave }) {
         {/* Mode toggle */}
         <div style={{ display: "flex", gap: 8, marginBottom: 4 }}>
           <button onClick={() => setMode("text")} style={{ flex: 1, padding: "8px", borderRadius: 8, border: `1.5px solid ${mode === "text" ? T.brand : T.border}`, background: mode === "text" ? `${T.brand}10` : "#fff", color: mode === "text" ? T.brand : T.inkSoft, fontSize: 13, fontWeight: mode === "text" ? 600 : 400, fontFamily: T.font, cursor: "pointer" }}>
-            ✏️ Texto / Notas
+            Texto / Notas
           </button>
           <button onClick={() => setMode("pdf")} style={{ flex: 1, padding: "8px", borderRadius: 8, border: `1.5px solid ${mode === "pdf" ? T.brand : T.border}`, background: mode === "pdf" ? `${T.brand}10` : "#fff", color: mode === "pdf" ? T.brand : T.inkSoft, fontSize: 13, fontWeight: mode === "pdf" ? 600 : 400, fontFamily: T.font, cursor: "pointer" }}>
-            📄 Subir PDF
+            Subir PDF
           </button>
         </div>
         <div>
@@ -62,13 +63,13 @@ function AddDocumentModal({ type, onClose, onSave }) {
             <div onClick={() => fileRef.current?.click()} style={{ border: `2px dashed ${pdfFile ? T.brand : T.border}`, borderRadius: 10, padding: "24px", textAlign: "center", cursor: "pointer", background: pdfFile ? `${T.brand}06` : "#fafafa" }}>
               {pdfFile ? (
                 <div>
-                  <div style={{ fontSize: 24, marginBottom: 4 }}>📄</div>
+                  <FileText size={22} color={T.inkFaint} style={{ margin: "0 auto 6px" }} />
                   <div style={{ fontSize: 14, fontWeight: 600, color: T.brand }}>{pdfFile.name}</div>
                   <div style={{ fontSize: 12, color: T.inkSoft, marginTop: 2 }}>{(pdfFile.size / 1024).toFixed(0)} KB · Listo para subir</div>
                 </div>
               ) : (
                 <div>
-                  <div style={{ fontSize: 28, marginBottom: 4 }}>📤</div>
+                  <Upload size={24} color={T.inkFaint} style={{ margin: "0 auto 6px" }} />
                   <div style={{ fontSize: 14, color: T.inkSoft }}>Haz clic para seleccionar un PDF</div>
                   <div style={{ fontSize: 12, color: T.inkFaint, marginTop: 2 }}>Evaluaciones, informes, reportes</div>
                 </div>

@@ -4,6 +4,7 @@ import { can } from "../../permissions.js";
 import { Btn, Modal, ModalHeader } from "../../ui/index.js";
 import { useAuthStore } from "../../store/authStore.js";
 import { T } from "../../theme.js";
+import { Check } from "lucide-react";
 
 function SessionWizard({ child, objectives, onClose, onSave }) {
   const currentUser = useAuthStore((s) => s.currentUser);
@@ -87,7 +88,7 @@ function SessionWizard({ child, objectives, onClose, onSave }) {
                       background: selected ? color : "#fff", flexShrink: 0,
                       display: "flex", alignItems: "center", justifyContent: "center"
                     }}>
-                      {selected && <span style={{ color: "#fff", fontSize: 12, fontWeight: 700 }}>✓</span>}
+                      {selected && <span style={{ color: "#fff", fontSize: 12, fontWeight: 700 }}><Check size={12} strokeWidth={3} /></span>}
                     </div>
                     <span style={{ fontSize: 13, color: selected ? color : "#333", fontWeight: selected ? 600 : 400 }}>{o.name}</span>
                   </button>

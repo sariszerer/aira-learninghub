@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Calendar } from "lucide-react";
+import { Calendar, X } from "lucide-react";
 import { T, SPECIALIST_COLORS } from "../theme.js";
 import { Eyebrow, Card, Btn } from "../ui/index.js";
 
@@ -66,7 +66,7 @@ function CalendarAgenda({ events, loading, error, date, onDateChange, children, 
           <Btn size="sm" onClick={onConnectGcal}>Conectar</Btn>
         </div>
       ) : error ? (
-        <div style={{ fontSize: 13, color: "#B56060", padding: "10px 14px", background: "#FFF0F0", borderRadius: 10, marginBottom: 12 }}>⚠ {error}</div>
+        <div style={{ fontSize: 13, color: "#B56060", padding: "10px 14px", background: "#FFF0F0", borderRadius: 10, marginBottom: 12 }}>{error}</div>
       ) : null}
 
       {!loading && !error && events.length === 0 && (
@@ -111,7 +111,7 @@ function CalendarAgenda({ events, loading, error, date, onDateChange, children, 
                         >
                           {linkedChild.name} {linkedChild.lastName}
                         </span>
-                        <button onClick={() => handleUnlink(i)} style={{ background: "none", border: "none", cursor: "pointer", color: T.inkFaint, fontSize: 11, padding: "0 2px" }}>✕</button>
+                        <button onClick={() => handleUnlink(i)} style={{ background: "none", border: "none", cursor: "pointer", color: T.inkFaint, fontSize: 11, padding: "0 2px" }}><X size={12} /></button>
                       </div>
                     ) : (
                       ev.specialist && <div style={{ fontSize: 12, color: T.inkSoft, marginTop: 1 }}>{ev.specialist}</div>
@@ -130,7 +130,7 @@ function CalendarAgenda({ events, loading, error, date, onDateChange, children, 
                       whiteSpace: "nowrap", flexShrink: 0,
                     }}
                   >
-                    {linkedChild ? "✎ cambiar" : "+ vincular"}
+                    {linkedChild ? "cambiar" : "vincular"}
                   </button>
                 </div>
 

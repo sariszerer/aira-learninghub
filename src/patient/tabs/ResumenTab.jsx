@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { T } from "../../theme.js";
 import { fmtDate } from "../../lib/format.js";
-import { Card, Field, Btn } from "../../ui/index.js";
+import { Btn, Card, Field, StatusIcon } from "../../ui/index.js";
 
 function ResumenTab({ child, objectives, sessions, users, onRenewPackage, onCloseProcess, currentUser }) {
   const PAQUETE = 8;
@@ -73,7 +73,7 @@ function ResumenTab({ child, objectives, sessions, users, onRenewPackage, onClos
         <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.45)", zIndex:200, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
           <div style={{ background:"#fff", borderRadius:20, padding:"32px", maxWidth:520, width:"100%", boxShadow:"0 20px 60px rgba(0,0,0,0.25)" }}>
             <div style={{ fontFamily:T.fontDisplay, fontSize:22, fontWeight:500, color:T.ink, marginBottom:6 }}>
-              Objetivos Alcanzados 🎓
+              Objetivos alcanzados
             </div>
             <div style={{ fontSize:13.5, color:T.inkSoft, marginBottom:20 }}>
               {child.name} {child.lastName} · {totalSessions} sesiones
@@ -84,7 +84,7 @@ function ResumenTab({ child, objectives, sessions, users, onRenewPackage, onClos
                 <div style={{ fontSize:12, fontWeight:700, color:T.inkSoft, textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:8 }}>Objetivos trabajados</div>
                 {childObjectives.map((o) => (
                   <div key={o.id} style={{ display:"flex", alignItems:"center", gap:8, padding:"6px 0", borderBottom:`1px solid ${T.borderSoft}` }}>
-                    <span style={{ fontSize:16 }}>{o.status === "logrado" ? "✅" : o.status === "apoyo" ? "🔴" : "🟡"}</span>
+                    <StatusIcon status={o.status} size={15} />
                     <span style={{ fontSize:13, color: o.status === "logrado" ? "#2E7D32" : T.ink, fontWeight: o.status === "logrado" ? 600 : 400 }}>{o.name}</span>
                   </div>
                 ))}

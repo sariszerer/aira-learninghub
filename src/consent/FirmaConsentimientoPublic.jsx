@@ -62,7 +62,7 @@ function FirmaConsentimientoPublic({ token }) {
         )}
 
         {status === "done" && (
-          <div style={{ fontSize: 14, color: T.ink, lineHeight: 1.6 }}>✅ ¡Gracias! Tu firma quedó registrada correctamente.</div>
+          <div style={{ fontSize: 14, color: T.ink, lineHeight: 1.6 }}>¡Gracias! Tu firma quedó registrada correctamente.</div>
         )}
 
         {(status === "ready" || status === "saving") && doc && (
