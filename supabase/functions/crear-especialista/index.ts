@@ -46,7 +46,11 @@ Deno.serve(async (req) => {
     global: { headers: { Authorization: authHeader } },
   });
 
-  const { data: sesion, error: errSesion } = await comoUsuario.auth.getUser();
+  // getUser() SIN argumento lee la sesion del almacenamiento del cliente, y en
+  // una funcion edge no hay ninguno: devolvia "sesion invalida" sin llegar a
+  // preguntarle al servidor de auth. Por eso el token va explicito.
+  const token = authHeader.slice("Bearer ".length);
+  const { data: sesion, error: errSesion } = await comoUsuario.auth.getUser(token);
   if (errSesion || !sesion?.user) {
     return json({ error: "Sesión inválida" }, 401);
   }
@@ -120,6 +124,7 @@ Deno.serve(async (req) => {
     role: rol,
     specialty: cuerpo.specialty ?? null,
     title: cuerpo.title ?? null,
+    license_no: cuerpo.licenseNo ?? null,
     avatar_bg: cuerpo.avatarBg ?? null,
     auth_id: creado.user.id,
     activo: true,

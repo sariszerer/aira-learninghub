@@ -21,20 +21,28 @@ function ReportesTab({ child, documents, users, sessions, parentReports, current
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+      {/* Los tres reportes de Formatos_Reportes_AIRA.docx, cada uno tras el
+          permiso que el documento le asigna. El historial es el mas sensible:
+          "Administrador y Direccion Clinica unicamente". */}
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        {can(currentUser, "report:evolution:generate") && (
         <ReportCard
-          icon={FileText} tone="brand" title="Historial completo"
-          description="Documento cronológico con todas las sesiones, objetivos y observaciones registradas."
-          action={onGenerateFull} actionLabel="Generar historial"
-        />
-        <ReportCard
-          icon={TrendingUp} tone="amber" title="Reporte de evolución"
-          description="Avances, dificultades frecuentes y recomendaciones, eligiendo desde qué fecha tomar la información."
+          icon={TrendingUp} tone="brand" title="Reporte de evolución"
+          description="Avance hacia los objetivos del plan con escala GAS, asistencia del período y recomendaciones. Se guarda en el expediente."
           action={onGenerateEvolution} actionLabel="Generar evolución"
         />
+        )}
+        {can(currentUser, "report:history:generate") && (
         <ReportCard
-          icon={Users} tone={readyForParentReport ? "amber" : "brand"} title="Reporte para padres"
-          description="Resumen en lenguaje sencillo basado en los reportes diarios, listo para enviar por correo o WhatsApp."
+          icon={FileText} tone="brand" title="Historial clínico completo"
+          description="Recorrido íntegro del paciente: evaluaciones, planes, especialistas, bitácora y métricas de asistencia. Documento confidencial."
+          action={onGenerateFull} actionLabel="Generar historial"
+        />
+        )}
+        {can(currentUser, "report:parent:generate") && (
+        <ReportCard
+          icon={Users} tone={readyForParentReport ? "amber" : "brand"} title="Reporte para la familia"
+          description="Versión breve y sin lenguaje clínico, con el progreso y recomendaciones para casa. Listo para enviar por correo o WhatsApp."
           action={onGenerateParentReport} actionLabel="Generar reporte"
           badge={
             <span style={{
@@ -46,6 +54,7 @@ function ReportesTab({ child, documents, users, sessions, parentReports, current
             </span>
           }
         />
+        )}
       </div>
 
       {/* Los documentos guardados van en sub-pestañas y no apilados: eran cinco

@@ -29,7 +29,8 @@ export const PERMISSIONS = [
   { key: 'workplan:create',         grupo: 'Clínico',            descripcion: 'Crear plan de trabajo' },
 
   { key: 'report:view',             grupo: 'Reportes',           descripcion: 'Ver reportes' },
-  { key: 'report:generate',         grupo: 'Reportes',           descripcion: 'Generar historial y evolución' },
+  { key: 'report:evolution:generate', grupo: 'Reportes',         descripcion: 'Generar reporte de evolución' },
+  { key: 'report:history:generate', grupo: 'Reportes',           descripcion: 'Generar historial clínico completo' },
   { key: 'report:parent:generate',  grupo: 'Reportes',           descripcion: 'Generar reporte para padres' },
 
   { key: 'meeting:view',            grupo: 'Interdisciplinario', descripcion: 'Ver reuniones' },
@@ -117,7 +118,7 @@ export const ROLES = {
       'objective:create', 'objective:edit:any',
       'document:create', 'document:edit:any',
       'anamnesis:edit', 'workplan:create',
-      'report:generate', 'report:parent:generate',
+      'report:evolution:generate', 'report:history:generate', 'report:parent:generate',
       'meeting:create', 'guidelines:view',
       'gabinete:view', 'gabinete:session:create', 'school:create',
       // sin tutorreport:create — el único punto de creación es TutorAiraHome,
@@ -138,7 +139,7 @@ export const ROLES = {
       'objective:create', 'objective:edit:any',
       'document:create', 'document:edit:any',
       'anamnesis:edit', 'workplan:create',
-      'report:generate', 'report:parent:generate',
+      'report:evolution:generate', 'report:history:generate', 'report:parent:generate',
       'meeting:create', 'guidelines:view',
       'gabinete:view', 'gabinete:session:create', 'school:create',
       // sin tutorreport:create — el único punto de creación es TutorAiraHome,
@@ -156,7 +157,9 @@ export const ROLES = {
       'objective:create', 'objective:edit:own',
       'document:create', 'document:edit:own',
       'anamnesis:edit', 'workplan:create',
-      'report:generate', 'report:parent:generate',
+      // sin report:history:generate — el documento lo restringe a
+      // "Administrador y Direccion Clinica unicamente"
+      'report:evolution:generate', 'report:parent:generate',
       'meeting:create',
     ],
   },
@@ -167,7 +170,7 @@ export const ROLES = {
     // Cambio de comportamiento aprobado: cierra el hueco de shadow, que hoy
     // podría ejercer 8 capacidades de escritura solo por ausencia de check en
     // App.jsx, no por diseño: cerrar procesos (patient:close), renovar
-    // paquetes (patient:renew_package), generar reportes (report:generate,
+    // paquetes (patient:renew_package), generar reportes (report:evolution:generate,
     // report:parent:generate), subir o editar sus documentos (document:create,
     // document:edit:own — DocumentsSection:2661), crear plan de trabajo
     // (workplan:create — bypass del canAdd en PlanTrabajoTab:3763) y registrar

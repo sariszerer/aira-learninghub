@@ -1,6 +1,7 @@
 import React from "react";
 import { Calendar, Clock } from "lucide-react";
 import { T } from "../theme.js";
+import { contar } from "../lib/format.js";
 import { Eyebrow, Avatar, Card } from "../ui/index.js";
 
 function TodaySchedule({ childrenToday, onOpenChild }) {
@@ -18,7 +19,7 @@ function TodaySchedule({ childrenToday, onOpenChild }) {
     <Card style={{ padding: "8px 6px", marginBottom: 28 }}>
       <div style={{ padding: "12px 14px 6px" }}>
         <Eyebrow style={{ marginBottom: 0 }}>
-          Hoy — {childrenToday.length} sesión{childrenToday.length !== 1 ? "es" : ""}
+          Hoy — {contar(childrenToday.length, "sesión", "sesiones")}
         </Eyebrow>
       </div>
       {childrenToday.map((c, i) => (

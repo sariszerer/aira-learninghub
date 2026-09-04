@@ -45,6 +45,7 @@ export function dbUserToApp(u) {
     id: u.id, name: u.name, email: u.email, role: u.role,
     specialty: u.specialty, title: u.title, avatarBg: u.avatar_bg,
     school: u.school, assignedChildId: u.assigned_child_id, authId: u.auth_id,
+    licenseNo: u.license_no,
     activo: u.activo !== false,
   }
 }
@@ -65,20 +66,31 @@ export function dbChildToApp(c) {
     // 44 pacientes como si no tuvieran estado.
     status: c.status,
     nextSession: c.next_session, nextSessionTime: c.next_session_time,
+    recordNo: c.record_no, school: c.school, referralReason: c.referral_reason,
+    dischargeDate: c.discharge_date, dischargeReason: c.discharge_reason,
     parentContact: c.parent_contact || {}, packageStart: c.package_start,
     packageNum: c.package_num || 1,
     age: c.birth_date ? Math.floor((new Date() - new Date(c.birth_date)) / (365.25*86400000)) : null,
   }
 }
+export function dbEvolutionReportToApp(r) {
+  return { id: r.id, childId: r.child_id, specialty: r.specialty,
+    specialistId: r.specialist_id, fromDate: r.from_date, toDate: r.to_date,
+    generatedDate: r.generated_date, generatedBy: r.generated_by,
+    content: r.content || {}, createdAt: r.created_at }
+}
 export function dbObjectiveToApp(o) {
   return { id: o.id, childId: o.child_id, name: o.name, area: o.area,
-    status: o.status, specialistId: o.specialist_id, createdDate: o.created_date }
+    status: o.status, specialistId: o.specialist_id, createdDate: o.created_date,
+    gasBaseline: o.gas_baseline, gasTarget: o.gas_target, gasCurrent: o.gas_current,
+    methodology: o.methodology }
 }
 export function dbSessionToApp(s) {
   return { id: s.id, childId: s.child_id, specialistId: s.specialist_id,
     specialty: s.specialty, date: s.date, duration: s.duration,
     objectivesWorked: s.objectives_worked || [], activities: s.activities || [],
-    observation: s.observation, nextSteps: s.next_steps, createdAt: s.created_at }
+    observation: s.observation, nextSteps: s.next_steps, createdAt: s.created_at,
+    attendance: s.attendance || 'asistio' }
 }
 export function dbDocumentToApp(d) {
   return { id: d.id, childId: d.child_id, type: d.type, title: d.title,
@@ -122,6 +134,7 @@ export const db = {
     if ('school' in updates) m.school = updates.school
     if ('assignedChildId' in updates) m.assigned_child_id = updates.assignedChildId
     if ('activo' in updates) m.activo = updates.activo
+    if ('licenseNo' in updates) m.license_no = updates.licenseNo
     const { error } = await supabase.from('users').update(m).eq('id', id)
     if (error) throw error
   },
@@ -173,6 +186,18 @@ export const db = {
 
   // El alta pasa por una Edge Function porque crear el usuario de auth exige la
   // clave service_role, que no puede estar en el navegador.
+  // El correo es la credencial de acceso y vive tambien en auth.users, que solo
+  // se toca con service_role. Por eso pasa por una funcion edge y no por un
+  // update normal.
+  async cambiarCorreo(id, email) {
+    const { data, error } = await supabase.functions.invoke('cambiar-correo', { body: { id, email } })
+    if (error) {
+      let detalle = null
+      try { detalle = (await error.context?.json())?.error } catch { /* sin cuerpo */ }
+      throw new Error(detalle || error.message)
+    }
+    return data
+  },
   async crearEspecialista(datos) {
     const { data, error } = await supabase.functions.invoke('crear-especialista', { body: datos })
     if (error) {
@@ -202,6 +227,17 @@ export const db = {
     if ('birthDate' in updates) m.birth_date = updates.birthDate
     if ('admissionDate' in updates) m.admission_date = updates.admissionDate
     if ('parentContact' in updates) m.parent_contact = updates.parentContact
+    // status, specialties y assignedSpecialists faltaban en la lista blanca:
+    // la interfaz los podia cambiar y el cambio no llegaba nunca a la base.
+    if ('status' in updates) m.status = updates.status
+    if ('specialties' in updates) m.specialties = updates.specialties
+    if ('assignedSpecialists' in updates) m.assigned_specialists = updates.assignedSpecialists
+    if ('avatarBg' in updates) m.avatar_bg = updates.avatarBg
+    if ('recordNo' in updates) m.record_no = updates.recordNo
+    if ('school' in updates) m.school = updates.school
+    if ('referralReason' in updates) m.referral_reason = updates.referralReason
+    if ('dischargeDate' in updates) m.discharge_date = updates.dischargeDate || null
+    if ('dischargeReason' in updates) m.discharge_reason = updates.dischargeReason
     const { error } = await supabase.from('children').update(m).eq('id', id)
     if (error) throw error
   },
@@ -212,7 +248,32 @@ export const db = {
       assigned_specialists: c.assignedSpecialists, avatar_bg: c.avatarBg,
       next_session: c.nextSession, next_session_time: c.nextSessionTime,
       parent_contact: c.parentContact, package_start: c.packageStart, package_num: c.packageNum || 1,
+      record_no: c.recordNo, school: c.school, referral_reason: c.referralReason,
+      discharge_date: c.dischargeDate || null, discharge_reason: c.dischargeReason,
     })
+    if (error) throw error
+  },
+  // ── Reportes de evolución ────────────────────────────────────────────────
+  // Se guarda el contenido entero y no solo el rango: un reporte es la foto de
+  // un momento, y recalcularlo meses despues con los objetivos ya cambiados
+  // daria un texto distinto al que se firmo.
+  async getEvolutionReports() {
+    const { data, error } = await supabase
+      .from('evolution_reports').select('*').order('generated_date', { ascending: false })
+    if (error) throw error
+    return data.map(dbEvolutionReportToApp)
+  },
+  async insertEvolutionReport(r) {
+    const { error } = await supabase.from('evolution_reports').insert({
+      id: r.id, child_id: r.childId, specialty: r.specialty,
+      specialist_id: r.specialistId, from_date: r.fromDate, to_date: r.toDate,
+      generated_date: r.generatedDate, generated_by: r.generatedBy,
+      content: r.content || {},
+    })
+    if (error) throw error
+  },
+  async deleteEvolutionReport(id) {
+    const { error } = await supabase.from('evolution_reports').delete().eq('id', id)
     if (error) throw error
   },
   async getObjectives() {
@@ -224,6 +285,8 @@ export const db = {
     const { error } = await supabase.from('objectives').upsert({
       id: o.id, child_id: o.childId, name: o.name, area: o.area,
       status: o.status, specialist_id: o.specialistId, created_date: o.createdDate,
+      gas_baseline: o.gasBaseline ?? null, gas_target: o.gasTarget ?? null,
+      gas_current: o.gasCurrent ?? null, methodology: o.methodology ?? null,
     })
     if (error) throw error
   },
@@ -242,6 +305,7 @@ export const db = {
       specialty: s.specialty, date: s.date, duration: s.duration,
       objectives_worked: s.objectivesWorked, activities: s.activities,
       observation: s.observation, next_steps: s.nextSteps,
+      attendance: s.attendance || 'asistio',
     })
     if (error) throw error
   },
@@ -251,6 +315,7 @@ export const db = {
       specialty: s.specialty, date: s.date, duration: s.duration,
       objectives_worked: s.objectivesWorked, activities: s.activities,
       observation: s.observation, next_steps: s.nextSteps,
+      attendance: s.attendance || 'asistio',
     }).eq('id', s.id)
     if (error) throw error
   },

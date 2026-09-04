@@ -7,6 +7,7 @@ import { T, FONTS, MobileStyles } from "./theme.js";
 import { useAuthStore } from "./store/authStore.js";
 import { useDataStore } from "./store/dataStore.js";
 import { useCalendarStore } from "./store/calendarStore.js";
+import { CargandoAira } from "./ui/index.js";
 import Sidebar, { RIEL, PANEL } from "./shell/Sidebar.jsx";
 import { SpecialistHome, ClinicalDirectorHome, TutorAiraHome, AdminDashboard } from "./home/index.js";
 import PatientRoute from "./patient/PatientRoute.jsx";
@@ -100,7 +101,7 @@ export default function App() {
   if (authLoading) {
     return (
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: T.bg }}>
-        <div style={{ fontFamily: T.font, fontSize: 21, fontWeight: 700, color: T.brand, letterSpacing: "-0.02em" }}>AIRA</div>
+        <CargandoAira />
       </div>
     );
   }

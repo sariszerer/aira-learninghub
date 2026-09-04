@@ -6,9 +6,10 @@ import { useDataStore } from "../store/dataStore.js";
 import ChildProfile from "./ChildProfile.jsx";
 import SessionWizard from "./modals/SessionWizard.jsx";
 import { DailyReportModal } from "./modals/DailyReport.jsx";
-import FullHistoryModal from "./modals/FullHistoryModal.jsx";
-import EvolutionReportModal from "./modals/EvolutionReportModal.jsx";
-import ParentReportModal from "./modals/ParentReportModal.jsx";
+import HistorialClinico from "../reports/HistorialClinico.jsx";
+import ReporteEvolucion from "../reports/ReporteEvolucion.jsx";
+import ReporteFamilia from "../reports/ReporteFamilia.jsx";
+import { useAuthStore } from "../store/authStore.js";
 
 // Contenedor de la ruta /paciente/:childId.
 //
@@ -27,6 +28,11 @@ export default function PatientRoute() {
   const addDocument = useDataStore((s) => s.addDocument);
   const addMeeting = useDataStore((s) => s.addMeeting);
   const addParentReport = useDataStore((s) => s.addParentReport);
+  const documents = useDataStore((s) => s.documents);
+  const meetings = useDataStore((s) => s.meetings);
+  const evolutionReports = useDataStore((s) => s.evolutionReports);
+  const guardarReporteEvolucion = useDataStore((s) => s.guardarReporteEvolucion);
+  const currentUser = useAuthStore((s) => s.currentUser);
 
   const [wizardOpen, setWizardOpen] = useState(false);
   const [viewingReport, setViewingReport] = useState(null);
@@ -81,22 +87,27 @@ export default function PatientRoute() {
       )}
 
       {fullHistoryOpen && (
-        <FullHistoryModal
+        <HistorialClinico
           child={child} sessions={sessions} objectives={objectives} users={users}
+          documents={documents} meetings={meetings} parentReports={parentReports}
+          evolutionReports={evolutionReports} currentUser={currentUser}
           onClose={() => setFullHistoryOpen(false)}
         />
       )}
 
       {evolutionOpen && (
-        <EvolutionReportModal
+        <ReporteEvolucion
           child={child} sessions={sessions} objectives={objectives} users={users}
+          currentUser={currentUser}
           onClose={() => setEvolutionOpen(false)}
+          onGuardar={guardarReporteEvolucion}
         />
       )}
 
       {parentReportOpen && (
-        <ParentReportModal
-          child={child} sessions={sessions} objectives={objectives} parentReports={parentReports}
+        <ReporteFamilia
+          child={child} sessions={sessions} objectives={objectives} users={users}
+          parentReports={parentReports} currentUser={currentUser}
           onClose={() => setParentReportOpen(false)}
           onGenerated={addParentReport}
         />

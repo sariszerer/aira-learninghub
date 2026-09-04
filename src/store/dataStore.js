@@ -24,6 +24,9 @@ export const useDataStore = create((set, get) => ({
   documents: seedDocuments,
   meetings: seedMeetings,
   parentReports: seedParentReports,
+  // Sin semilla: los reportes de evolucion guardados son historia real del
+  // expediente y no hay version de demostracion que tenga sentido inventar.
+  evolutionReports: [],
   tutors: seedTutors,
   schools: seedSchools,
   gabineteSessions: seedGabineteSessions,
@@ -43,9 +46,11 @@ export const useDataStore = create((set, get) => ({
       const [
         dbChildren, dbObjectives, dbSessions, dbDocuments,
         dbMeetings, dbSchools, dbGabineteSessions, dbTutorReports,
+        dbEvolutionReports,
       ] = await Promise.all([
         db.getChildren(), db.getObjectives(), db.getSessions(), db.getDocuments(),
         db.getMeetings(), db.getSchools(), db.getGabineteSessions(), db.getTutorReports(),
+        db.getEvolutionReports(),
       ])
       // Incondicional, a diferencia de las demas: ahora que RLS aplica el
       // alcance del rol, un resultado vacio es una respuesta real ("este
@@ -59,6 +64,8 @@ export const useDataStore = create((set, get) => ({
       if (dbSchools.length > 0) set({ schools: dbSchools })
       if (dbGabineteSessions.length > 0) set({ gabineteSessions: dbGabineteSessions })
       if (dbTutorReports.length > 0) set({ tutorReports: dbTutorReports })
+      // Incondicional: sin semilla, un resultado vacio es la verdad.
+      set({ evolutionReports: dbEvolutionReports })
     } catch (e) {
       console.error('Supabase load error:', e)
     } finally {
@@ -113,6 +120,7 @@ export const useDataStore = create((set, get) => ({
       activities: payload.activities,
       observation: payload.observation,
       nextSteps: payload.nextSteps,
+      attendance: payload.attendance || 'asistio',
       createdAt: new Date().toISOString(),
     }
     set((s) => ({ sessions: [...s.sessions, newSession] }))
@@ -231,6 +239,17 @@ export const useDataStore = create((set, get) => ({
 
   // La tabla parent_reports no la consume supabase.js todavia: el reporte se
   // genera y se guarda solo en memoria, igual que antes del refactor.
+  // Guarda el reporte de evolucion en el expediente. El Historial Clinico pide
+  // el listado de los generados, asi que si no se persiste esa seccion nunca
+  // tendria contenido.
+  guardarReporteEvolucion: async (reporte) => {
+    const fila = { id: `er-${Date.now()}`, ...reporte }
+    set((s) => ({ evolutionReports: [fila, ...s.evolutionReports] }))
+    try { await db.insertEvolutionReport(fila) }
+    catch (e) { console.error('Guardar reporte de evolucion:', e) }
+    return fila
+  },
+
   addParentReport: (report) => {
     set((s) => ({ parentReports: [...s.parentReports, { id: `pr-${Date.now()}`, ...report }] }))
   },
@@ -250,6 +269,12 @@ export const useDataStore = create((set, get) => ({
       await get().recargarUsuarios()
       throw e
     }
+  },
+
+  cambiarCorreo: async (id, email) => {
+    const res = await db.cambiarCorreo(id, email)
+    await get().recargarUsuarios()
+    return res
   },
 
   crearEspecialista: async (datos) => {

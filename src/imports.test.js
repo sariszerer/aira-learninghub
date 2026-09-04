@@ -18,7 +18,7 @@ const CONOCIDOS = [
   'AIRA_MARK_URI', 'AIRA_LOGO_FULL_URI',
   'ACTIVITY_CATALOG', 'DOC_TYPES', 'MEETING_TYPES',
   'fmtDate', 'fmtDateShort', 'readableTextOn', 'slugifyName', 'daysAgoISO',
-  'sessionsSinceLastParentReport', 'buildParentReportText',
+  'sessionsSinceLastParentReport',
   'seedUsers', 'seedChildren', 'seedObjectives', 'seedSessions', 'seedDocuments',
   'seedMeetings', 'seedParentReports', 'seedTutors', 'seedSchools',
   'seedGabineteSessions', 'seedTutorReports',
@@ -52,13 +52,51 @@ function archivosFuente(dir, acc = []) {
 }
 
 // Quita comentarios y cadenas: una mencion en prosa no es un uso.
+//
+// Las plantillas se tratan aparte. Borrarlas enteras dejaba ciego al guardia
+// justo donde mas codigo hay en este repositorio: lo de dentro de ${...} es
+// codigo, no texto. Asi paso inadvertido que lib/reports.js usaba TODAY sin
+// importarlo dentro de una interpolacion — un ReferenceError en cuanto el rango
+// de fechas venia vacio.
 function soloCodigo(src) {
-  return src
+  return sinTextoDePlantillas(src)
     .replace(/\/\*[\s\S]*?\*\//g, '')
     .replace(/\/\/[^\n]*/g, '')
     .replace(/"(?:[^"\\]|\\.)*"/g, '""')
     .replace(/'(?:[^'\\]|\\.)*'/g, "''")
-    .replace(/`(?:[^`\\]|\\.)*`/g, '``')
+}
+
+// Vacia el texto literal de cada plantilla y conserva el contenido de cada
+// ${...}, contando llaves para soportar anidamiento.
+function sinTextoDePlantillas(src) {
+  let salida = ''
+  let i = 0
+  while (i < src.length) {
+    if (src[i] === '\\') { salida += src.slice(i, i + 2); i += 2; continue }
+    if (src[i] !== '`') { salida += src[i]; i++; continue }
+    i++
+    salida += '`'
+    while (i < src.length && src[i] !== '`') {
+      if (src[i] === '\\') { i += 2; continue }
+      if (src[i] === '$' && src[i + 1] === '{') {
+        i += 2
+        const desde = i
+        let prof = 1
+        while (i < src.length && prof > 0) {
+          if (src[i] === '{') prof++
+          else if (src[i] === '}') prof--
+          if (prof > 0) i++
+        }
+        salida += ' ' + sinTextoDePlantillas(src.slice(desde, i)) + ' '
+        i++
+        continue
+      }
+      i++
+    }
+    salida += '`'
+    i++
+  }
+  return salida
 }
 
 function importadoODefinido(src, nombre) {

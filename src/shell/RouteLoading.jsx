@@ -1,13 +1,11 @@
 import React from "react";
-import { T } from "../theme.js";
+import { CargandoAira } from "../ui/index.js";
 
-// Shown while a cold deep link to /paciente/:id waits for the first Supabase load.
+// Se muestra mientras un enlace directo a /paciente/:id espera la primera carga
+// de Supabase. Comparte pantalla con el arranque de la aplicacion: dos
+// esperas distintas con dos aspectos distintos se leen como dos fallos.
 function RouteLoading() {
-  return (
-    <div style={{ padding: "80px 20px", textAlign: "center", fontSize: 14, color: T.inkFaint }}>
-      Cargando…
-    </div>
-  );
+  return <CargandoAira />;
 }
 
 export default RouteLoading;

@@ -25,6 +25,7 @@ const ROLES_ASIGNABLES = ["specialist", "clinical_director", "admin"];
 export default function SpecialistModal({ usuario, onClose }) {
   const crearEspecialista = useDataStore((s) => s.crearEspecialista);
   const updateUser = useDataStore((s) => s.updateUser);
+  const cambiarCorreo = useDataStore((s) => s.cambiarCorreo);
   const currentUser = useAuthStore((s) => s.currentUser);
 
   const esNuevo = !usuario;
@@ -36,6 +37,7 @@ export default function SpecialistModal({ usuario, onClose }) {
     role: usuario?.role || "specialist",
     specialty: usuario?.specialty || "",
     title: usuario?.title || "",
+    licenseNo: usuario?.licenseNo || "",
     avatarBg: usuario?.avatarBg || PALETA[0],
   });
   const [guardando, setGuardando] = useState(false);
@@ -44,7 +46,11 @@ export default function SpecialistModal({ usuario, onClose }) {
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
-  const valido = form.name.trim() && (!esNuevo || /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email.trim()));
+  const CORREO = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+  const correoCambia = !esNuevo && form.email.trim().toLowerCase() !== (usuario?.email || "").toLowerCase();
+  const valido = form.name.trim()
+    && (!esNuevo || CORREO.test(form.email.trim()))
+    && (!correoCambia || CORREO.test(form.email.trim()));
 
   const guardar = async () => {
     setError(null); setAviso(null); setGuardando(true);
@@ -56,6 +62,7 @@ export default function SpecialistModal({ usuario, onClose }) {
           role: form.role,
           specialty: form.specialty.trim() || null,
           title: form.title.trim() || null,
+          licenseNo: form.licenseNo.trim() || null,
           avatarBg: form.avatarBg,
         });
         if (res?.aviso) { setAviso(res.aviso); setGuardando(false); return; }
@@ -64,12 +71,20 @@ export default function SpecialistModal({ usuario, onClose }) {
           name: form.name.trim(),
           specialty: form.specialty.trim() || null,
           title: form.title.trim() || null,
+          licenseNo: form.licenseNo.trim() || null,
           avatarBg: form.avatarBg,
         };
         // El rol solo viaja si de verdad cambio, y nunca el propio: la base lo
         // rechaza con un trigger y es mejor no ofrecerlo que fallar despues.
         if (!esUnoMismo && form.role !== usuario.role) cambios.role = form.role;
         await updateUser(usuario.id, cambios);
+        // Va aparte y despues: pasa por una funcion edge porque toca auth.users.
+        // Si fallara, el resto del perfil ya quedo guardado y el correo sigue
+        // siendo el de antes — que es el estado seguro, nadie pierde el acceso.
+        if (correoCambia) {
+          const res = await cambiarCorreo(usuario.id, form.email.trim());
+          if (res?.aviso) { setAviso(res.aviso); setGuardando(false); return; }
+        }
       }
       onClose();
     } catch (e) {
@@ -133,12 +148,20 @@ export default function SpecialistModal({ usuario, onClose }) {
               nota: "Recibirá una invitación para fijar su contraseña.",
             })
           : campo("Correo", "email", {
-              disabled: true,
-              nota: "Cambiar el correo exige mover también su cuenta de acceso.",
+              // Ya es editable: una funcion edge mueve a la vez public.users y
+              // auth.users. Antes estaba bloqueado porque cambiar solo el
+              // primero dejaba la pantalla diciendo una cosa y el acceso
+              // funcionando con otra.
+              nota: correoCambia
+                ? `Es su usuario de acceso: a partir de guardar entrará con ${form.email.trim()}. La contraseña no cambia.`
+                : "Es también su usuario de acceso.",
             })}
 
         {campo("Especialidad", "specialty", { placeholder: "Fonoaudiología" })}
         {campo("Título", "title", { placeholder: "Terapeuta ocupacional" })}
+        {/* Firma del Reporte de Evolución: el documento pide "N° de
+            licencia/idoneidad" junto al nombre y la especialidad. */}
+        {campo("N° de idoneidad", "licenseNo", { placeholder: "Aparece en la firma de los reportes" })}
 
         <div style={{ marginBottom: 14 }}>
           <div style={{

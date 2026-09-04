@@ -12,6 +12,8 @@ vi.mock('../supabase.js', () => ({
     getSchools: vi.fn(async () => []),
     getGabineteSessions: vi.fn(async () => []),
     getTutorReports: vi.fn(async () => []),
+    getEvolutionReports: vi.fn(async () => []),
+    insertEvolutionReport: vi.fn(async () => {}),
     insertChild: vi.fn(async () => {}),
     updateChild: vi.fn(async () => {}),
     insertSession: vi.fn(async () => {}),
@@ -136,5 +138,26 @@ describe('markActivitySeen', () => {
     useDataStore.setState({ activityLog: [{ id: 'a', seen: false }, { id: 'b', seen: false }] })
     useDataStore.getState().markActivitySeen()
     expect(useDataStore.getState().activityLog.every((a) => a.seen)).toBe(true)
+  })
+})
+
+describe('asistencia', () => {
+  it('saveSession guarda la asistencia que llega en el payload', () => {
+    useDataStore.getState().saveSession({
+      childId: 'c-noha', specialistId: 'u-1', specialty: 'X', date: '2026-09-03',
+      duration: 45, objectivesWorked: [], activities: [], observation: '', nextSteps: '',
+      attendance: 'no_show',
+    })
+    expect(useDataStore.getState().sessions.slice(-1)[0].attendance).toBe('no_show')
+  })
+
+  it('sin asistencia en el payload asume asistio', () => {
+    // Las 438 sesiones importadas del calendario no traen el campo, y un valor
+    // nulo violaria el check de la columna.
+    useDataStore.getState().saveSession({
+      childId: 'c-noha', specialistId: 'u-1', specialty: 'X', date: '2026-09-03',
+      duration: 45, objectivesWorked: [], activities: [], observation: '', nextSteps: '',
+    })
+    expect(useDataStore.getState().sessions.slice(-1)[0].attendance).toBe('asistio')
   })
 })
