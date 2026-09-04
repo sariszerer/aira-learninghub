@@ -23,4 +23,5 @@ export { default as EmptyNote } from "./EmptyNote.jsx";
 export { default as SavedToast } from "./SavedToast.jsx";
 export { default as StatStrip } from "./StatStrip.jsx";
 export { default as DateRangeBar } from "./DateRangeBar.jsx";
+export { default as SelectorAsistencia } from "./SelectorAsistencia.jsx";
 export { default as ReportCard } from "./ReportCard.jsx";

@@ -120,6 +120,7 @@ Deno.serve(async (req) => {
     role: rol,
     specialty: cuerpo.specialty ?? null,
     title: cuerpo.title ?? null,
+    license_no: cuerpo.licenseNo ?? null,
     avatar_bg: cuerpo.avatarBg ?? null,
     auth_id: creado.user.id,
     activo: true,

@@ -5,14 +5,15 @@ import { useDataStore } from "../../store/dataStore.js";
 import { useAuthStore } from "../../store/authStore.js";
 import { can } from "../../permissions.js";
 import { Btn } from "../../ui/index.js";
-import { Check, Pencil, Plus, Trash2, X } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
+import ObjetivoModal from "../modals/ObjetivoModal.jsx";
+import { EscalaGas } from "../../reports/piezas.jsx";
 
 function ObjectivesList({ objectives, compact, onUpdate, onAdd, onDelete, defaultArea }) {
-  const [editing, setEditing] = useState(null); // obj id being edited
-  const [editName, setEditName] = useState("");
-  const [adding, setAdding] = useState(false);
-  const [newName, setNewName] = useState("");
-  const [newArea, setNewArea] = useState(defaultArea || "");
+  // La edicion en linea solo alcanzaba para el nombre. Desde que el objetivo
+  // lleva escala GAS y metodologia — que la especificacion de reportes pide en
+  // tres secciones — no cabe en una fila, y se edita en un modal.
+  const [editando, setEditando] = useState(null);
 
   const STATUS_OPTS = [
     { val: "logrado", label: "Logrado" },
@@ -20,15 +21,8 @@ function ObjectivesList({ objectives, compact, onUpdate, onAdd, onDelete, defaul
     { val: "apoyo", label: "Necesita apoyo" },
   ];
 
-  const startEdit = (o) => { setEditing(o.id); setEditName(o.name); };
-  const saveEdit = (o) => { if (onUpdate && editName.trim()) onUpdate({ ...o, name: editName.trim() }); setEditing(null); };
-
-  const handleAdd = () => {
-    if (onAdd && newName.trim()) {
-      onAdd({ name: newName.trim(), area: newArea.trim() || "General" });
-      setNewName(""); setNewArea(""); setAdding(false);
-    }
-  };
+  const areasSugeridas = [...new Set(objectives.map((o) => o.area).filter(Boolean))];
+  if (defaultArea && !areasSugeridas.includes(defaultArea)) areasSugeridas.unshift(defaultArea);
 
   return (
     <div>
@@ -40,18 +34,15 @@ function ObjectivesList({ objectives, compact, onUpdate, onAdd, onDelete, defaul
           }}>
             <StatusRing status={o.status} size={30} />
             <div style={{ flex: 1, minWidth: 0 }}>
-              {editing === o.id ? (
-                <input autoFocus value={editName} onChange={(e) => setEditName(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") saveEdit(o); if (e.key === "Escape") setEditing(null); }}
-                  style={{ width: "100%", padding: "4px 8px", borderRadius: 7, border: `1.5px solid ${T.brand}`, fontSize: 14, fontFamily: T.font, outline: "none", boxSizing: "border-box" }}
-                />
-              ) : (
-                <>
-                  <div style={{ fontWeight: 700, fontSize: 14.5, color: T.ink }}>{o.name}</div>
-                  <div style={{ fontSize: 12, color: T.inkSoft }}>{o.area}</div>
-                </>
-              )}
+              <div style={{ fontWeight: 700, fontSize: 14.5, color: T.ink }}>{o.name}</div>
+              <div style={{ fontSize: 12, color: T.inkSoft }}>{o.area}</div>
             </div>
+
+            {/* La escala solo aparece si esta puesta: un hueco vacio en cada
+                fila sugeriria que falta rellenar algo obligatorio, y no lo es. */}
+            {!compact && (o.gasCurrent != null || o.gasTarget != null || o.gasBaseline != null) && (
+              <EscalaGas base={o.gasBaseline} meta={o.gasTarget} actual={o.gasCurrent} ancho={120} />
+            )}
 
             {/* Status selector */}
             {onUpdate && !compact && (
@@ -73,17 +64,8 @@ function ObjectivesList({ objectives, compact, onUpdate, onAdd, onDelete, defaul
 
             {!compact && onUpdate && (
               <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
-                {editing === o.id ? (
-                  <>
-                    <button onClick={() => saveEdit(o)} style={{ background: T.brand, color: "#fff", border: "none", borderRadius: 7, padding: "3px 8px", fontSize: 11.5, cursor: "pointer", fontFamily: T.font }}><Check size={13} /></button>
-                    <button onClick={() => setEditing(null)} style={{ background: T.bg, color: T.inkSoft, border: `1px solid ${T.border}`, borderRadius: 7, padding: "3px 8px", fontSize: 11.5, cursor: "pointer", fontFamily: T.font }}><X size={13} /></button>
-                  </>
-                ) : (
-                  <>
-                    <button onClick={() => startEdit(o)} style={{ background: "none", border: "none", color: T.inkFaint, cursor: "pointer", fontSize: 13, padding: "2px 4px" }} title="Editar nombre"><Pencil size={13} /></button>
-                    {onDelete && <button onClick={() => onDelete(o.id)} style={{ background: "none", border: "none", color: T.inkFaint, cursor: "pointer", fontSize: 13, padding: "2px 4px" }} title="Eliminar"><Trash2 size={13} /></button>}
-                  </>
-                )}
+                <button onClick={() => setEditando(o)} style={{ background: "none", border: "none", color: T.inkFaint, cursor: "pointer", fontSize: 13, padding: "2px 4px" }} title="Editar objetivo"><Pencil size={13} /></button>
+                {onDelete && <button onClick={() => onDelete(o.id)} style={{ background: "none", border: "none", color: T.inkFaint, cursor: "pointer", fontSize: 13, padding: "2px 4px" }} title="Eliminar"><Trash2 size={13} /></button>}
               </div>
             )}
 
@@ -92,34 +74,18 @@ function ObjectivesList({ objectives, compact, onUpdate, onAdd, onDelete, defaul
         ))}
       </div>
 
-      {/* Add objective */}
+      {editando && (
+        <ObjetivoModal
+          objetivo={editando.id ? editando : null}
+          areasSugeridas={areasSugeridas}
+          onClose={() => setEditando(null)}
+          onGuardar={(o) => (o.id ? onUpdate(o) : onAdd(o))}
+        />
+      )}
+
       {onAdd && !compact && (
         <div style={{ marginTop: 14 }}>
-          {adding ? (
-            <div style={{ display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
-              <div style={{ flex: 2, minWidth: 180 }}>
-                <div style={{ fontSize: 11, color: T.inkSoft, marginBottom: 3 }}>Nombre del objetivo</div>
-                <input autoFocus value={newName} onChange={(e) => setNewName(e.target.value)}
-                  placeholder="Ej: Regulación emocional"
-                  onKeyDown={(e) => { if (e.key === "Enter") handleAdd(); if (e.key === "Escape") setAdding(false); }}
-                  style={{ width: "100%", padding: "7px 10px", borderRadius: 8, border: `1.5px solid ${T.brand}`, fontSize: 13.5, fontFamily: T.font, outline: "none", boxSizing: "border-box" }}
-                />
-              </div>
-              <div style={{ flex: 1, minWidth: 120 }}>
-                <div style={{ fontSize: 11, color: T.inkSoft, marginBottom: 3 }}>Área</div>
-                <input value={newArea} onChange={(e) => setNewArea(e.target.value)}
-                  placeholder="Ej: Psicología"
-                  style={{ width: "100%", padding: "7px 10px", borderRadius: 8, border: `1px solid ${T.border}`, fontSize: 13.5, fontFamily: T.font, outline: "none", boxSizing: "border-box" }}
-                />
-              </div>
-              <div style={{ display: "flex", gap: 6 }}>
-                <Btn size="sm" onClick={handleAdd} disabled={!newName.trim()}>Agregar</Btn>
-                <Btn size="sm" variant="secondary" onClick={() => { setAdding(false); setNewName(""); setNewArea(""); }}>Cancelar</Btn>
-              </div>
-            </div>
-          ) : (
-            <Btn icon={Plus} onClick={() => setAdding(true)}>Agregar objetivo</Btn>
-          )}
+          <Btn icon={Plus} onClick={() => setEditando({ area: defaultArea || "" })}>Agregar objetivo</Btn>
         </div>
       )}
     </div>

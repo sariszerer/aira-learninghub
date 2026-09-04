@@ -36,6 +36,7 @@ export default function SpecialistModal({ usuario, onClose }) {
     role: usuario?.role || "specialist",
     specialty: usuario?.specialty || "",
     title: usuario?.title || "",
+    licenseNo: usuario?.licenseNo || "",
     avatarBg: usuario?.avatarBg || PALETA[0],
   });
   const [guardando, setGuardando] = useState(false);
@@ -56,6 +57,7 @@ export default function SpecialistModal({ usuario, onClose }) {
           role: form.role,
           specialty: form.specialty.trim() || null,
           title: form.title.trim() || null,
+          licenseNo: form.licenseNo.trim() || null,
           avatarBg: form.avatarBg,
         });
         if (res?.aviso) { setAviso(res.aviso); setGuardando(false); return; }
@@ -64,6 +66,7 @@ export default function SpecialistModal({ usuario, onClose }) {
           name: form.name.trim(),
           specialty: form.specialty.trim() || null,
           title: form.title.trim() || null,
+          licenseNo: form.licenseNo.trim() || null,
           avatarBg: form.avatarBg,
         };
         // El rol solo viaja si de verdad cambio, y nunca el propio: la base lo
@@ -139,6 +142,9 @@ export default function SpecialistModal({ usuario, onClose }) {
 
         {campo("Especialidad", "specialty", { placeholder: "Fonoaudiología" })}
         {campo("Título", "title", { placeholder: "Terapeuta ocupacional" })}
+        {/* Firma del Reporte de Evolución: el documento pide "N° de
+            licencia/idoneidad" junto al nombre y la especialidad. */}
+        {campo("N° de idoneidad", "licenseNo", { placeholder: "Aparece en la firma de los reportes" })}
 
         <div style={{ marginBottom: 14 }}>
           <div style={{

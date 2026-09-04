@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { inputStyle, TODAY } from "../../theme.js";
 import { can } from "../../permissions.js";
-import { Btn, EmptyNote, Modal, ModalHeader } from "../../ui/index.js";
+import { Btn, EmptyNote, Modal, ModalHeader, SelectorAsistencia } from "../../ui/index.js";
 import { useAuthStore } from "../../store/authStore.js";
 import { T } from "../../theme.js";
 import { Check } from "lucide-react";
@@ -10,6 +10,7 @@ function SessionWizard({ child, objectives, onClose, onSave }) {
   const currentUser = useAuthStore((s) => s.currentUser);
   const [date, setDate] = useState(TODAY);
   const [duration, setDuration] = useState(45);
+  const [attendance, setAttendance] = useState("asistio");
   const [selectedObjIds, setSelectedObjIds] = useState([]);
   const [customObjText, setCustomObjText] = useState("");
   const [activities, setActivities] = useState("");
@@ -38,6 +39,7 @@ function SessionWizard({ child, objectives, onClose, onSave }) {
       specialty: currentUser.specialty,
       date,
       duration,
+      attendance,
       _newObjectiveNames: objetivoPuntual ? [objetivoPuntual] : [],
       objectivesWorked: [
         ...selectedObjIds.map(id => ({ objectiveId: id, status: "proceso" })),
@@ -76,6 +78,13 @@ function SessionWizard({ child, objectives, onClose, onSave }) {
               ))}
             </div>
           </div>
+        </div>
+
+        {/* Asistencia. Va antes que los objetivos porque si no asistio, lo de
+            abajo no aplica. */}
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>Asistencia</div>
+          <SelectorAsistencia valor={attendance} onChange={setAttendance} />
         </div>
 
         {/* Objetivos trabajados */}

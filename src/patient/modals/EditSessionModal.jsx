@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import { Check } from "lucide-react";
 import { T, STATUS, inputStyle } from "../../theme.js";
 import { fmtDate } from "../../lib/format.js";
-import { Btn, EmptyNote, Field, Modal, ModalHeader, StatusIcon } from "../../ui/index.js";
+import { Btn, EmptyNote, Field, Modal, ModalHeader, SelectorAsistencia, StatusIcon } from "../../ui/index.js";
 
 const ESTADOS = ["logrado", "proceso", "apoyo"];
 
@@ -31,6 +31,7 @@ function EditSessionModal({ session, objectives, users, onClose, onSave }) {
 
   const [trabajados, setTrabajados] = useState(reparto.editables);
   const [actividades, setActividades] = useState(() => (session.activities || []).join("\n"));
+  const [attendance, setAttendance] = useState(session.attendance || "asistio");
   const [observation, setObservation] = useState(session.observation || "");
   const [nextSteps, setNextSteps] = useState(session.nextSteps || "");
 
@@ -56,7 +57,7 @@ function EditSessionModal({ session, objectives, users, onClose, onSave }) {
   }, [delNino]);
 
   const guardar = () => {
-    onSave(componerSesion(session, { trabajados, huerfanas, actividades, observation, nextSteps }));
+    onSave(componerSesion(session, { trabajados, huerfanas, actividades, observation, nextSteps, attendance }));
     onClose();
   };
 
@@ -74,6 +75,10 @@ function EditSessionModal({ session, objectives, users, onClose, onSave }) {
           <Field label="Especialidad" value={session.specialty || "—"} />
           <Field label="Duración" value={session.duration ? `${session.duration} min` : "—"} />
         </div>
+
+        <Seccion titulo="Asistencia">
+          <SelectorAsistencia valor={attendance} onChange={setAttendance} />
+        </Seccion>
 
         <Seccion titulo="Objetivos de la sesión">
           {porArea.length > 0 ? (
@@ -243,9 +248,10 @@ export function repartirObjetivos(objectivesWorked, idsExistentes) {
   return { editables, huerfanas };
 }
 
-export function componerSesion(session, { trabajados, huerfanas, actividades, observation, nextSteps }) {
+export function componerSesion(session, { trabajados, huerfanas, actividades, observation, nextSteps, attendance }) {
   return {
     ...session,
+    attendance: attendance || session.attendance || "asistio",
     objectivesWorked: [
       ...Object.entries(trabajados).map(([objectiveId, status]) => ({ objectiveId, status })),
       ...huerfanas,

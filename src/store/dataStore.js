@@ -120,6 +120,7 @@ export const useDataStore = create((set, get) => ({
       activities: payload.activities,
       observation: payload.observation,
       nextSteps: payload.nextSteps,
+      attendance: payload.attendance || 'asistio',
       createdAt: new Date().toISOString(),
     }
     set((s) => ({ sessions: [...s.sessions, newSession] }))
