@@ -5,13 +5,24 @@ import { ROLES } from "../permissions.js";
 import { Eyebrow, Card, Chip } from "../ui/index.js";
 import { useDataStore } from "../store/dataStore.js";
 import { Btn } from "../ui/index.js";
-import { Plus, School } from "lucide-react";
+import { FileText, Plus, School, Trash2 } from "lucide-react";
+import { DOC_TYPES_GABINETE } from "../constants.js";
+import { can } from "../permissions.js";
+import { useAuthStore } from "../store/authStore.js";
+import { IconBtn } from "../ui/index.js";
+import AddDocumentModal from "../patient/modals/AddDocumentModal.jsx";
 
 function GabinetePanel({ onAddSession }) {
   const schools = useDataStore((s) => s.schools);
   const users = useDataStore((s) => s.users);
   const gabineteSessions = useDataStore((s) => s.gabineteSessions);
   const onAddSchool = useDataStore((s) => s.addSchool);
+  const documents = useDataStore((s) => s.documents);
+  const borrarColegio = useDataStore((s) => s.borrarColegio);
+  const agregarDocumentoDeColegio = useDataStore((s) => s.agregarDocumentoDeColegio);
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const [subiendo, setSubiendo] = useState(null);
+  const [errorColegio, setErrorColegio] = useState(null);
   const [selectedSchool, setSelectedSchool] = useState(null);
   const [addingSchool, setAddingSchool] = useState(false);
   const [sessionForm, setSessionForm] = useState(null);
@@ -25,7 +36,10 @@ function GabinetePanel({ onAddSession }) {
   const emptySession = () => ({ specialistId: "", specialty: "", date: TODAY, participants: "", duration: 60, area: "", notes: "" });
 
   const handleSaveSession = () => {
-    onAddSession({ id: `gs-${Date.now()}`, schoolId: school.id, ...sessionForm });
+    // La especialidad no se pide en el formulario y se guardaba vacia: sale de
+    // quien imparte, que si se elige.
+    const especialidad = allSpecialists.find((u) => u.id === sessionForm.specialistId)?.specialty || "";
+    onAddSession({ id: `gs-${Date.now()}`, schoolId: school.id, ...sessionForm, specialty: especialidad });
     setSessionForm(null);
   };
 
@@ -134,6 +148,31 @@ function GabinetePanel({ onAddSession }) {
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                     {school.phone && <a href={`tel:${school.phone}`} style={{ fontSize: 12.5, color: T.brand, textDecoration: "none", fontWeight: 600 }}>{school.phone}</a>}
                     {school.email && <a href={`mailto:${school.email}`} style={{ fontSize: 12.5, color: T.brand, textDecoration: "none", fontWeight: 600 }}>{school.email}</a>}
+                    {can(currentUser, "school:create") && (
+                      <IconBtn
+                        icon={Trash2} tone="peligro" size="sm"
+                        title="Eliminar colegio"
+                        onClick={async () => {
+                          const n = gabineteSessions.filter((x) => x.schoolId === school.id).length;
+                          const d = documents.filter((x) => x.schoolId === school.id).length;
+                          const detalle = [n && `${n} sesión${n === 1 ? "" : "es"}`, d && `${d} documento${d === 1 ? "" : "s"}`]
+                            .filter(Boolean).join(" y ");
+                          // Se dice QUE se lleva por delante antes de preguntar:
+                          // "¿seguro?" a secas no da con que decidir.
+                          const aviso = detalle
+                            ? `Se eliminará ${school.name} junto con ${detalle}. No se puede deshacer.`
+                            : `Se eliminará ${school.name}. No se puede deshacer.`;
+                          if (!window.confirm(aviso)) return;
+                          setErrorColegio(null);
+                          try {
+                            await borrarColegio(school.id);
+                            setSelectedSchool(null);
+                          } catch (e) {
+                            setErrorColegio(e.message || "No se pudo eliminar el colegio.");
+                          }
+                        }}
+                      />
+                    )}
                   </div>
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 14 }}>
@@ -164,12 +203,76 @@ function GabinetePanel({ onAddSession }) {
                   </div>
                 </div>
                 {school.notes && <div style={{ fontSize: 13.5, color: T.inkSoft, marginTop: 10, }}>{school.notes}</div>}
+                {errorColegio && (
+                  <div style={{
+                    marginTop: 12, background: T.apoyoTint, color: T.apoyo,
+                    borderRadius: T.radiusSm, padding: "9px 12px", fontSize: 13,
+                  }}>
+                    {errorColegio}
+                  </div>
+                )}
               </Card>
+
+              {/* Documentos del colegio. Cuelgan del contrato, no de un
+                  paciente: son el expediente del gabinete con esa escuela. */}
+              <div style={{ marginBottom: 22 }}>
+                <Eyebrow style={{ marginBottom: 12 }}>Documentos del colegio</Eyebrow>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {Object.entries(DOC_TYPES_GABINETE).map(([tipo, meta]) => {
+                    const suyos = documents
+                      .filter((d) => d.schoolId === school.id && d.type === tipo)
+                      .sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+                    return (
+                      <Card key={tipo} style={{ padding: "14px 16px" }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                            <FileText size={16} color={T.brand} />
+                            <div style={{ fontSize: 13.5, fontWeight: 600, color: T.ink }}>{meta.label}</div>
+                            <span style={{ fontSize: 11.5, color: T.inkFaint }}>
+                              {suyos.length ? `${suyos.length} guardado${suyos.length === 1 ? "" : "s"}` : "Ninguno todavía"}
+                            </span>
+                          </div>
+                          {can(currentUser, "gabinete:session:create") && (
+                            <Btn size="sm" variant="secondary" icon={Plus} onClick={() => setSubiendo(tipo)}>Subir</Btn>
+                          )}
+                        </div>
+                        {suyos.length > 0 && (
+                          <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 5 }}>
+                            {suyos.map((d) => (
+                              <div key={d.id} style={{ display: "flex", justifyContent: "space-between", gap: 12, fontSize: 12.5 }}>
+                                <span style={{ color: T.ink, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                  {d.title}
+                                </span>
+                                <span style={{ color: T.inkFaint, whiteSpace: "nowrap" }}>
+                                  {d.date ? fmtDate(d.date) : "sin fecha"}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </Card>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {subiendo && (
+                <AddDocumentModal
+                  type={subiendo}
+                  meta={DOC_TYPES_GABINETE[subiendo]}
+                  onClose={() => setSubiendo(null)}
+                  onSave={(doc) => { agregarDocumentoDeColegio(school.id, doc); setSubiendo(null); }}
+                />
+              )}
 
               {/* Sessions */}
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
                 <Eyebrow>Sesiones de gabinete</Eyebrow>
-                <Btn icon={Plus} onClick={() => setAddingSession(true)}>Registrar sesión</Btn>
+                {/* Llamaba a setAddingSession, un setter que no existe en
+                    este componente: pulsarlo lanzaba un ReferenceError en vez
+                    de abrir el formulario. emptySession ya estaba escrito y
+                    sin usar. */}
+                <Btn icon={Plus} onClick={() => setSessionForm(emptySession())}>Registrar sesión</Btn>
               </div>
 
               {sessionForm && (

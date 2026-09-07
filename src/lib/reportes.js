@@ -238,6 +238,28 @@ export function especialidadPrincipal(child, sesiones = [], objetivos = []) {
     .sort((a, b) => b.sesiones - a.sesiones || b.objetivos - a.objetivos || a.esp.localeCompare(b.esp, "es"))[0].esp;
 }
 
+// Quien ATIENDE el caso en el periodo, ordenados por numero de sesiones.
+//
+// No es lo mismo que quien genera el reporte. El Reporte para la Familia ponia
+// en la cabecera al usuario de la sesion, asi que un reporte de una paciente de
+// Neyma generado por la direccion salia firmado por la direccion. A la familia
+// hay que decirle quien ve a su hijo.
+//
+// Devuelve varios porque un paciente puede tener mas de una disciplina y este
+// reporte no se filtra por especialidad: nombrar solo a uno esconderia al resto
+// del equipo.
+export function especialistasQueAtendieron(sesiones = [], usuarios = []) {
+  const conteo = new Map();
+  for (const s of sesiones) {
+    if (!s.specialistId) continue;
+    conteo.set(s.specialistId, (conteo.get(s.specialistId) || 0) + 1);
+  }
+  return [...conteo.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([id]) => usuarios.find((u) => u.id === id))
+    .filter(Boolean);
+}
+
 // ── Utilidades de rango ──────────────────────────────────────────────────────
 
 export function textoRango(desde, hasta) {

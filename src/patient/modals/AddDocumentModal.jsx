@@ -4,8 +4,11 @@ import { DOC_TYPES } from "../../constants.js";
 import { Btn, Modal, ModalHeader, FieldLabel } from "../../ui/index.js";
 import { FileText, Upload } from "lucide-react";
 
-function AddDocumentModal({ type, onClose, onSave }) {
-  const meta = DOC_TYPES[type] || { label: type, plural: type };
+// meta llega desde fuera cuando el tipo no vive en DOC_TYPES: los documentos de
+// gabinete cuelgan de un colegio y tienen su propio catalogo, pero el modal de
+// subida es el mismo.
+function AddDocumentModal({ type, meta: metaExterna, onClose, onSave }) {
+  const meta = metaExterna || DOC_TYPES[type] || { label: type, plural: type };
   const [title, setTitle] = useState("");
   const [date, setDate] = useState(TODAY);
   const [notes, setNotes] = useState("");

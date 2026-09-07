@@ -1,10 +1,10 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { Mail, MessageCircle } from "lucide-react";
 import { T, TODAY } from "../theme.js";
 import { contar, fmtDate } from "../lib/format.js";
 import {
   resumenAsistencia, progresoParaFamilia, logrosDestacados,
-  sesionesEnRango, textoRango, especialidadesDelPaciente,
+  sesionesEnRango, textoRango, especialidadesDelPaciente, especialistasQueAtendieron,
 } from "../lib/reportes.js";
 import { Btn } from "../ui/index.js";
 import DocumentoAira, { CONTACTO_AIRA } from "./DocumentoAira.jsx";
@@ -69,11 +69,36 @@ export default function ReporteFamilia({
 
   const asistencia = useMemo(() => resumenAsistencia(sesiones), [sesiones]);
   const contacto = child.parentContact || {};
-  const especialista = users.find((u) => u.id === currentUser?.id);
+  // Quien atiende, no quien genera. Antes salia currentUser y un reporte de una
+  // paciente de Neyma hecho por la direccion iba firmado por la direccion.
+  // Si en el periodo no hay sesiones se cae a los asignados de la ficha, que es
+  // lo mas cercano a "quien lleva el caso" cuando aun no hay historial.
+  const queAtienden = useMemo(() => {
+    const desdeSesiones = especialistasQueAtendieron(sesiones, users);
+    if (desdeSesiones.length) return desdeSesiones;
+    return (child.assignedSpecialists || []).map((id) => users.find((u) => u.id === id)).filter(Boolean);
+  }, [sesiones, users, child.assignedSpecialists]);
 
-  // El texto plano para correo y WhatsApp se compone del mismo contenido que se
-  // ve: dos redacciones distintas divergen a la primera correccion.
-  const textoPlano = useMemo(() => {
+  const refDocumento = useRef(null);
+
+  // El mensaje sale del DOCUMENTO, no de una composicion aparte.
+  //
+  // Antes habia dos redacciones — la que se veia y la que se enviaba — y en
+  // cuanto se pudo corregir el documento a mano dejaron de coincidir: la
+  // familia habria recibido el texto sin las correcciones. Se clona el nodo,
+  // se le quitan los controles y la rejilla de datos, y se lee el resto.
+  const mensajeDelDocumento = () => {
+    const doc = refDocumento.current;
+    if (!doc) return textoBase;
+    const copia = doc.cloneNode(true);
+    copia.querySelectorAll(".no-imprimir, .no-mensaje").forEach((n) => n.remove());
+    const cuerpo = copia.innerText.replace(/\n{3,}/g, "\n\n").trim();
+    const pie = `${CONTACTO_AIRA.nombre} · ${CONTACTO_AIRA.telefono} · ${CONTACTO_AIRA.correo}`;
+    return `${cuerpo}\n\n${pie}`;
+  };
+
+  // Respaldo por si el documento aun no esta montado.
+  const textoBase = useMemo(() => {
     const l = [];
     l.push(`Reporte para la Familia — ${child.name} ${child.lastName}`);
     l.push(`${CONTACTO_AIRA.nombre} · ${textoRango(desde, hasta)}`);
@@ -107,12 +132,13 @@ export default function ReporteFamilia({
   });
 
   const enviar = (canal) => {
+    const texto = mensajeDelDocumento();
     if (canal === "email") {
       const asunto = encodeURIComponent(`Reporte de progreso — ${child.name} ${child.lastName}`);
-      window.open(`mailto:${contacto.email || ""}?subject=${asunto}&body=${encodeURIComponent(textoPlano)}`, "_blank");
+      window.open(`mailto:${contacto.email || ""}?subject=${asunto}&body=${encodeURIComponent(texto)}`, "_blank");
     } else {
       const tel = (contacto.phone || "").replace(/\D/g, "");
-      window.open(`https://wa.me/${tel}?text=${encodeURIComponent(textoPlano)}`, "_blank");
+      window.open(`https://wa.me/${tel}?text=${encodeURIComponent(texto)}`, "_blank");
     }
     registrar();
   };
@@ -121,6 +147,7 @@ export default function ReporteFamilia({
     <VisorReporte
       titulo="Reporte para la Familia"
       onClose={onClose}
+      refDocumento={refDocumento}
       acciones={
         <>
           <Btn variant="secondary" icon={Mail} onClick={() => enviar("email")}>Correo</Btn>
@@ -147,7 +174,8 @@ export default function ReporteFamilia({
         meta={[
           { etiqueta: "Período", valor: textoRango(desde, hasta) },
           { etiqueta: "Especialidad", valor: especialidadesDelPaciente(child, sessions, objectives).join(", ") },
-          { etiqueta: "Especialista", valor: especialista?.name },
+          { etiqueta: queAtienden.length > 1 ? "Especialistas" : "Especialista",
+            valor: queAtienden.map((u) => u.name).join(" · ") },
           { etiqueta: "Fecha", valor: fmtDate(TODAY) },
         ]}
       >

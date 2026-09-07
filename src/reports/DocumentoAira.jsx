@@ -71,6 +71,9 @@ export default function DocumentoAira({
 
       {meta.length > 0 && (
         <div
+          // La rejilla de datos se lee bien en un documento y fatal en un
+          // WhatsApp, donde queda como una lista de etiquetas sueltas.
+          className="no-mensaje"
           style={{
             display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
             gap: "10px 20px", marginTop: 14, padding: "12px 14px",

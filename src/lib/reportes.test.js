@@ -4,7 +4,7 @@ import {
   avancePorObjetivo, logrosDestacados, areasDeAtencion,
   especialistasInvolucrados, evaluacionesIniciales, planesPorDisciplina,
   estadoDelPaciente, textoRango, sesionesEnRango, especialidadesDelPaciente,
-  especialidadPrincipal,
+  especialidadPrincipal, especialistasQueAtendieron,
 } from './reportes.js'
 
 const ses = (o) => ({ childId: 'c1', date: '2026-01-01', attendance: 'asistio', objectivesWorked: [], ...o })
@@ -287,5 +287,38 @@ describe('especialidadPrincipal', () => {
 
   it('sin ninguna cae a "Todas" en vez de dejar el filtro indefinido', () => {
     expect(especialidadPrincipal({ id: 'c1' }, [], [])).toBe('Todas')
+  })
+})
+
+describe('especialistasQueAtendieron', () => {
+  const usuarios = [
+    { id: 'u-neyma', name: 'Neyma Paniagua' },
+    { id: 'u-admin', name: 'Sarita Szerer' },
+    { id: 'u-celilia', name: 'Celilia Miranda' },
+  ]
+
+  it('nombra a quien dio las sesiones, no a quien genera el reporte', () => {
+    // Caso real: un reporte de una paciente de Neyma, generado por la
+    // dirección, salía firmado por la dirección.
+    const r = especialistasQueAtendieron([
+      ses({ specialistId: 'u-neyma' }), ses({ specialistId: 'u-neyma' }),
+    ], usuarios)
+    expect(r.map((u) => u.name)).toEqual(['Neyma Paniagua'])
+  })
+
+  it('devuelve a todos los que atendieron, del que más al que menos', () => {
+    const r = especialistasQueAtendieron([
+      ses({ specialistId: 'u-celilia' }),
+      ses({ specialistId: 'u-neyma' }), ses({ specialistId: 'u-neyma' }),
+    ], usuarios)
+    expect(r.map((u) => u.name)).toEqual(['Neyma Paniagua', 'Celilia Miranda'])
+  })
+
+  it('sin sesiones no inventa a nadie', () => {
+    expect(especialistasQueAtendieron([], usuarios)).toEqual([])
+  })
+
+  it('descarta ids que ya no corresponden a ningún usuario', () => {
+    expect(especialistasQueAtendieron([ses({ specialistId: 'u-borrado' })], usuarios)).toEqual([])
   })
 })

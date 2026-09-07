@@ -54,7 +54,24 @@ describe('loadAll', () => {
     expect(useDataStore.getState().children).toEqual([])
   })
 
-  it('conserva los datos semilla de las demas colecciones con resultado vacio', async () => {
+  it('vacia TODAS las colecciones con resultado vacio, no solo children', async () => {
+    // Antes solo children se vaciaba y el resto caia a la semilla. Eso hacia
+    // que el panel de gabinete mostrara un "Colegio Ejemplo" inventado que no
+    // existia en la base — y que por tanto no habia forma de borrar. Con RLS
+    // aplicando el alcance, una coleccion vacia es una respuesta real.
+    expect(inicial.objectives.length).toBeGreaterThan(0)
+    expect(inicial.schools.length).toBeGreaterThan(0)
+    await useDataStore.getState().loadAll('admin', 'u-1')
+    const s = useDataStore.getState()
+    for (const k of ['objectives', 'sessions', 'documents', 'meetings', 'schools', 'gabineteSessions', 'tutorReports']) {
+      expect(s[k], k).toEqual([])
+    }
+  })
+
+  it('si la carga falla, la semilla se queda en pie', async () => {
+    // El catch impide que se aplique ninguna asignacion, asi que una caida de
+    // red no deja la pantalla en blanco fingiendo que no hay pacientes.
+    db.getObjectives.mockRejectedValueOnce(new Error('sin red'))
     await useDataStore.getState().loadAll('admin', 'u-1')
     expect(useDataStore.getState().objectives).toEqual(inicial.objectives)
   })

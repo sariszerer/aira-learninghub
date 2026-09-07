@@ -1,6 +1,6 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Download, X } from "lucide-react";
+import { Check, Download, PencilLine, X } from "lucide-react";
 import { T } from "../theme.js";
 import { Btn, IconBtn } from "../ui/index.js";
 
@@ -57,7 +57,35 @@ function EstilosImpresion() {
   return <style>{CSS_IMPRESION}</style>;
 }
 
-export default function VisorReporte({ titulo, onClose, acciones, children }) {
+export default function VisorReporte({ titulo, onClose, acciones, children, refDocumento }) {
+  // Modo de edicion manual.
+  //
+  // Un reporte generado nunca sale perfecto: la redaccion hay que ajustarla al
+  // caso antes de firmarlo o mandarlo, y la correccion puede estar en cualquier
+  // frase, incluida una que compuso el sistema. Por eso se edita el documento
+  // entero y no unos campos concretos.
+  //
+  // Se activa sobre .doc-imprimible y no sobre la hoja entera, para que los
+  // filtros de arriba sigan siendo controles y no texto editable.
+  const hoja = useRef(null);
+  const [editando, setEditando] = useState(false);
+
+  useEffect(() => {
+    const doc = hoja.current?.querySelector(".doc-imprimible");
+    if (!doc) return;
+    doc.contentEditable = editando ? "true" : "false";
+    doc.style.outline = editando ? "2px dashed rgba(30,121,226,0.45)" : "none";
+    doc.style.outlineOffset = editando ? "10px" : "0";
+    if (editando) doc.focus();
+  }, [editando]);
+
+  // El reporte recibe el nodo del documento para poder leerlo tal como quedo.
+  // Sin esto, lo que se envia por correo o WhatsApp saldria de una composicion
+  // paralela que deja de coincidir en cuanto alguien corrige una frase.
+  useEffect(() => {
+    if (refDocumento) refDocumento.current = hoja.current?.querySelector(".doc-imprimible") || null;
+  });
+
   useEffect(() => {
     const alPulsar = (e) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", alPulsar);
@@ -95,12 +123,20 @@ export default function VisorReporte({ titulo, onClose, acciones, children }) {
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             {acciones}
+            <Btn
+              variant={editando ? "primary" : "secondary"}
+              icon={editando ? Check : PencilLine}
+              onClick={() => setEditando((e) => !e)}
+            >
+              {editando ? "Listo" : "Editar texto"}
+            </Btn>
             <Btn icon={Download} onClick={() => window.print()}>Descargar PDF</Btn>
             <IconBtn icon={X} title="Cerrar" onClick={onClose} />
           </div>
         </div>
 
         <div
+          ref={hoja}
           className="visor-hoja"
           style={{
             width: "100%", maxWidth: 860, background: "#fff",
