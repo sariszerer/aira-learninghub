@@ -57,13 +57,22 @@ export const useDataStore = create((set, get) => ({
       // especialista no tiene pacientes"). Caer a datos semilla ahi le
       // mostraria todos los de demostracion en vez de ninguno.
       set({ children: dbChildren })
-      if (dbObjectives.length > 0) set({ objectives: dbObjectives })
-      if (dbSessions.length > 0) set({ sessions: dbSessions })
-      if (dbDocuments.length > 0) set({ documents: dbDocuments })
-      if (dbMeetings.length > 0) set({ meetings: dbMeetings })
-      if (dbSchools.length > 0) set({ schools: dbSchools })
-      if (dbGabineteSessions.length > 0) set({ gabineteSessions: dbGabineteSessions })
-      if (dbTutorReports.length > 0) set({ tutorReports: dbTutorReports })
+      // Todas incondicionales, por la misma razon que children: con RLS
+      // aplicando el alcance, una coleccion vacia es una respuesta real y no un
+      // fallo de carga. Caer a la semilla ahi presenta datos inventados como si
+      // fueran del expediente — el panel de gabinete mostraba un "Colegio
+      // Ejemplo" que no existe en la base, y por eso no habia forma de
+      // borrarlo. Si la carga falla de verdad, el catch de abajo impide que se
+      // aplique ninguna de estas asignaciones y la semilla se queda.
+      set({
+        objectives: dbObjectives,
+        sessions: dbSessions,
+        documents: dbDocuments,
+        meetings: dbMeetings,
+        schools: dbSchools,
+        gabineteSessions: dbGabineteSessions,
+        tutorReports: dbTutorReports,
+      })
       // Incondicional: sin semilla, un resultado vacio es la verdad.
       set({ evolutionReports: dbEvolutionReports })
     } catch (e) {
@@ -311,6 +320,26 @@ export const useDataStore = create((set, get) => ({
   addGabineteSession: async (session) => {
     set((s) => ({ gabineteSessions: [...s.gabineteSessions, session] }))
     try { await db.insertGabineteSession(session) } catch (e) { console.error('Add gabinete session:', e) }
+  },
+
+  borrarColegio: async (id) => {
+    set((s) => ({
+      schools: s.schools.filter((x) => x.id !== id),
+      gabineteSessions: s.gabineteSessions.filter((x) => x.schoolId !== id),
+      documents: s.documents.filter((x) => x.schoolId !== id),
+    }))
+    await db.deleteSchool(id)
+  },
+
+  // Documento que cuelga de un colegio y no de un paciente. addDocument exige
+  // childId y le pone el autor de la sesion; aqui el dueño es el colegio.
+  agregarDocumentoDeColegio: async (schoolId, doc) => {
+    const autor = useAuthStore.getState().currentUser?.id || null
+    const fila = { id: `d-${Date.now()}`, schoolId, childId: null, authorId: autor, ...doc }
+    set((s) => ({ documents: [fila, ...s.documents] }))
+    try { await db.insertDocument(fila) }
+    catch (e) { console.error('Documento de colegio:', e) }
+    return fila
   },
 
   addSchool: async (school) => {

@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { T, inputStyle } from "../theme.js";
 import { useDataStore } from "../store/dataStore.js";
-import { Btn, Modal, ModalHeader } from "../ui/index.js";
+import { Btn, Chip, Modal, ModalHeader } from "../ui/index.js";
+import { ROLES } from "../permissions.js";
 
 // Modal de edicion del perfil del paciente.
 //
@@ -23,6 +24,16 @@ const ESTADOS = [
 
 export default function EditProfileModal({ child, onClose }) {
   const onUpdateChild = useDataStore((s) => s.updateChild);
+  const users = useDataStore((s) => s.users);
+
+  // Solo quien atiende. Los roles clinicos los declara la matriz de permisos,
+  // no una lista de nombres de rol repetida aqui.
+  const clinicos = useMemo(
+    () => users
+      .filter((u) => u.activo !== false && ROLES[u.role]?.esClinico)
+      .sort((a, b) => a.name.localeCompare(b.name)),
+    [users]
+  );
   const [f, setF] = useState({
     name: child.name || "",
     lastName: child.lastName || "",
@@ -37,6 +48,7 @@ export default function EditProfileModal({ child, onClose }) {
     parentName: child.parentContact?.name || "",
     parentPhone: child.parentContact?.phone || "",
     parentEmail: child.parentContact?.email || "",
+    assignedSpecialists: child.assignedSpecialists || [],
   });
   const set = (k, v) => setF((x) => ({ ...x, [k]: v }));
 
@@ -56,6 +68,16 @@ export default function EditProfileModal({ child, onClose }) {
       dischargeDate: f.status === "alta" ? f.dischargeDate || null : null,
       dischargeReason: f.status === "alta" ? f.dischargeReason.trim() || null : null,
       parentContact: { name: f.parentName, phone: f.parentPhone, email: f.parentEmail },
+      assignedSpecialists: f.assignedSpecialists,
+      // Las especialidades del paciente se derivan de quien lo atiende, igual
+      // que en el alta. Mantenerlas a mano las dejaba desfasadas: habia fichas
+      // con una disciplina declarada y sesiones de tres.
+      specialties: [...new Set(
+        f.assignedSpecialists
+          .map((id) => users.find((u) => u.id === id)?.specialty)
+          .filter(Boolean)
+          .concat(child.specialties || [])
+      )],
     });
     onClose();
   };
@@ -139,6 +161,33 @@ export default function EditProfileModal({ child, onClose }) {
             </Campo>
           </>
         )}
+
+        <Campo
+          etiqueta="Especialistas asignados"
+          ayuda="Quien esté marcado podrá ver y editar este expediente."
+        >
+          {clinicos.length === 0 ? (
+            <div style={{ fontSize: 12.5, color: T.inkFaint }}>
+              No hay especialistas activos registrados.
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+              {clinicos.map((u) => (
+                <Chip
+                  key={u.id}
+                  label={u.specialty ? `${u.name} · ${u.specialty}` : u.name}
+                  selected={f.assignedSpecialists.includes(u.id)}
+                  onClick={() => set(
+                    "assignedSpecialists",
+                    f.assignedSpecialists.includes(u.id)
+                      ? f.assignedSpecialists.filter((x) => x !== u.id)
+                      : [...f.assignedSpecialists, u.id]
+                  )}
+                />
+              ))}
+            </div>
+          )}
+        </Campo>
 
         <div style={{ borderTop: `1px solid ${T.border}`, paddingTop: 16 }}>
           <Campo etiqueta="Nombre del padre / madre / tutor">

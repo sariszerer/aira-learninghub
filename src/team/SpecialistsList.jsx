@@ -6,7 +6,8 @@ import { useDataStore } from "../store/dataStore.js";
 import { useAuthStore } from "../store/authStore.js";
 import PageHeader from "../shell/PageHeader.jsx";
 import SpecialistModal from "./SpecialistModal.jsx";
-import { Avatar, Btn, Card, IconBtn, List, ListRow, Table } from "../ui/index.js";
+import { Avatar, Btn, Card, IconBtn, List, ListRow, Modal, ModalHeader, Table } from "../ui/index.js";
+import { useNavigate } from "react-router-dom";
 
 // Gestion del equipo. El alta pasa por una Edge Function porque crear un
 // usuario que pueda iniciar sesion exige service_role; editar y desactivar si
@@ -36,6 +37,15 @@ export default function SpecialistsList() {
     [users, query, verInactivos]);
 
   const inactivos = users.filter((u) => u.activo === false).length;
+
+  // Ver la carga de una persona: el numero de la columna dice cuanta, y esto
+  // dice de quien. Sin ello, para saber a quien atiende alguien habia que abrir
+  // los 44 pacientes uno por uno.
+  const [viendoCarga, setViendoCarga] = useState(null);
+  const navigate = useNavigate();
+  const pacientesDe = (id) => children
+    .filter((c) => c.assignedSpecialists?.includes(id))
+    .sort((a, b) => `${a.name} ${a.lastName}`.localeCompare(`${b.name} ${b.lastName}`));
 
   const carga = (id) => ({
     pacientes: children.filter((c) => c.assignedSpecialists?.includes(id)).length,
@@ -129,6 +139,24 @@ export default function SpecialistsList() {
             },
             {
               clave: "pacientes", titulo: "Pacientes", ancho: "100px", alinear: "derecha",
+              celda: (u) => (
+                <button
+                  type="button"
+                  onClick={() => setViendoCarga(u)}
+                  disabled={!carga(u.id).pacientes}
+                  title={carga(u.id).pacientes ? "Ver sus pacientes" : "Sin pacientes asignados"}
+                  style={{
+                    background: "none", border: "none", fontFamily: T.font, fontSize: 13,
+                    fontWeight: 600, padding: "2px 4px", borderRadius: 6,
+                    color: carga(u.id).pacientes ? T.brand : T.inkFaint,
+                    cursor: carga(u.id).pacientes ? "pointer" : "default",
+                    textDecoration: carga(u.id).pacientes ? "underline" : "none",
+                    textUnderlineOffset: 3,
+                  }}
+                >
+                  {carga(u.id).pacientes}
+                </button>
+              ),
               celda: (u) => <span style={{ fontWeight: 600 }}>{u.pacientes}</span>,
             },
             {
@@ -168,6 +196,37 @@ export default function SpecialistsList() {
           usuario={editando === "nuevo" ? null : editando}
           onClose={() => setEditando(null)}
         />
+      )}
+
+      {viendoCarga && (
+        <Modal onClose={() => setViendoCarga(null)} width={480}>
+          <ModalHeader
+            title={`Pacientes de ${viendoCarga.name}`}
+            subtitle={`${pacientesDe(viendoCarga.id).length} asignados · ${carga(viendoCarga.id).sesiones} sesiones impartidas`}
+            onClose={() => setViendoCarga(null)}
+          />
+          <div style={{ padding: "8px 24px 20px", maxHeight: "62vh", overflowY: "auto" }}>
+            <List>
+              {pacientesDe(viendoCarga.id).map((c) => (
+                <ListRow
+                  key={c.id}
+                  onClick={() => { setViendoCarga(null); navigate(`/paciente/${encodeURIComponent(c.id)}`); }}
+                >
+                  <Avatar name={`${c.name} ${c.lastName}`} bg={c.avatarBg} size={30} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 600, fontSize: 13.5 }}>{c.name} {c.lastName}</div>
+                    <div style={{ fontSize: 11.5, color: T.inkFaint }}>
+                      {(c.specialties || []).join(" · ") || "Sin disciplinas registradas"}
+                    </div>
+                  </div>
+                  <span style={{ fontSize: 12, color: T.inkFaint, whiteSpace: "nowrap" }}>
+                    {sessions.filter((s) => s.childId === c.id && s.specialistId === viendoCarga.id).length} ses.
+                  </span>
+                </ListRow>
+              ))}
+            </List>
+          </div>
+        </Modal>
       )}
     </>
   );

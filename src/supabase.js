@@ -94,7 +94,8 @@ export function dbSessionToApp(s) {
 }
 export function dbDocumentToApp(d) {
   return { id: d.id, childId: d.child_id, type: d.type, title: d.title,
-    date: d.date, authorId: d.author_id, notes: d.notes, fields: d.fields || {} }
+    date: d.date, authorId: d.author_id, notes: d.notes, fields: d.fields || {},
+    schoolId: d.school_id }
 }
 export function dbMeetingToApp(m) {
   return { id: m.id, childId: m.child_id, date: m.date, type: m.type,
@@ -326,7 +327,8 @@ export const db = {
   },
   async insertDocument(d) {
     const { error } = await supabase.from('documents').insert({
-      id: d.id, child_id: d.childId, type: d.type, title: d.title,
+      id: d.id, child_id: d.childId ?? null, school_id: d.schoolId ?? null,
+      type: d.type, title: d.title,
       date: d.date, author_id: d.authorId, notes: d.notes, fields: d.fields || {},
     })
     if (error) throw error
@@ -355,6 +357,13 @@ export const db = {
     const { data, error } = await supabase.from('schools').select('*').order('name')
     if (error) throw error
     return data.map(dbSchoolToApp)
+  },
+  async deleteSchool(id) {
+    // Las sesiones y documentos del colegio se van con el por cascade. Es
+    // deliberado: un colegio sin contrato no deja historial clinico de ningun
+    // paciente, solo su propio expediente de gabinete.
+    const { error } = await supabase.from('schools').delete().eq('id', id)
+    if (error) throw error
   },
   async insertSchool(s) {
     const { error } = await supabase.from('schools').insert({

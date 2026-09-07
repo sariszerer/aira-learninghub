@@ -15,10 +15,20 @@ import { Btn, Chip } from "../ui/index.js";
 // Colores de avatar. Se eligen a mano y no de los tokens porque tienen que
 // distinguirse ENTRE SI de un vistazo: son la forma de reconocer a una persona
 // en una lista, no de comunicar marca.
-// Todos con contraste >= 4.6 contra texto blanco (WCAG AA). El selector no
-// puede ofrecer un color que produzca un avatar ilegible: los anteriores
-// (#06B6D4, #F59E0B, #10B981) daban 2.4, 2.1 y 2.5.
-const PALETA = ["#1C74DA", "#048096", "#5564F6", "#0C855D", "#A26807", "#E81414", "#0E7490", "#7C3AED"];
+// Veinte tonos repartidos por la rueda de color, todos con contraste >= 4.6
+// contra texto blanco (WCAG AA).
+//
+// El selector no puede ofrecer un color que produzca un avatar ilegible — los
+// originales (#06B6D4, #F59E0B, #10B981) daban 2.4, 2.1 y 2.5 — pero con ocho
+// opciones el equipo se quedaba corto. Cada tono se oscurecio solo lo justo
+// para cruzar el umbral, asi que siguen siendo colores distintos entre si y no
+// variaciones del mismo azul.
+const PALETA = [
+  "#2D77C1", "#327F8F", "#268371", "#388351", "#49832C",
+  "#767A15", "#9A6C1D", "#B55C30", "#D04437", "#C04D73",
+  "#C73D99", "#B147C2", "#9257D5", "#7466CF", "#5C70C1",
+  "#3D7F7D", "#208723", "#837532", "#AD6047", "#B050A8",
+];
 
 const ROLES_ASIGNABLES = ["specialist", "clinical_director", "admin"];
 
@@ -194,7 +204,7 @@ export default function SpecialistModal({ usuario, onClose }) {
           }}>
             Color
           </div>
-          <div style={{ display: "flex", gap: 7 }}>
+          <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
             {PALETA.map((c) => (
               <button
                 key={c}
