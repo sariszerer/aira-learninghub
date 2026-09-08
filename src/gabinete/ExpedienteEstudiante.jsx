@@ -7,6 +7,9 @@ import { useDataStore } from "../store/dataStore.js";
 import { useAuthStore } from "../store/authStore.js";
 import { Avatar, Btn, Card, Eyebrow } from "../ui/index.js";
 import { FORMATOS_TUTOR } from "./formatosTutor.js";
+import { RESULTADOS, RUTAS, faltaExpediente, tonoDe } from "./preescolar.js";
+import TamizajeModal from "./TamizajeModal.jsx";
+import { AlertTriangle, Stethoscope } from "lucide-react";
 import FormatoTutorModal from "./FormatoTutorModal.jsx";
 
 // Expediente de un estudiante dentro del gabinete externo.
@@ -16,14 +19,27 @@ import FormatoTutorModal from "./FormatoTutorModal.jsx";
 // que solo enseña lo ya creado no dice cual falta.
 
 const ORDEN = ["plan_trabajo_tutor", "supervision", "tutor_quincenal"];
+// En preescolar el plan de trabajo y el seguimiento sustituyen a los formatos
+// de tutoria: es otro programa, no el mismo con otro nombre.
+const ORDEN_PREESCOLAR = ["plan_preescolar", "seguimiento_caso", "informe_familia"];
 
-export default function ExpedienteEstudiante({ estudiante, onVolver }) {
+export default function ExpedienteEstudiante({ estudiante, onVolver, programa = "tutoria" }) {
   const documents = useDataStore((s) => s.documents);
   const tutores = useDataStore((s) => s.tutores);
   const children = useDataStore((s) => s.children);
   const agregarDocumento = useDataStore((s) => s.agregarDocumentoDeEstudiante);
   const currentUser = useAuthStore((s) => s.currentUser);
   const [creando, setCreando] = useState(null);
+  const [tamizando, setTamizando] = useState(false);
+  const [abriendo, setAbriendo] = useState(false);
+  const tamizajes = useDataStore((s) => s.tamizajes);
+  const abrirExpediente = useDataStore((s) => s.abrirExpedienteDeEstudiante);
+  const esPreescolar = programa === "preescolar";
+  const suyosTamizajes = useMemo(
+    () => tamizajes.filter((t) => t.studentId === estudiante.id)
+      .sort((a, b) => (b.fecha || "").localeCompare(a.fecha || "")),
+    [tamizajes, estudiante.id]
+  );
 
   const tutor = tutores.find((t) => t.id === estudiante.tutorId) || null;
   const paciente = children.find((c) => c.id === estudiante.childId) || null;
@@ -55,8 +71,9 @@ export default function ExpedienteEstudiante({ estudiante, onVolver }) {
               {estudiante.name} {estudiante.lastName || ""}
             </div>
             <div style={{ fontSize: 13, color: T.inkSoft, marginTop: 2 }}>
-              {[estudiante.grade, estudiante.startDate && `desde ${fmtDate(estudiante.startDate)}`]
-                .filter(Boolean).join(" · ") || "Sin grado registrado"}
+              {[esPreescolar ? estudiante.nivel : estudiante.grade,
+                estudiante.startDate && `desde ${fmtDate(estudiante.startDate)}`]
+                .filter(Boolean).join(" · ") || (esPreescolar ? "Sin nivel asignado" : "Sin grado registrado")}
             </div>
           </div>
         </div>
@@ -65,17 +82,27 @@ export default function ExpedienteEstudiante({ estudiante, onVolver }) {
           display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
           gap: 12, marginTop: 16,
         }}>
-          <Dato etiqueta="Tutora asignada" icono={User}>
-            {tutor
-              ? tutor.name
-              : <span style={{ color: T.inkFaint, fontStyle: "italic" }}>Sin asignar</span>}
-          </Dato>
+          {!esPreescolar && (
+            <Dato etiqueta="Tutora asignada" icono={User}>
+              {tutor
+                ? tutor.name
+                : <span style={{ color: T.inkFaint, fontStyle: "italic" }}>Sin asignar</span>}
+            </Dato>
+          )}
           <Dato etiqueta="Expediente clínico">
             {paciente
               ? <span style={{ color: T.brand }}>{paciente.name} {paciente.lastName}</span>
               : <span style={{ color: T.inkFaint, fontStyle: "italic" }}>No es paciente de AIRA</span>}
           </Dato>
-          <Dato etiqueta="Documentos">{contar(suyos.length, "documento", "documentos")}</Dato>
+          {esPreescolar ? (
+            <Dato etiqueta="Ruta del caso">
+              <span style={{ color: tonoDe((RUTAS[estudiante.ruta] || RUTAS.sin_evaluar).tono, T).color }}>
+                {(RUTAS[estudiante.ruta] || RUTAS.sin_evaluar).label}
+              </span>
+            </Dato>
+          ) : (
+            <Dato etiqueta="Documentos">{contar(suyos.length, "documento", "documentos")}</Dato>
+          )}
         </div>
 
         {estudiante.notas && (
@@ -85,9 +112,96 @@ export default function ExpedienteEstudiante({ estudiante, onVolver }) {
         )}
       </Card>
 
+      {esPreescolar && (
+        <>
+          {faltaExpediente(estudiante) && (
+            <Card style={{
+              marginBottom: 18, padding: "14px 16px",
+              background: T.apoyoTint, border: `1px solid ${T.apoyo}33`,
+            }}>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 10, flexWrap: "wrap" }}>
+                <AlertTriangle size={17} color={T.apoyo} style={{ flexShrink: 0, marginTop: 1 }} />
+                <div style={{ flex: 1, minWidth: 200 }}>
+                  <div style={{ fontSize: 13.5, fontWeight: 700, color: T.apoyo }}>
+                    Derivado al centro y sin expediente clínico
+                  </div>
+                  <div style={{ fontSize: 12.5, color: T.ink, marginTop: 3, lineHeight: 1.5 }}>
+                    Se decidió que necesita atención en el centro. Ábrele el expediente
+                    para poder registrarle sesiones, objetivos y reportes.
+                  </div>
+                </div>
+                {puedeEscribir && (
+                  <Btn
+                    size="sm" icon={Stethoscope} disabled={abriendo}
+                    onClick={async () => {
+                      setAbriendo(true);
+                      try { await abrirExpediente(estudiante.id); }
+                      finally { setAbriendo(false); }
+                    }}
+                  >
+                    {abriendo ? "Abriendo…" : "Abrir expediente"}
+                  </Btn>
+                )}
+              </div>
+            </Card>
+          )}
+
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, gap: 12, flexWrap: "wrap" }}>
+            <Eyebrow>Tamizaje y resultados</Eyebrow>
+            {puedeEscribir && (
+              <Btn size="sm" variant="secondary" icon={Plus} onClick={() => setTamizando(true)}>Registrar tamizaje</Btn>
+            )}
+          </div>
+
+          {suyosTamizajes.length === 0 ? (
+            <Card style={{ padding: "20px", textAlign: "center", marginBottom: 22 }}>
+              <div style={{ fontSize: 13, color: T.inkFaint }}>
+                Todavía no se le ha aplicado ningún tamizaje.
+              </div>
+            </Card>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 22 }}>
+              {suyosTamizajes.map((t) => {
+                const r = RESULTADOS[t.resultado] || RESULTADOS.pendiente;
+                const tono = tonoDe(r.tono, T);
+                return (
+                  <Card key={t.id} style={{ padding: "13px 15px" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                      <div style={{ fontSize: 13, fontWeight: 600 }}>
+                        {fmtDate(t.fecha)}
+                        {t.instrumento && <span style={{ color: T.inkSoft, fontWeight: 400 }}> · {t.instrumento}</span>}
+                      </div>
+                      <span style={{
+                        fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 999,
+                        background: tono.fondo, color: tono.color,
+                      }}>
+                        {r.label}
+                      </span>
+                    </div>
+                    {t.areasAlerta?.length > 0 && (
+                      <div style={{ fontSize: 12, color: T.inkSoft, marginTop: 7 }}>
+                        <b style={{ color: T.ink }}>Áreas de alerta:</b> {t.areasAlerta.join(", ")}
+                      </div>
+                    )}
+                    {t.observaciones && (
+                      <div style={{ fontSize: 12.5, marginTop: 6, lineHeight: 1.6 }}>{t.observaciones}</div>
+                    )}
+                    {t.recomendacion && (
+                      <div style={{ fontSize: 12.5, marginTop: 6, lineHeight: 1.6, color: T.inkSoft }}>
+                        <b style={{ color: T.ink }}>Recomendación:</b> {t.recomendacion}
+                      </div>
+                    )}
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </>
+      )}
+
       <Eyebrow style={{ marginBottom: 12 }}>Expediente</Eyebrow>
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        {ORDEN.map((tipo) => {
+        {(esPreescolar ? ORDEN_PREESCOLAR : ORDEN).map((tipo) => {
           const formato = FORMATOS_TUTOR[tipo];
           const suyosDelTipo = suyos
             .filter((d) => d.type === tipo)
@@ -134,6 +248,10 @@ export default function ExpedienteEstudiante({ estudiante, onVolver }) {
           );
         })}
       </div>
+
+      {tamizando && (
+        <TamizajeModal estudiante={estudiante} onClose={() => setTamizando(false)} />
+      )}
 
       {creando && (
         <FormatoTutorModal

@@ -79,9 +79,15 @@ export function dbEvolutionReportToApp(r) {
     generatedDate: r.generated_date, generatedBy: r.generated_by,
     content: r.content || {}, createdAt: r.created_at }
 }
+export function dbTamizajeToApp(t) {
+  return { id: t.id, studentId: t.student_id, fecha: t.fecha, instrumento: t.instrumento,
+    aplicadoPor: t.aplicado_por, resultado: t.resultado, areasAlerta: t.areas_alerta || [],
+    observaciones: t.observaciones, recomendacion: t.recomendacion, detalle: t.detalle || {} }
+}
 export function dbEstudianteToApp(e) {
   return { id: e.id, schoolId: e.school_id, childId: e.child_id, tutorId: e.tutor_id,
     name: e.name, lastName: e.last_name, grade: e.grade, startDate: e.start_date,
+    nivel: e.nivel, ruta: e.ruta || 'sin_evaluar', fechaRuta: e.fecha_ruta,
     activo: e.activo !== false, notas: e.notas }
 }
 export function dbTutorToApp(t) {
@@ -393,12 +399,30 @@ export const db = {
       id: e.id, school_id: e.schoolId, child_id: e.childId ?? null,
       tutor_id: e.tutorId ?? null, name: e.name, last_name: e.lastName ?? null,
       grade: e.grade ?? null, start_date: e.startDate || null,
+      nivel: e.nivel ?? null, ruta: e.ruta || 'sin_evaluar',
+      fecha_ruta: e.fechaRuta || null,
       activo: e.activo !== false, notas: e.notas ?? null,
     })
     if (error) throw error
   },
   async deleteEstudianteGabinete(id) {
     const { error } = await supabase.from('gabinete_estudiantes').delete().eq('id', id)
+    if (error) throw error
+  },
+  // ── Tamizajes ─────────────────────────────────────────────────────────────
+  async getTamizajes() {
+    const { data, error } = await supabase.from('tamizajes').select('*').order('fecha', { ascending: false })
+    if (error) throw error
+    return data.map(dbTamizajeToApp)
+  },
+  async upsertTamizaje(t) {
+    const { error } = await supabase.from('tamizajes').upsert({
+      id: t.id, student_id: t.studentId, fecha: t.fecha,
+      instrumento: t.instrumento ?? null, aplicado_por: t.aplicadoPor ?? null,
+      resultado: t.resultado || 'pendiente', areas_alerta: t.areasAlerta || [],
+      observaciones: t.observaciones ?? null, recomendacion: t.recomendacion ?? null,
+      detalle: t.detalle || {},
+    })
     if (error) throw error
   },
   async getTutores() {

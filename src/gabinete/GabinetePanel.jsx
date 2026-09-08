@@ -13,6 +13,7 @@ import { IconBtn } from "../ui/index.js";
 import AddDocumentModal from "../patient/modals/AddDocumentModal.jsx";
 import EstudianteModal from "./EstudianteModal.jsx";
 import ExpedienteEstudiante from "./ExpedienteEstudiante.jsx";
+import PanelPreescolar from "./PanelPreescolar.jsx";
 import { GraduationCap, Users } from "lucide-react";
 import { Avatar } from "../ui/index.js";
 import { contar } from "../lib/format.js";
@@ -162,6 +163,7 @@ function GabinetePanel({ onAddSession }) {
           {school && viendoExpediente ? (
             <ExpedienteEstudiante
               estudiante={estudiantesGabinete.find((e) => e.id === viendoExpediente) || viendoExpediente}
+              programa={school.programa || "tutoria"}
               onVolver={() => setViendoExpediente(null)}
             />
           ) : school && (
@@ -240,8 +242,18 @@ function GabinetePanel({ onAddSession }) {
                 )}
               </Card>
 
-              {/* Estudiantes. Solo en el programa de tutoria: el de preescolar
-                  no acompaña a un niño concreto sino a un grupo. */}
+              {!esTutoria && (
+                <div style={{ marginBottom: 22 }}>
+                  <PanelPreescolar
+                    school={school}
+                    onAbrirEstudiante={setViendoExpediente}
+                    onNuevoEstudiante={() => setEditandoEstudiante({ nuevo: true })}
+                  />
+                </div>
+              )}
+
+              {/* Estudiantes con tutor. Solo en el programa de tutoria: el de
+                  preescolar se organiza por nivel y lo pinta PanelPreescolar. */}
               {esTutoria && (
                 <div style={{ marginBottom: 22 }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, gap: 12, flexWrap: "wrap" }}>
@@ -349,6 +361,7 @@ function GabinetePanel({ onAddSession }) {
                 <EstudianteModal
                   estudiante={editandoEstudiante.nuevo ? null : editandoEstudiante}
                   schoolId={school.id}
+                  programa={school.programa || "tutoria"}
                   onClose={() => setEditandoEstudiante(null)}
                   onGuardar={guardarEstudiante}
                 />
