@@ -11,6 +11,11 @@ import { can } from "../permissions.js";
 import { useAuthStore } from "../store/authStore.js";
 import { IconBtn } from "../ui/index.js";
 import AddDocumentModal from "../patient/modals/AddDocumentModal.jsx";
+import EstudianteModal from "./EstudianteModal.jsx";
+import ExpedienteEstudiante from "./ExpedienteEstudiante.jsx";
+import { GraduationCap, Users } from "lucide-react";
+import { Avatar } from "../ui/index.js";
+import { contar } from "../lib/format.js";
 
 function GabinetePanel({ onAddSession }) {
   const schools = useDataStore((s) => s.schools);
@@ -23,15 +28,23 @@ function GabinetePanel({ onAddSession }) {
   const currentUser = useAuthStore((s) => s.currentUser);
   const [subiendo, setSubiendo] = useState(null);
   const [errorColegio, setErrorColegio] = useState(null);
+  const estudiantesGabinete = useDataStore((s) => s.estudiantesGabinete);
+  const tutores = useDataStore((s) => s.tutores);
+  const guardarEstudiante = useDataStore((s) => s.guardarEstudianteGabinete);
+  const [editandoEstudiante, setEditandoEstudiante] = useState(null);
+  const [viendoExpediente, setViendoExpediente] = useState(null);
   const [selectedSchool, setSelectedSchool] = useState(null);
   const [addingSchool, setAddingSchool] = useState(false);
   const [sessionForm, setSessionForm] = useState(null);
-  const [newSchool, setNewSchool] = useState({ name: "", contact: "", phone: "", email: "", contractStart: "", contractEnd: "", specialty: "", assignedSpecialists: [], notes: "" });
+  const VACIA = { name: "", contact: "", phone: "", email: "", contractStart: "", contractEnd: "", specialty: "", assignedSpecialists: [], notes: "", programa: "tutoria" };
+  const [newSchool, setNewSchool] = useState(VACIA);
 
   const school = schools.find((s) => s.id === selectedSchool) || schools[0] || null;
   const schoolSessions = school ? gabineteSessions.filter((s) => s.schoolId === school.id).sort((a, b) => b.date.localeCompare(a.date)) : [];
 
   const allSpecialists = users.filter((u) => ROLES[u.role]?.esClinico);
+  const delColegio = school ? estudiantesGabinete.filter((e) => e.schoolId === school.id) : [];
+  const esTutoria = (school?.programa || "tutoria") === "tutoria";
 
   const emptySession = () => ({ specialistId: "", specialty: "", date: TODAY, participants: "", duration: 60, area: "", notes: "" });
 
@@ -46,7 +59,7 @@ function GabinetePanel({ onAddSession }) {
   const handleSaveSchool = () => {
     onAddSchool({ id: `sch-${Date.now()}`, ...newSchool, students: [] });
     setAddingSchool(false);
-    setNewSchool({ name: "", contact: "", phone: "", email: "", contractStart: "", contractEnd: "", specialty: "", assignedSpecialists: [], notes: "" });
+    setNewSchool(VACIA);
   };
 
   const Field2 = ({ label, value, onChange, type = "text" }) => (
@@ -78,6 +91,14 @@ function GabinetePanel({ onAddSession }) {
             <Field2 label="Email" value={newSchool.email} onChange={(v) => setNewSchool({ ...newSchool, email: v })} type="email" />
             <Field2 label="Inicio de contrato" value={newSchool.contractStart} onChange={(v) => setNewSchool({ ...newSchool, contractStart: v })} type="date" />
             <Field2 label="Fin de contrato" value={newSchool.contractEnd} onChange={(v) => setNewSchool({ ...newSchool, contractEnd: v })} type="date" />
+          </div>
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: T.inkSoft, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em" }}>Programa</div>
+            <div style={{ display: "flex", gap: 8 }}>
+              {[["tutoria", "Tutoría"], ["preescolar", "Detección y atención en preescolar"]].map(([v, txt]) => (
+                <Chip key={v} label={txt} selected={newSchool.programa === v} onClick={() => setNewSchool({ ...newSchool, programa: v })} />
+              ))}
+            </div>
           </div>
           <Field2 label="Especialidades contratadas" value={newSchool.specialty} onChange={(v) => setNewSchool({ ...newSchool, specialty: v })} />
           <div style={{ marginBottom: 14 }}>
@@ -136,8 +157,14 @@ function GabinetePanel({ onAddSession }) {
             ))}
           </div>
 
-          {/* School detail */}
-          {school && (
+          {/* Expediente de un estudiante: ocupa el detalle entero. Verlo en un
+              modal sobre la escuela escondia justo lo que se va a leer. */}
+          {school && viendoExpediente ? (
+            <ExpedienteEstudiante
+              estudiante={estudiantesGabinete.find((e) => e.id === viendoExpediente) || viendoExpediente}
+              onVolver={() => setViendoExpediente(null)}
+            />
+          ) : school && (
             <div>
               <Card style={{ marginBottom: 18 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 10, marginBottom: 16 }}>
@@ -213,6 +240,68 @@ function GabinetePanel({ onAddSession }) {
                 )}
               </Card>
 
+              {/* Estudiantes. Solo en el programa de tutoria: el de preescolar
+                  no acompaña a un niño concreto sino a un grupo. */}
+              {esTutoria && (
+                <div style={{ marginBottom: 22 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, gap: 12, flexWrap: "wrap" }}>
+                    <Eyebrow>Estudiantes con tutor</Eyebrow>
+                    {can(currentUser, "gabinete:session:create") && (
+                      <Btn size="sm" icon={Plus} onClick={() => setEditandoEstudiante({ nuevo: true })}>Agregar estudiante</Btn>
+                    )}
+                  </div>
+
+                  {delColegio.length === 0 ? (
+                    <Card style={{ padding: "26px 20px", textAlign: "center" }}>
+                      <GraduationCap size={30} color={T.inkFaint} style={{ marginBottom: 10 }} />
+                      <div style={{ fontSize: 14, fontWeight: 600, color: T.inkSoft, marginBottom: 5 }}>
+                        Ningún estudiante registrado en {school.name}
+                      </div>
+                      <div style={{ fontSize: 13, color: T.inkFaint }}>
+                        Cada estudiante tiene su tutora y su expediente: plan de trabajo,
+                        registros de supervisión y reportes quincenales.
+                      </div>
+                    </Card>
+                  ) : (
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 12 }}>
+                      {delColegio.map((e) => {
+                        const tutor = tutores.find((t) => t.id === e.tutorId);
+                        const docs = documents.filter((d) => d.studentId === e.id).length;
+                        return (
+                          <Card key={e.id} style={{ padding: "14px 16px" }}>
+                            <button
+                              type="button"
+                              onClick={() => setViendoExpediente(e.id)}
+                              style={{ display: "flex", alignItems: "center", gap: 11, width: "100%", background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left", fontFamily: T.font }}
+                            >
+                              <Avatar name={`${e.name} ${e.lastName || ""}`} bg={T.brand} size={36} />
+                              <div style={{ minWidth: 0, flex: 1 }}>
+                                <div style={{ fontSize: 14, fontWeight: 600, color: T.ink, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                  {e.name} {e.lastName || ""}
+                                </div>
+                                <div style={{ fontSize: 11.5, color: T.inkFaint }}>
+                                  {e.grade || "Sin grado"}
+                                </div>
+                              </div>
+                            </button>
+                            <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 10, fontSize: 12, color: T.inkSoft }}>
+                              <Users size={12} color={T.inkFaint} />
+                              {tutor ? tutor.name : <span style={{ fontStyle: "italic", color: T.inkFaint }}>Sin tutora asignada</span>}
+                            </div>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 8 }}>
+                              <span style={{ fontSize: 11.5, color: T.inkFaint }}>{contar(docs, "documento", "documentos")}</span>
+                              {can(currentUser, "gabinete:session:create") && (
+                                <Btn size="sm" variant="ghost" onClick={() => setEditandoEstudiante(e)}>Editar</Btn>
+                              )}
+                            </div>
+                          </Card>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Documentos del colegio. Cuelgan del contrato, no de un
                   paciente: son el expediente del gabinete con esa escuela. */}
               <div style={{ marginBottom: 22 }}>
@@ -255,6 +344,15 @@ function GabinetePanel({ onAddSession }) {
                   })}
                 </div>
               </div>
+
+              {editandoEstudiante && (
+                <EstudianteModal
+                  estudiante={editandoEstudiante.nuevo ? null : editandoEstudiante}
+                  schoolId={school.id}
+                  onClose={() => setEditandoEstudiante(null)}
+                  onGuardar={guardarEstudiante}
+                />
+              )}
 
               {subiendo && (
                 <AddDocumentModal

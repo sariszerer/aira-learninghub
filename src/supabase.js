@@ -79,6 +79,16 @@ export function dbEvolutionReportToApp(r) {
     generatedDate: r.generated_date, generatedBy: r.generated_by,
     content: r.content || {}, createdAt: r.created_at }
 }
+export function dbEstudianteToApp(e) {
+  return { id: e.id, schoolId: e.school_id, childId: e.child_id, tutorId: e.tutor_id,
+    name: e.name, lastName: e.last_name, grade: e.grade, startDate: e.start_date,
+    activo: e.activo !== false, notas: e.notas }
+}
+export function dbTutorToApp(t) {
+  return { id: t.id, name: t.name, role: t.role, schoolId: t.school_id, school: t.school,
+    assignedChildId: t.assigned_child_id, avatarBg: t.avatar_bg,
+    startDate: t.start_date, activo: t.activo !== false }
+}
 export function dbObjectiveToApp(o) {
   return { id: o.id, childId: o.child_id, name: o.name, area: o.area,
     status: o.status, specialistId: o.specialist_id, createdDate: o.created_date,
@@ -95,7 +105,7 @@ export function dbSessionToApp(s) {
 export function dbDocumentToApp(d) {
   return { id: d.id, childId: d.child_id, type: d.type, title: d.title,
     date: d.date, authorId: d.author_id, notes: d.notes, fields: d.fields || {},
-    schoolId: d.school_id }
+    schoolId: d.school_id, studentId: d.student_id }
 }
 export function dbMeetingToApp(m) {
   return { id: m.id, childId: m.child_id, date: m.date, type: m.type,
@@ -105,7 +115,7 @@ export function dbSchoolToApp(s) {
   return { id: s.id, name: s.name, contact: s.contact, phone: s.phone, email: s.email,
     contractStart: s.contract_start, contractEnd: s.contract_end,
     assignedSpecialists: s.assigned_specialists || [], specialty: s.specialty,
-    students: s.students || [], notes: s.notes }
+    students: s.students || [], notes: s.notes, programa: s.programa || 'tutoria' }
 }
 export function dbGabineteSessionToApp(s) {
   return { id: s.id, schoolId: s.school_id, specialistId: s.specialist_id,
@@ -340,6 +350,7 @@ export const db = {
   async insertDocument(d) {
     const { error } = await supabase.from('documents').insert({
       id: d.id, child_id: d.childId ?? null, school_id: d.schoolId ?? null,
+      student_id: d.studentId ?? null,
       type: d.type, title: d.title,
       date: d.date, author_id: d.authorId, notes: d.notes, fields: d.fields || {},
     })
@@ -370,6 +381,41 @@ export const db = {
     if (error) throw error
     return data.map(dbSchoolToApp)
   },
+  // ── Gabinete: estudiantes y tutoras ──────────────────────────────────────
+  async getEstudiantesGabinete() {
+    const { data, error } = await supabase
+      .from('gabinete_estudiantes').select('*').order('name')
+    if (error) throw error
+    return data.map(dbEstudianteToApp)
+  },
+  async upsertEstudianteGabinete(e) {
+    const { error } = await supabase.from('gabinete_estudiantes').upsert({
+      id: e.id, school_id: e.schoolId, child_id: e.childId ?? null,
+      tutor_id: e.tutorId ?? null, name: e.name, last_name: e.lastName ?? null,
+      grade: e.grade ?? null, start_date: e.startDate || null,
+      activo: e.activo !== false, notas: e.notas ?? null,
+    })
+    if (error) throw error
+  },
+  async deleteEstudianteGabinete(id) {
+    const { error } = await supabase.from('gabinete_estudiantes').delete().eq('id', id)
+    if (error) throw error
+  },
+  async getTutores() {
+    const { data, error } = await supabase.from('tutors').select('*').order('name')
+    if (error) throw error
+    return data.map(dbTutorToApp)
+  },
+  async upsertTutor(t) {
+    const { error } = await supabase.from('tutors').upsert({
+      id: t.id, name: t.name, role: t.role ?? 'shadow', school_id: t.schoolId ?? null,
+      school: t.school ?? null, assigned_child_id: t.assignedChildId ?? null,
+      avatar_bg: t.avatarBg ?? null, start_date: t.startDate || null,
+      activo: t.activo !== false,
+    })
+    if (error) throw error
+  },
+
   async deleteSchool(id) {
     // Las sesiones y documentos del colegio se van con el por cascade. Es
     // deliberado: un colegio sin contrato no deja historial clinico de ningun
@@ -380,6 +426,7 @@ export const db = {
   async insertSchool(s) {
     const { error } = await supabase.from('schools').insert({
       id: s.id, name: s.name, contact: s.contact, phone: s.phone, email: s.email,
+      programa: s.programa || 'tutoria',
       contract_start: s.contractStart, contract_end: s.contractEnd,
       assigned_specialists: s.assignedSpecialists, specialty: s.specialty,
       students: s.students || [], notes: s.notes,

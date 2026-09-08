@@ -27,6 +27,8 @@ export const useDataStore = create((set, get) => ({
   // Sin semilla: los reportes de evolucion guardados son historia real del
   // expediente y no hay version de demostracion que tenga sentido inventar.
   evolutionReports: [],
+  estudiantesGabinete: [],
+  tutores: [],
   tutors: seedTutors,
   schools: seedSchools,
   gabineteSessions: seedGabineteSessions,
@@ -46,11 +48,11 @@ export const useDataStore = create((set, get) => ({
       const [
         dbChildren, dbObjectives, dbSessions, dbDocuments,
         dbMeetings, dbSchools, dbGabineteSessions, dbTutorReports,
-        dbEvolutionReports,
+        dbEvolutionReports, dbEstudiantes, dbTutores,
       ] = await Promise.all([
         db.getChildren(), db.getObjectives(), db.getSessions(), db.getDocuments(),
         db.getMeetings(), db.getSchools(), db.getGabineteSessions(), db.getTutorReports(),
-        db.getEvolutionReports(),
+        db.getEvolutionReports(), db.getEstudiantesGabinete(), db.getTutores(),
       ])
       // Incondicional, a diferencia de las demas: ahora que RLS aplica el
       // alcance del rol, un resultado vacio es una respuesta real ("este
@@ -74,7 +76,11 @@ export const useDataStore = create((set, get) => ({
         tutorReports: dbTutorReports,
       })
       // Incondicional: sin semilla, un resultado vacio es la verdad.
-      set({ evolutionReports: dbEvolutionReports })
+      set({
+        evolutionReports: dbEvolutionReports,
+        estudiantesGabinete: dbEstudiantes,
+        tutores: dbTutores,
+      })
     } catch (e) {
       console.error('Supabase load error:', e)
     } finally {
@@ -324,10 +330,51 @@ export const useDataStore = create((set, get) => ({
     try { await db.insertGabineteSession(session) } catch (e) { console.error('Add gabinete session:', e) }
   },
 
+  guardarEstudianteGabinete: async (est) => {
+    const fila = { id: est.id || `ge-${Date.now()}`, ...est }
+    set((s) => ({
+      estudiantesGabinete: s.estudiantesGabinete.some((x) => x.id === fila.id)
+        ? s.estudiantesGabinete.map((x) => (x.id === fila.id ? fila : x))
+        : [...s.estudiantesGabinete, fila],
+    }))
+    await db.upsertEstudianteGabinete(fila)
+    return fila
+  },
+
+  borrarEstudianteGabinete: async (id) => {
+    set((s) => ({
+      estudiantesGabinete: s.estudiantesGabinete.filter((x) => x.id !== id),
+      documents: s.documents.filter((x) => x.studentId !== id),
+    }))
+    await db.deleteEstudianteGabinete(id)
+  },
+
+  guardarTutor: async (t) => {
+    const fila = { id: t.id || `tu-${Date.now()}`, ...t }
+    set((s) => ({
+      tutores: s.tutores.some((x) => x.id === fila.id)
+        ? s.tutores.map((x) => (x.id === fila.id ? fila : x))
+        : [...s.tutores, fila],
+    }))
+    await db.upsertTutor(fila)
+    return fila
+  },
+
+  // Documento del expediente de un estudiante de gabinete.
+  agregarDocumentoDeEstudiante: async (studentId, doc) => {
+    const autor = useAuthStore.getState().currentUser?.id || null
+    const fila = { id: `d-${Date.now()}`, studentId, childId: null, schoolId: null, authorId: autor, ...doc }
+    set((s) => ({ documents: [fila, ...s.documents] }))
+    try { await db.insertDocument(fila) }
+    catch (e) { console.error('Documento de estudiante:', e) }
+    return fila
+  },
+
   borrarColegio: async (id) => {
     set((s) => ({
       schools: s.schools.filter((x) => x.id !== id),
       gabineteSessions: s.gabineteSessions.filter((x) => x.schoolId !== id),
+      estudiantesGabinete: s.estudiantesGabinete.filter((x) => x.schoolId !== id),
       documents: s.documents.filter((x) => x.schoolId !== id),
     }))
     await db.deleteSchool(id)
