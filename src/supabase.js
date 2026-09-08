@@ -190,6 +190,18 @@ export const db = {
   // El correo es la credencial de acceso y vive tambien en auth.users, que solo
   // se toca con service_role. Por eso pasa por una funcion edge y no por un
   // update normal.
+  // Reenvia el enlace para establecer contraseña. Va por funcion edge porque
+  // mandar el correo en nombre de otra persona exige service_role: desde el
+  // navegador solo se puede pedir recuperacion para uno mismo.
+  async enviarInvitacion(id) {
+    const { data, error } = await supabase.functions.invoke('enviar-invitacion', { body: { id } })
+    if (error) {
+      let detalle = null
+      try { detalle = (await error.context?.json())?.error } catch { /* sin cuerpo */ }
+      throw new Error(detalle || error.message)
+    }
+    return data
+  },
   async cambiarCorreo(id, email) {
     const { data, error } = await supabase.functions.invoke('cambiar-correo', { body: { id, email } })
     if (error) {

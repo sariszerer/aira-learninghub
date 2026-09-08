@@ -280,6 +280,8 @@ export const useDataStore = create((set, get) => ({
     }
   },
 
+  enviarInvitacion: async (id) => db.enviarInvitacion(id),
+
   cambiarCorreo: async (id, email) => {
     const res = await db.cambiarCorreo(id, email)
     await get().recargarUsuarios()

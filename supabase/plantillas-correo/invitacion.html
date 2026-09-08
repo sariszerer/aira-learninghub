@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <title>Te damos acceso a AIRA Learning Hub</title>
+  </head>
+  <body style="margin:0; padding:0; background:#F7F8FA;">
+    <!-- Texto de previsualizacion: es lo que se lee en la bandeja antes de
+         abrir. Sin el, el cliente muestra el primer texto que encuentre. -->
+    <div style="display:none; max-height:0; overflow:hidden; opacity:0;">Crea tu contraseña para entrar a AIRA.</div>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F7F8FA;">
+      <tr>
+        <td align="center" style="padding:32px 16px;">
+
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                 style="max-width:520px; background:#FFFFFF; border:1px solid #E5E7EB; border-radius:14px;">
+
+            <!-- Franja de marca. Si el cliente bloquea la imagen del logo, esta
+                 barra sigue identificando el correo. -->
+            <tr><td style="background:#1E79E2; height:4px; line-height:4px; font-size:0; border-radius:14px 14px 0 0;">&nbsp;</td></tr>
+
+            <tr>
+              <td align="center" style="padding:28px 32px 4px;">
+                <img src="https://aira-learninghub.vercel.app/aira-logo.png" width="96" alt="AIRA Learning Hub"
+                     style="display:block; width:96px; height:auto; border:0;" />
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:18px 32px 0;">
+                <h1 style="margin:0; font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:19px; line-height:1.35; font-weight:700; color:#111827;">
+                  Te damos acceso a AIRA Learning Hub
+                </h1>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:12px 32px 0; font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:14.5px; line-height:1.65; color:#374151;">
+                <p style="margin:0 0 12px;">Hola,</p>
+                <p style="margin:0 0 12px;">Ya tienes cuenta en <strong>AIRA Learning Hub</strong>, el sistema donde llevamos los expedientes, las sesiones y los reportes de los pacientes.</p>
+                <p style="margin:0;">Solo falta que crees tu contraseña.</p>
+              </td>
+            </tr>
+
+            
+            <tr>
+              <td align="center" style="padding:22px 32px 6px;">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td align="center" bgcolor="#1E79E2" style="border-radius:10px;">
+                      <a href="{{ .ConfirmationURL }}"
+                         style="display:inline-block; padding:13px 30px; font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:15px; font-weight:700; color:#FFFFFF; text-decoration:none; border-radius:10px;">
+                        Crear mi contraseña
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:14px 32px 0; font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:11.5px; line-height:1.5; color:#9CA3AF;">
+                Si el botón no funciona, copia este enlace en tu navegador:<br />
+                <span style="color:#1560B8; word-break:break-all;">{{ .ConfirmationURL }}</span>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:8px 32px 26px; font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:12.5px; line-height:1.6; color:#6B7280;">
+                Entrarás con <strong style="color:#374151;">{{ .Email }}</strong>. Este enlace caduca en 24 horas y solo se puede usar una vez. Si ya venció, pide uno nuevo a la administración.
+              </td>
+            </tr>
+
+            <tr><td style="padding:0 32px;"><div style="height:1px; background:#E5E7EB; line-height:1px; font-size:0;">&nbsp;</div></td></tr>
+
+            <tr>
+              <td style="padding:16px 32px 22px; font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:11.5px; line-height:1.6; color:#9CA3AF;">
+                <strong style="color:#1E79E2;">AIRA Learning Hub</strong> · Ciudad de Panamá, Panamá<br />
+                Este correo contiene un acceso personal. No lo reenvíes.
+              </td>
+            </tr>
+          </table>
+
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

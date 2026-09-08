@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { Plus, Check, X } from "lucide-react";
+import { Plus, Check, X, Mail } from "lucide-react";
 import { T } from "../theme.js";
 import { ROLES } from "../permissions.js";
 import { useDataStore } from "../store/dataStore.js";
@@ -42,6 +42,25 @@ export default function SpecialistsList() {
   // dice de quien. Sin ello, para saber a quien atiende alguien habia que abrir
   // los 44 pacientes uno por uno.
   const [viendoCarga, setViendoCarga] = useState(null);
+
+  // Reenvio del acceso. Las nueve cuentas ya existen, asi que no se pueden dar
+  // de alta otra vez: la unica via para que fijen su contraseña es mandarles un
+  // enlace de recuperacion.
+  const enviarInvitacion = useDataStore((s) => s.enviarInvitacion);
+  const [enviando, setEnviando] = useState(null);
+  const [aviso, setAviso] = useState(null);
+
+  const mandarAcceso = async (u) => {
+    setError(null); setAviso(null); setEnviando(u.id);
+    try {
+      const res = await enviarInvitacion(u.id);
+      setAviso(res?.aviso || `Acceso enviado a ${u.email}.`);
+    } catch (e) {
+      setError(e.message || "No se pudo enviar el acceso.");
+    } finally {
+      setEnviando(null);
+    }
+  };
   const navigate = useNavigate();
   const pacientesDe = (id) => children
     .filter((c) => c.assignedSpecialists?.includes(id))
@@ -80,6 +99,15 @@ export default function SpecialistsList() {
             borderRadius: T.radiusSm, padding: "10px 14px", fontSize: 13, marginBottom: 16,
           }}>
             {error}
+          </div>
+        )}
+
+        {aviso && (
+          <div style={{
+            background: T.logradoTint, color: T.logrado, border: `1px solid ${T.logrado}33`,
+            borderRadius: T.radiusSm, padding: "10px 14px", fontSize: 13, marginBottom: 16,
+          }}>
+            {aviso}
           </div>
         )}
 
@@ -157,16 +185,22 @@ export default function SpecialistsList() {
                   {carga(u.id).pacientes}
                 </button>
               ),
-              celda: (u) => <span style={{ fontWeight: 600 }}>{u.pacientes}</span>,
             },
             {
               clave: "sesiones", titulo: "Sesiones", ancho: "100px", alinear: "derecha",
               celda: (u) => <span style={{ color: T.inkSoft }}>{u.sesiones}</span>,
             },
             {
-              clave: "acciones", titulo: "", ancho: "130px", alinear: "derecha", ordenable: false,
+              clave: "acciones", titulo: "", ancho: "170px", alinear: "derecha", ordenable: false,
               celda: (u) => puedeGestionar ? (
                 <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+                  <IconBtn
+                    icon={Mail}
+                    title={u.email ? `Enviar acceso a ${u.email}` : "Sin correo registrado"}
+                    size="sm"
+                    disabled={!u.email || u.activo === false || enviando === u.id}
+                    onClick={() => mandarAcceso(u)}
+                  />
                   <Btn variant="secondary" size="sm" onClick={() => setEditando(u)}>Editar</Btn>
                   <IconBtn
                     icon={u.activo === false ? Check : X}
