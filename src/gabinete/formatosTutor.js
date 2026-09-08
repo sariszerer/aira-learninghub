@@ -203,10 +203,104 @@ export const FORMATO_PLAN_TUTOR = {
   ],
 };
 
+// ── Programa de preescolar ───────────────────────────────────────────────────
+//
+// Tampoco hay documentos de referencia todavia. Estos formatos recogen lo que
+// el propio programa exige segun como lo describio la clinica: el plan
+// distingue si la atencion se da en la escuela o en el centro, porque de eso
+// depende la ruta del caso.
+
+export const FORMATO_PLAN_PREESCOLAR = {
+  titulo: "Plan de Trabajo",
+  cabecera: [
+    { clave: "vigencia_desde", label: "Vigente desde", tipo: "fecha" },
+    { clave: "vigencia_hasta", label: "Vigente hasta", tipo: "fecha" },
+  ],
+  secciones: [
+    {
+      titulo: "Atención en la escuela",
+      nota: "Qué se trabaja dentro del aula y con quién.",
+      campos: [
+        { clave: "objetivos_escuela", label: "Objetivos", tipo: "area", filas: 3 },
+        { clave: "apoyos_aula", label: "Apoyos y ajustes en el aula", tipo: "area", filas: 3 },
+        { clave: "responsable_escuela", label: "Responsable en el colegio", tipo: "area", filas: 1 },
+      ],
+    },
+    {
+      titulo: "Atención en el centro",
+      nota: "Solo si el caso se deriva a AIRA. Qué se pide y con qué frecuencia.",
+      campos: [
+        { clave: "motivo_derivacion", label: "Motivo de la derivación", tipo: "area", filas: 2 },
+        { clave: "disciplinas", label: "Disciplinas sugeridas", tipo: "area", filas: 1 },
+        { clave: "frecuencia", label: "Frecuencia propuesta", tipo: "area", filas: 1 },
+      ],
+    },
+    {
+      titulo: "Acuerdos con la familia",
+      campos: [{ clave: "acuerdos_familia", label: null, tipo: "area", filas: 3 }],
+    },
+    {
+      titulo: "Cómo se revisa el avance",
+      campos: [{ clave: "revision", label: null, tipo: "area", filas: 2 }],
+    },
+  ],
+};
+
+export const FORMATO_SEGUIMIENTO_CASO = {
+  titulo: "Seguimiento de caso",
+  cabecera: [],
+  secciones: [
+    {
+      titulo: "Qué se observó",
+      nota: "Hechos observables del periodo, no interpretaciones.",
+      campos: [{ clave: "observado", label: null, tipo: "area", filas: 4 }],
+    },
+    {
+      titulo: "Qué se hizo",
+      campos: [{ clave: "intervencion", label: null, tipo: "area", filas: 3 }],
+    },
+    {
+      titulo: "Cambios respecto al seguimiento anterior",
+      campos: [{ clave: "cambios", label: null, tipo: "area", filas: 3 }],
+    },
+    {
+      titulo: "Siguiente paso",
+      campos: [{ clave: "siguiente", label: null, tipo: "area", filas: 2 }],
+    },
+  ],
+};
+
+export const FORMATO_INFORME_FAMILIA = {
+  titulo: "Informe para la familia",
+  cabecera: [],
+  secciones: [
+    {
+      titulo: "Qué observamos",
+      nota: "En lenguaje claro, sin terminología técnica sin explicar.",
+      campos: [{ clave: "observamos", label: null, tipo: "area", filas: 4 }],
+    },
+    {
+      titulo: "Qué estamos haciendo en la escuela",
+      campos: [{ clave: "en_escuela", label: null, tipo: "area", filas: 3 }],
+    },
+    {
+      titulo: "Qué recomendamos",
+      campos: [{ clave: "recomendamos", label: null, tipo: "area", filas: 3 }],
+    },
+    {
+      titulo: "Cómo pueden acompañar en casa",
+      campos: [{ clave: "en_casa", label: null, tipo: "area", filas: 3 }],
+    },
+  ],
+};
+
 export const FORMATOS_TUTOR = {
   plan_trabajo_tutor: FORMATO_PLAN_TUTOR,
   supervision: FORMATO_SUPERVISION,
   tutor_quincenal: FORMATO_QUINCENAL,
+  plan_preescolar: FORMATO_PLAN_PREESCOLAR,
+  seguimiento_caso: FORMATO_SEGUIMIENTO_CASO,
+  informe_familia: FORMATO_INFORME_FAMILIA,
 };
 
 // Vacio inicial de un formato: las claves existen desde el principio para que

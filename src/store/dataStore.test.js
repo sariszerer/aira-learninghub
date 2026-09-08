@@ -13,8 +13,11 @@ vi.mock('../supabase.js', () => ({
     getGabineteSessions: vi.fn(async () => []),
     getTutorReports: vi.fn(async () => []),
     getEvolutionReports: vi.fn(async () => []),
+    getUsers: vi.fn(async () => []),
     getEstudiantesGabinete: vi.fn(async () => []),
     getTutores: vi.fn(async () => []),
+    getTamizajes: vi.fn(async () => []),
+    upsertTamizaje: vi.fn(async () => {}),
     upsertEstudianteGabinete: vi.fn(async () => {}),
     upsertTutor: vi.fn(async () => {}),
     deleteEstudianteGabinete: vi.fn(async () => {}),
@@ -54,32 +57,48 @@ describe('loadAll', () => {
     expect(useDataStore.getState().appLoading).toBe(false)
   })
 
-  it('vacia children con resultado vacio, en vez de caer a datos semilla', async () => {
-    expect(inicial.children.length).toBeGreaterThan(0)
-    await useDataStore.getState().loadAll('specialist', 'u-sin-pacientes')
-    expect(useDataStore.getState().children).toEqual([])
+  it('arranca vacio: no hay datos de ejemplo que confundir con reales', () => {
+    // Se retiraron los datos semilla. En un sistema con expedientes clinicos de
+    // menores, un paciente inventado indistinguible de uno real no es una
+    // comodidad de desarrollo.
+    for (const k of ['children', 'users', 'objectives', 'sessions', 'documents',
+                     'meetings', 'schools', 'gabineteSessions', 'tutorReports']) {
+      expect(inicial[k], k).toEqual([])
+    }
   })
 
-  it('vacia TODAS las colecciones con resultado vacio, no solo children', async () => {
-    // Antes solo children se vaciaba y el resto caia a la semilla. Eso hacia
-    // que el panel de gabinete mostrara un "Colegio Ejemplo" inventado que no
-    // existia en la base — y que por tanto no habia forma de borrar. Con RLS
-    // aplicando el alcance, una coleccion vacia es una respuesta real.
-    expect(inicial.objectives.length).toBeGreaterThan(0)
-    expect(inicial.schools.length).toBeGreaterThan(0)
+  it('carga los usuarios, no solo los pacientes', async () => {
+    // No se cargaban: la pantalla de especialistas mostraba la semilla, que no
+    // trae correo, y el equipo entero salia "sin correo" con el boton de enviar
+    // acceso desactivado.
+    db.getUsers.mockResolvedValueOnce([{ id: 'u-1', name: 'Ana', email: 'ana@aira.com' }])
+    await useDataStore.getState().loadAll('admin', 'u-1')
+    expect(useDataStore.getState().users).toEqual([{ id: 'u-1', name: 'Ana', email: 'ana@aira.com' }])
+  })
+
+  it('un resultado vacio deja la coleccion vacia, no la anterior', async () => {
+    // Con RLS aplicando el alcance, vacio es una respuesta real: "este
+    // especialista no tiene pacientes". Conservar lo de antes mostraria los de
+    // la sesion previa.
+    useDataStore.setState({ schools: [{ id: 'viejo' }], children: [{ id: 'viejo' }] })
     await useDataStore.getState().loadAll('admin', 'u-1')
     const s = useDataStore.getState()
-    for (const k of ['objectives', 'sessions', 'documents', 'meetings', 'schools', 'gabineteSessions', 'tutorReports']) {
+    for (const k of ['children', 'objectives', 'sessions', 'documents', 'meetings',
+                     'schools', 'gabineteSessions', 'tutorReports']) {
       expect(s[k], k).toEqual([])
     }
   })
 
-  it('si la carga falla, la semilla se queda en pie', async () => {
+  it('si la carga falla, no se aplica nada a medias', async () => {
     // El catch impide que se aplique ninguna asignacion, asi que una caida de
     // red no deja la pantalla en blanco fingiendo que no hay pacientes.
+    // El catch impide que se aplique ninguna asignacion: una caida a mitad no
+    // deja media pantalla con datos nuevos y media con los viejos.
+    const previos = [{ id: 'o-previo' }]
+    useDataStore.setState({ objectives: previos })
     db.getObjectives.mockRejectedValueOnce(new Error('sin red'))
     await useDataStore.getState().loadAll('admin', 'u-1')
-    expect(useDataStore.getState().objectives).toEqual(inicial.objectives)
+    expect(useDataStore.getState().objectives).toEqual(previos)
   })
 
   it('no filtra pacientes desde el cliente: el alcance lo aplica RLS', async () => {
@@ -93,8 +112,9 @@ describe('loadAll', () => {
 
 describe('renewPackage', () => {
   it('escribe el mismo numero de paquete en el estado y en la base', async () => {
-    const id = inicial.children[0].id
-    const previo = inicial.children[0].packageNum || 1
+    useDataStore.setState({ children: [{ id: 'c-x', name: 'X', packageNum: 2 }] })
+    const id = 'c-x'
+    const previo = 2
     await useDataStore.getState().renewPackage(id)
     const enEstado = useDataStore.getState().children.find((c) => c.id === id).packageNum
     expect(enEstado).toBe(previo + 1)

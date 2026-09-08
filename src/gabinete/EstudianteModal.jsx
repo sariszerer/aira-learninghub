@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { T, inputStyle } from "../theme.js";
 import { useDataStore } from "../store/dataStore.js";
 import { Btn, Chip, Modal, ModalHeader } from "../ui/index.js";
+import { NIVELES, RUTAS } from "./preescolar.js";
 
 // Alta y edicion de un estudiante del gabinete.
 //
@@ -10,7 +11,7 @@ import { Btn, Chip, Modal, ModalHeader } from "../ui/index.js";
 // reciben — pasa — enlazarlos evita tener la misma persona dos veces y permite
 // saltar de un expediente al otro.
 
-export default function EstudianteModal({ estudiante, schoolId, onGuardar, onClose }) {
+export default function EstudianteModal({ estudiante, schoolId, programa = "tutoria", onGuardar, onClose }) {
   const nuevo = !estudiante?.id;
   const children = useDataStore((s) => s.children);
   const tutores = useDataStore((s) => s.tutores);
@@ -24,7 +25,10 @@ export default function EstudianteModal({ estudiante, schoolId, onGuardar, onClo
     tutorId: estudiante?.tutorId || "",
     childId: estudiante?.childId || "",
     notas: estudiante?.notas || "",
+    nivel: estudiante?.nivel || "",
+    ruta: estudiante?.ruta || "sin_evaluar",
   });
+  const esPreescolar = programa === "preescolar";
   const [tutorNuevo, setTutorNuevo] = useState("");
   const set = (k, v) => setF((x) => ({ ...x, [k]: v }));
 
@@ -60,6 +64,8 @@ export default function EstudianteModal({ estudiante, schoolId, onGuardar, onClo
       name: f.name.trim(),
       lastName: f.lastName.trim() || null,
       grade: f.grade.trim() || null,
+      nivel: esPreescolar ? (f.nivel || null) : null,
+      ruta: esPreescolar ? f.ruta : "sin_evaluar",
       startDate: f.startDate || null,
       tutorId: tutorId || null,
       childId: f.childId || null,
@@ -85,16 +91,40 @@ export default function EstudianteModal({ estudiante, schoolId, onGuardar, onClo
             <input value={f.lastName} onChange={(e) => set("lastName", e.target.value)}
                    style={{ ...inputStyle, width: "100%", boxSizing: "border-box" }} />
           </Campo>
-          <Campo etiqueta="Grado">
-            <input value={f.grade} onChange={(e) => set("grade", e.target.value)} placeholder="Ej: 1° primaria"
-                   style={{ ...inputStyle, width: "100%", boxSizing: "border-box" }} />
-          </Campo>
+          {esPreescolar ? (
+            <div style={{ gridColumn: "1 / -1" }}>
+              <Campo etiqueta="Nivel">
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {NIVELES.map((n) => (
+                    <Chip key={n} label={n} selected={f.nivel === n}
+                          onClick={() => set("nivel", f.nivel === n ? "" : n)} />
+                  ))}
+                </div>
+              </Campo>
+            </div>
+          ) : (
+            <Campo etiqueta="Grado">
+              <input value={f.grade} onChange={(e) => set("grade", e.target.value)} placeholder="Ej: 1 primaria"
+                     style={{ ...inputStyle, width: "100%", boxSizing: "border-box" }} />
+            </Campo>
+          )}
           <Campo etiqueta="Inicio del acompañamiento">
             <input type="date" value={f.startDate} onChange={(e) => set("startDate", e.target.value)}
                    style={{ ...inputStyle, width: "100%", boxSizing: "border-box" }} />
           </Campo>
         </div>
 
+        {esPreescolar && (
+          <Campo etiqueta="Ruta del caso" ayuda="Qué se decidió hacer tras el tamizaje. También se puede fijar al registrarlo.">
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {Object.entries(RUTAS).sort((a, b) => a[1].orden - b[1].orden).map(([clave, r]) => (
+                <Chip key={clave} label={r.label} selected={f.ruta === clave} onClick={() => set("ruta", clave)} />
+              ))}
+            </div>
+          </Campo>
+        )}
+
+        {!esPreescolar && (
         <Campo etiqueta="Tutora asignada">
           {delColegio.length > 0 && (
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
@@ -112,6 +142,7 @@ export default function EstudianteModal({ estudiante, schoolId, onGuardar, onClo
             />
           )}
         </Campo>
+        )}
 
         <Campo
           etiqueta="Expediente clínico"

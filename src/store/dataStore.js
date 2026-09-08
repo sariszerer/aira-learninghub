@@ -2,10 +2,18 @@ import { create } from 'zustand'
 import { db } from '../supabase.js'
 import { TODAY } from '../theme.js'
 import { useAuthStore } from './authStore.js'
-import {
-  seedUsers, seedChildren, seedObjectives, seedSessions, seedDocuments, seedMeetings,
-  seedParentReports, seedTutors, seedSchools, seedGabineteSessions, seedTutorReports,
-} from '../data/seed.js'
+// Sin datos semilla. La aplicacion arranca vacia y se llena con lo que hay en
+// la base.
+//
+// Se retiraron porque presentaban informacion inventada como si fuera del
+// expediente: el panel de gabinete mostraba un "Colegio Ejemplo" que nadie
+// podia borrar porque no existia, y la lista de especialistas mostraba al
+// equipo SIN CORREO — los nombres de la semilla coinciden con los reales, pero
+// la semilla no trae direcciones, asi que el boton de enviar acceso salia
+// desactivado para todo el mundo.
+//
+// En un sistema con expedientes clinicos de menores, un dato de demostracion
+// indistinguible de uno real no es una comodidad de desarrollo: es un riesgo.
 
 // Datos clinicos y sus mutaciones.
 //
@@ -17,22 +25,23 @@ import {
 // El id del usuario actual se lee del store de sesion cuando hace falta.
 // Zustand permite ese acceso puntual fuera de React; Context no.
 export const useDataStore = create((set, get) => ({
-  children: seedChildren,
-  users: seedUsers,
-  objectives: seedObjectives,
-  sessions: seedSessions,
-  documents: seedDocuments,
-  meetings: seedMeetings,
-  parentReports: seedParentReports,
+  children: [],
+  users: [],
+  objectives: [],
+  sessions: [],
+  documents: [],
+  meetings: [],
+  parentReports: [],
   // Sin semilla: los reportes de evolucion guardados son historia real del
   // expediente y no hay version de demostracion que tenga sentido inventar.
   evolutionReports: [],
   estudiantesGabinete: [],
   tutores: [],
-  tutors: seedTutors,
-  schools: seedSchools,
-  gabineteSessions: seedGabineteSessions,
-  tutorReports: seedTutorReports,
+  tamizajes: [],
+  tutors: [],
+  schools: [],
+  gabineteSessions: [],
+  tutorReports: [],
   activityLog: [],
   rolesDisponibles: [],
 
@@ -48,25 +57,23 @@ export const useDataStore = create((set, get) => ({
       const [
         dbChildren, dbObjectives, dbSessions, dbDocuments,
         dbMeetings, dbSchools, dbGabineteSessions, dbTutorReports,
-        dbEvolutionReports, dbEstudiantes, dbTutores,
+        dbEvolutionReports, dbEstudiantes, dbTutores, dbTamizajes, dbUsers,
       ] = await Promise.all([
         db.getChildren(), db.getObjectives(), db.getSessions(), db.getDocuments(),
         db.getMeetings(), db.getSchools(), db.getGabineteSessions(), db.getTutorReports(),
         db.getEvolutionReports(), db.getEstudiantesGabinete(), db.getTutores(),
+        db.getTamizajes(), db.getUsers(),
       ])
       // Incondicional, a diferencia de las demas: ahora que RLS aplica el
       // alcance del rol, un resultado vacio es una respuesta real ("este
       // especialista no tiene pacientes"). Caer a datos semilla ahi le
       // mostraria todos los de demostracion en vez de ninguno.
       set({ children: dbChildren })
-      // Todas incondicionales, por la misma razon que children: con RLS
-      // aplicando el alcance, una coleccion vacia es una respuesta real y no un
-      // fallo de carga. Caer a la semilla ahi presenta datos inventados como si
-      // fueran del expediente — el panel de gabinete mostraba un "Colegio
-      // Ejemplo" que no existe en la base, y por eso no habia forma de
-      // borrarlo. Si la carga falla de verdad, el catch de abajo impide que se
-      // aplique ninguna de estas asignaciones y la semilla se queda.
+      // Los usuarios no se cargaban aqui: la pantalla de especialistas mostraba
+      // la semilla, que no trae correo, y por eso el equipo entero salia "sin
+      // correo" con el boton de enviar acceso desactivado.
       set({
+        users: dbUsers,
         objectives: dbObjectives,
         sessions: dbSessions,
         documents: dbDocuments,
@@ -80,6 +87,7 @@ export const useDataStore = create((set, get) => ({
         evolutionReports: dbEvolutionReports,
         estudiantesGabinete: dbEstudiantes,
         tutores: dbTutores,
+        tamizajes: dbTamizajes,
       })
     } catch (e) {
       console.error('Supabase load error:', e)
@@ -347,6 +355,44 @@ export const useDataStore = create((set, get) => ({
       documents: s.documents.filter((x) => x.studentId !== id),
     }))
     await db.deleteEstudianteGabinete(id)
+  },
+
+  guardarTamizaje: async (t) => {
+    const fila = { id: t.id || `tz-${Date.now()}`, ...t }
+    set((s) => ({
+      tamizajes: s.tamizajes.some((x) => x.id === fila.id)
+        ? s.tamizajes.map((x) => (x.id === fila.id ? fila : x))
+        : [fila, ...s.tamizajes],
+    }))
+    await db.upsertTamizaje(fila)
+    return fila
+  },
+
+  // Abre el expediente clinico de un estudiante derivado y los enlaza.
+  //
+  // Es la accion que cierra el punto 4 del programa: sin ella, "derivado al
+  // centro" es una etiqueta que alguien tiene que recordar convertir en un alta
+  // de paciente, y el aviso de "derivados sin expediente" no tendria como
+  // resolverse desde la pantalla donde aparece.
+  abrirExpedienteDeEstudiante: async (studentId) => {
+    const est = get().estudiantesGabinete.find((e) => e.id === studentId)
+    if (!est) throw new Error('No se encontró el estudiante')
+    if (est.childId) return est.childId
+
+    const id = `c-${Date.now().toString(36)}`
+    const paciente = {
+      id, name: est.name, lastName: est.lastName || '',
+      birthDate: null, admissionDate: new Date().toISOString().slice(0, 10),
+      specialties: [], assignedSpecialists: [], status: 'activo',
+      parentContact: {}, packageNum: 1,
+      // Queda escrito de donde viene: en el expediente clinico importa saber
+      // que el caso entro por el tamizaje del colegio y no por consulta directa.
+      referralReason: `Derivado desde el programa de preescolar${est.nivel ? ` (${est.nivel})` : ''}.`,
+    }
+    set((s) => ({ children: [...s.children, paciente] }))
+    await db.insertChild(paciente)
+    await get().guardarEstudianteGabinete({ ...est, childId: id })
+    return id
   },
 
   guardarTutor: async (t) => {
