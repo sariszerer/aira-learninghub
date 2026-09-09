@@ -96,6 +96,23 @@ function sinTextoDePlantillas(src) {
   return salida
 }
 
+// Un identificador esta USADO si algo lo rodea como codigo: se invoca, se
+// accede, se pasa, o abre una etiqueta JSX.
+//
+// Con el limite de palabra a secas bastaba con que la palabra apareciera, y el
+// texto que se pinta en pantalla cuenta como aparicion: el titulo "Agenda —
+// Google Calendar" hacia saltar el guardia pidiendo importar el icono Calendar,
+// que esa pantalla ya no usa. Es texto JSX, que no va entre comillas y por eso
+// soloCodigo no lo quita.
+function seUsa(codigo, nombre) {
+  const e = nombre.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  // Delante: <Nombre  {Nombre  (Nombre  ,Nombre  =Nombre  [Nombre  :Nombre
+  const antes = new RegExp(`[<{(,=[:]\\s*${e}(?![A-Za-z0-9_$])`)
+  // Detras: Nombre(  Nombre.  Nombre,  Nombre)  Nombre}  Nombre]  Nombre;  Nombre=
+  const despues = new RegExp(`(?<![A-Za-z0-9_$.])${e}\\s*[(.,)}\\];=]`)
+  return antes.test(codigo) || despues.test(codigo)
+}
+
 function importadoODefinido(src, nombre) {
   const e = nombre.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   return [
@@ -118,8 +135,7 @@ describe('imports entre modulos', () => {
       const crudo = fs.readFileSync(archivo, 'utf8')
       const codigo = soloCodigo(crudo)
       for (const nombre of CONOCIDOS) {
-        const usado = new RegExp(`(?<![A-Za-z0-9_$.])${nombre}(?![A-Za-z0-9_$])`).test(codigo)
-        if (usado && !importadoODefinido(crudo, nombre)) {
+        if (seUsa(codigo, nombre) && !importadoODefinido(crudo, nombre)) {
           libres.push(`${archivo.replace(/\\/g, '/')} usa ${nombre} sin importarlo`)
         }
       }

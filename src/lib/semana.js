@@ -1,0 +1,112 @@
+// Cálculo de la rejilla del calendario: qué días entran en la vista y dónde
+// se coloca cada cita dentro del día.
+//
+// Todo con fechas en texto "AAAA-MM-DD" y minutos desde medianoche, nunca con
+// objetos Date sobre la zona del navegador. El centro está en Panamá y quien
+// mira puede no estarlo: construir un Date de "2026-09-09" en otro huso lo
+// corre un día, y la semana entera se desplaza.
+
+export const DIAS = ["lun", "mar", "mié", "jue", "vie", "sáb", "dom"];
+
+// La semana empieza en lunes, como el calendario del centro y el de cualquier
+// colegio de Panamá. Date.getDay() cuenta desde domingo, de ahí el ajuste.
+export function inicioDeSemana(fecha) {
+  const [a, m, d] = fecha.split("-").map(Number);
+  const dt = new Date(Date.UTC(a, m - 1, d));
+  const desdeLunes = (dt.getUTCDay() + 6) % 7;
+  dt.setUTCDate(dt.getUTCDate() - desdeLunes);
+  return dt.toISOString().slice(0, 10);
+}
+
+export function sumarDias(fecha, n) {
+  const [a, m, d] = fecha.split("-").map(Number);
+  const dt = new Date(Date.UTC(a, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + n);
+  return dt.toISOString().slice(0, 10);
+}
+
+export function diasDeSemana(fecha) {
+  const lunes = inicioDeSemana(fecha);
+  return Array.from({ length: 7 }, (_, i) => sumarDias(lunes, i));
+}
+
+// El rango que se le pide a Google, con el huso fijo de Panamá: no tiene
+// horario de verano, así que el desfase es el mismo todo el año.
+export function rangoDeVista(vista, fecha) {
+  const dias = vista === "dia" ? [fecha] : diasDeSemana(fecha);
+  return {
+    desde: `${dias[0]}T00:00:00-05:00`,
+    hasta: `${dias[dias.length - 1]}T23:59:59-05:00`,
+  };
+}
+
+export function agruparPorDia(eventos = []) {
+  const mapa = new Map();
+  for (const e of eventos) {
+    if (!mapa.has(e.fecha)) mapa.set(e.fecha, []);
+    mapa.get(e.fecha).push(e);
+  }
+  return mapa;
+}
+
+// Reparte en columnas las citas que se pisan.
+//
+// Es lo que hace honesta una vista de semana. En este centro se solapan de
+// verdad: el 9 de septiembre hay dos citas a las 2:45 con especialistas
+// distintas, y otras dos a las 4:00. Dibujadas una encima de otra, la segunda
+// desaparece y la agenda miente sobre la carga del día.
+//
+// Se agrupan en racimos de citas encadenadas por solape, y dentro de cada
+// racimo cada una toma la primera columna libre. El ancho lo fija el racimo
+// entero, no la cita: así dos que se pisan ocupan media caja cada una y se ven
+// las dos completas.
+export function repartirSolapes(eventos = []) {
+  const conHora = eventos
+    .filter((e) => e.inicioMin != null)
+    .sort((a, b) => a.inicioMin - b.inicioMin || a.finMin - b.finMin);
+
+  const salida = [];
+  let racimo = [];
+  let finDelRacimo = -1;
+
+  const cerrar = () => {
+    if (!racimo.length) return;
+    // Las columnas se asignan buscando la primera libre; el total es el máximo
+    // simultáneo del racimo, no cuántas citas tiene.
+    const columnas = [];
+    for (const e of racimo) {
+      let i = columnas.findIndex((fin) => fin <= e.inicioMin);
+      if (i === -1) { i = columnas.length; columnas.push(0); }
+      columnas[i] = e.finMin;
+      e._col = i;
+    }
+    for (const e of racimo) salida.push({ ...e, columna: e._col, columnas: columnas.length });
+    racimo = [];
+    finDelRacimo = -1;
+  };
+
+  for (const e of conHora) {
+    if (racimo.length && e.inicioMin >= finDelRacimo) cerrar();
+    racimo.push(e);
+    finDelRacimo = Math.max(finDelRacimo, e.finMin);
+  }
+  cerrar();
+  return salida;
+}
+
+// Franja horaria que hay que dibujar.
+//
+// Se ajusta a lo que hay, con un margen: una rejilla fija de 00:00 a 23:59
+// dedica dos tercios del alto a horas en las que el centro está cerrado, y deja
+// las citas apretadas en una banda. Si no hay nada con hora, se cae a la jornada
+// habitual para que la rejilla no salga vacía ni de altura cero.
+export function franjaHoraria(eventos = [], { desde = 7, hasta = 19 } = {}) {
+  const conHora = eventos.filter((e) => e.inicioMin != null);
+  if (!conHora.length) return { desde, hasta };
+  const min = Math.min(...conHora.map((e) => e.inicioMin));
+  const max = Math.max(...conHora.map((e) => e.finMin));
+  return {
+    desde: Math.max(0, Math.floor(min / 60) - 1),
+    hasta: Math.min(24, Math.ceil(max / 60) + 1),
+  };
+}

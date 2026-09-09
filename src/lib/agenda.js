@@ -36,12 +36,45 @@ export function estaCancelada(ev = {}) {
   return texto.includes("CANCEL");
 }
 
+// Fecha del evento en la zona del centro, como texto AAAA-MM-DD.
+//
+// Se saca del desfase que ya trae el ISO y no construyendo un Date: quien mira
+// la agenda puede estar en otro huso, y ahí una cita de las 8 de la noche se
+// iría al día siguiente. El calendario es de Panamá y la agenda tiene que
+// leerse igual desde cualquier parte.
+export function fechaDe(iso) {
+  if (!iso) return "";
+  if (!iso.includes("T")) return iso.slice(0, 10);
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  // en-CA da directamente AAAA-MM-DD.
+  return d.toLocaleDateString("en-CA", { timeZone: ZONA });
+}
+
+// Minutos desde medianoche, en hora de Panamá. Es lo que posiciona la cita en
+// la rejilla; la cadena "9:45 AM" sirve para leerla, no para dibujarla.
+export function minutosDe(iso) {
+  if (!iso || !iso.includes("T")) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  const [h, m] = d.toLocaleTimeString("en-GB", {
+    hour: "2-digit", minute: "2-digit", hour12: false, timeZone: ZONA,
+  }).split(":").map(Number);
+  return h * 60 + m;
+}
+
 export function filaDeEvento(ev = {}) {
+  const ini = ev.start?.dateTime || ev.start?.date || "";
+  const fin = ev.end?.dateTime || ev.end?.date || "";
   return {
     id: ev.id,
     title: ev.summary || "Sin título",
-    time: horaDe(ev.start?.dateTime || ev.start?.date || ""),
-    endTime: horaDe(ev.end?.dateTime || ev.end?.date || ""),
+    time: horaDe(ini),
+    endTime: horaDe(fin),
+    fecha: fechaDe(ini),
+    inicioMin: minutosDe(ini),
+    finMin: minutosDe(fin),
+    diaCompleto: !ini.includes("T"),
     raw: ev.summary || "",
     description: ev.description || "",
     specialist: "",

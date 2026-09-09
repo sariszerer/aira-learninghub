@@ -7,16 +7,11 @@ import TodaySchedule from "./TodaySchedule.jsx";
 import CalendarAgenda from "./CalendarAgenda.jsx";
 import ChildCard from "./ChildCard.jsx";
 import { useDataStore } from "../store/dataStore.js";
-import { useCalendarStore } from "../store/calendarStore.js";
 
-function SpecialistHome({ user, onOpenChild, onCalendarDateChange }) {
+function SpecialistHome({ user, onOpenChild }) {
   const children = useDataStore((s) => s.children);
   const users = useDataStore((s) => s.users);
   const sessions = useDataStore((s) => s.sessions);
-  const calendarEvents = useCalendarStore((s) => s.events);
-  const calendarLoading = useCalendarStore((s) => s.loading);
-  const calendarError = useCalendarStore((s) => s.error);
-  const calendarDate = useCalendarStore((s) => s.date);
   const [query, setQuery] = useState("");
   const myChildren = visibleChildren(user, children);
   const filtered = myChildren.filter((c) =>
@@ -37,11 +32,7 @@ function SpecialistHome({ user, onOpenChild, onCalendarDateChange }) {
         </div>
       </div>
 
-      <CalendarAgenda
-        events={calendarEvents} loading={calendarLoading} error={calendarError}
-        date={calendarDate} onDateChange={onCalendarDateChange}
-        children={myChildren} onOpenChild={onOpenChild}
-      />
+      <CalendarAgenda children={myChildren} onOpenChild={onOpenChild} />
       <TodaySchedule childrenToday={childrenToday} onOpenChild={onOpenChild} />
 
       <div style={{ position: "relative", marginBottom: 28 }}>
