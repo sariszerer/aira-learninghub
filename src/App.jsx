@@ -33,8 +33,6 @@ export default function App() {
   const markLoaded = useDataStore((s) => s.markLoaded);
   const addGabineteSession = useDataStore((s) => s.addGabineteSession);
 
-  const calendarDate = useCalendarStore((s) => s.date);
-  const setCalendarDate = useCalendarStore((s) => s.setDate);
   const fetchCalendarEvents = useCalendarStore((s) => s.fetchEvents);
 
   // La navegacion vive en la URL: / · /gabinete · /paciente/:childId?tab=slug
@@ -83,13 +81,13 @@ export default function App() {
     }
   }, [currentUser, loadAll, markLoaded]);
 
+  // Solo la carga inicial. Cambiar de dia o de vista lo resuelve el propio
+  // store, que es quien sabe que rango pedir para cada una; tenerlo tambien
+  // aqui provocaba dos peticiones por cada clic.
   useEffect(() => {
-    if (currentUser && currentUser.home !== "tutor") {
-      fetchCalendarEvents(calendarDate);
-    }
-  }, [currentUser, calendarDate, fetchCalendarEvents]);
+    if (currentUser && currentUser.home !== "tutor") fetchCalendarEvents();
+  }, [currentUser, fetchCalendarEvents]);
 
-  const onCalendarDateChange = (d) => { setCalendarDate(d); fetchCalendarEvents(d); };
 
   // El plegado del menu vive aqui porque el area de trabajo necesita el ancho
   // para su margen: si viviera dentro del Sidebar, App no podria seguirlo.
@@ -146,11 +144,11 @@ export default function App() {
           currentUser.home === "tutor" ? (
             <TutorAiraHome user={currentUser} onOpenChild={openChild} />
           ) : currentUser.home === "especialista" ? (
-            <SpecialistHome user={currentUser} onCalendarDateChange={onCalendarDateChange} onOpenChild={openChild} />
+            <SpecialistHome user={currentUser} onOpenChild={openChild} />
           ) : currentUser.home === "clinico" ? (
-            <ClinicalDirectorHome user={currentUser} onCalendarDateChange={onCalendarDateChange} onOpenChild={openChild} />
+            <ClinicalDirectorHome user={currentUser} onOpenChild={openChild} />
           ) : currentUser.home === "admin" ? (
-            <AdminDashboard onCalendarDateChange={onCalendarDateChange} onOpenChild={openChild} />
+            <AdminDashboard onOpenChild={openChild} />
           ) : null
         } />
 

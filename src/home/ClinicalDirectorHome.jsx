@@ -8,9 +8,8 @@ import ChildCard from "./ChildCard.jsx";
 import { computeClinicalAlerts } from "./clinicalAlerts.js";
 import ActivityFeed from "./ActivityFeed.jsx";
 import { useDataStore } from "../store/dataStore.js";
-import { useCalendarStore } from "../store/calendarStore.js";
 
-function ClinicalDirectorHome({ user, onOpenChild, onCalendarDateChange }) {
+function ClinicalDirectorHome({ user, onOpenChild }) {
   const children = useDataStore((s) => s.children);
   const users = useDataStore((s) => s.users);
   const sessions = useDataStore((s) => s.sessions);
@@ -18,10 +17,6 @@ function ClinicalDirectorHome({ user, onOpenChild, onCalendarDateChange }) {
   const tutors = useDataStore((s) => s.tutors);
   const tutorReports = useDataStore((s) => s.tutorReports);
   const activityLog = useDataStore((s) => s.activityLog);
-  const calendarEvents = useCalendarStore((s) => s.events);
-  const calendarLoading = useCalendarStore((s) => s.loading);
-  const calendarError = useCalendarStore((s) => s.error);
-  const calendarDate = useCalendarStore((s) => s.date);
   const onMarkSeen = useDataStore((s) => s.markActivitySeen);
   const [query, setQuery] = useState("");
   const [filterSpecialty, setFilterSpecialty] = useState("Todos");
@@ -104,11 +99,7 @@ function ClinicalDirectorHome({ user, onOpenChild, onCalendarDateChange }) {
       </Card>
 
       {/* Live calendar */}
-      <CalendarAgenda
-        events={calendarEvents} loading={calendarLoading} error={calendarError}
-        date={calendarDate} onDateChange={onCalendarDateChange}
-        children={children} onOpenChild={onOpenChild}
-      />
+      <CalendarAgenda children={children} onOpenChild={onOpenChild} />
       <ActivityFeed activityLog={activityLog} users={users} onMarkSeen={onMarkSeen} />
 
       {/* Two-column layout */}

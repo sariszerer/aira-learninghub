@@ -13,12 +13,11 @@
 import { supabase } from "./supabase.js";
 import { filasDeEventos } from "./lib/agenda.js";
 
-// Panamá no tiene horario de verano, así que el desfase es fijo todo el año.
-const HUSO = "-05:00";
-
-export async function fetchCalendarEvents(date) {
+// El rango lo arma quien llama (rangoDeVista): el mismo endpoint sirve para un
+// dia y para una semana, y la funcion ya recibia desde/hasta desde el principio.
+export async function fetchCalendarEvents({ desde, hasta }) {
   const { data, error } = await supabase.functions.invoke("calendario", {
-    body: { desde: `${date}T00:00:00${HUSO}`, hasta: `${date}T23:59:59${HUSO}` },
+    body: { desde, hasta },
   });
 
   // functions.invoke envuelve el fallo y pierde el cuerpo de la respuesta, que

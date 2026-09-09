@@ -6,20 +6,15 @@ import { ROLES } from "../permissions.js";
 import { Avatar, Btn, Card, Eyebrow, List, ListRow, StatStrip } from "../ui/index.js";
 import CalendarAgenda from "./CalendarAgenda.jsx";
 import { useDataStore } from "../store/dataStore.js";
-import { useCalendarStore } from "../store/calendarStore.js";
 import { useAuthStore } from "../store/authStore.js";
 
-function AdminDashboard({ onOpenChild, onCalendarDateChange }) {
+function AdminDashboard({ onOpenChild }) {
   const children = useDataStore((s) => s.children);
   const users = useDataStore((s) => s.users);
   const sessions = useDataStore((s) => s.sessions);
   const objectives = useDataStore((s) => s.objectives);
   const parentReports = useDataStore((s) => s.parentReports);
   const activityLog = useDataStore((s) => s.activityLog);
-  const calendarEvents = useCalendarStore((s) => s.events);
-  const calendarLoading = useCalendarStore((s) => s.loading);
-  const calendarError = useCalendarStore((s) => s.error);
-  const calendarDate = useCalendarStore((s) => s.date);
   const onMarkSeen = useDataStore((s) => s.markActivitySeen);
   const currentUser = useAuthStore((s) => s.currentUser);
   const onAddChild = useDataStore((s) => s.addChild);
@@ -81,11 +76,7 @@ function AdminDashboard({ onOpenChild, onCalendarDateChange }) {
         },
       ]} />
 
-      <CalendarAgenda
-        events={calendarEvents} loading={calendarLoading} error={calendarError}
-        date={calendarDate} onDateChange={onCalendarDateChange}
-        children={children} onOpenChild={onOpenChild}
-      />
+      <CalendarAgenda children={children} onOpenChild={onOpenChild} />
 
       {sessions.length > 0 && (childrenNoRecentSession.length > 0 || childrenReadyForParentReport.length > 0) && (
         <Card style={{ padding: 0, marginBottom: 24, overflow: "hidden" }}>

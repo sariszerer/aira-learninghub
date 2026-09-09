@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { horaDe, estaCancelada, filaDeEvento, filasDeEventos } from './agenda.js'
+import { horaDe, estaCancelada, filaDeEvento, filasDeEventos, fechaDe, minutosDe } from './agenda.js'
 
 describe('horaDe', () => {
   it('formatea en la hora de Panamá', () => {
@@ -64,5 +64,43 @@ describe('filaDeEvento', () => {
   it('una lista vacía da una lista vacía', () => {
     expect(filasDeEventos([])).toEqual([])
     expect(filasDeEventos()).toEqual([])
+  })
+})
+
+describe('fechaDe y minutosDe', () => {
+  it('sitúan la cita en el día y la hora de Panamá', () => {
+    // Se leen del desfase del propio ISO, no de un Date en la zona de quien
+    // mira: desde España, una cita de las 8 de la noche en Panamá se iría al
+    // día siguiente y la agenda mostraría el día equivocado.
+    expect(fechaDe('2026-09-09T20:00:00-05:00')).toBe('2026-09-09')
+    expect(minutosDe('2026-09-09T20:00:00-05:00')).toBe(20 * 60)
+  })
+
+  it('un evento de día completo tiene fecha pero no minutos', () => {
+    expect(fechaDe('2026-09-09')).toBe('2026-09-09')
+    expect(minutosDe('2026-09-09')).toBeNull()
+  })
+
+  it('no revientan con basura', () => {
+    expect(fechaDe('')).toBe('')
+    expect(minutosDe(null)).toBeNull()
+  })
+})
+
+describe('filaDeEvento — datos para la rejilla', () => {
+  it('trae fecha, minutos y si ocupa el día entero', () => {
+    expect(filaDeEvento({
+      id: 'e1', summary: 'Haim - Sarita',
+      start: { dateTime: '2026-09-09T14:45:00-05:00' },
+      end: { dateTime: '2026-09-09T15:30:00-05:00' },
+    })).toMatchObject({
+      fecha: '2026-09-09', inicioMin: 885, finMin: 930, diaCompleto: false,
+    })
+  })
+
+  it('marca los de día completo', () => {
+    expect(filaDeEvento({
+      id: 'e2', summary: 'NEYMA OUT VACACIONES', start: { date: '2026-09-09' },
+    })).toMatchObject({ diaCompleto: true, inicioMin: null })
   })
 })
