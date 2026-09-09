@@ -35,7 +35,6 @@ export default function App() {
   const calendarDate = useCalendarStore((s) => s.date);
   const setCalendarDate = useCalendarStore((s) => s.setDate);
   const fetchCalendarEvents = useCalendarStore((s) => s.fetchEvents);
-  const connectGcal = useCalendarStore((s) => s.connect);
 
   // La navegacion vive en la URL: / · /gabinete · /paciente/:childId?tab=slug
   const navigate = useNavigate();
@@ -148,9 +147,9 @@ export default function App() {
           ) : currentUser.home === "especialista" ? (
             <SpecialistHome user={currentUser} onCalendarDateChange={onCalendarDateChange} onOpenChild={openChild} />
           ) : currentUser.home === "clinico" ? (
-            <ClinicalDirectorHome user={currentUser} onCalendarDateChange={onCalendarDateChange} onOpenChild={openChild} onConnectGcal={connectGcal} />
+            <ClinicalDirectorHome user={currentUser} onCalendarDateChange={onCalendarDateChange} onOpenChild={openChild} />
           ) : currentUser.home === "admin" ? (
-            <AdminDashboard onCalendarDateChange={onCalendarDateChange} onOpenChild={openChild} onConnectGcal={connectGcal} />
+            <AdminDashboard onCalendarDateChange={onCalendarDateChange} onOpenChild={openChild} />
           ) : null
         } />
 

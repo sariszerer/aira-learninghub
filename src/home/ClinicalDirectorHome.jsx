@@ -10,7 +10,7 @@ import ActivityFeed from "./ActivityFeed.jsx";
 import { useDataStore } from "../store/dataStore.js";
 import { useCalendarStore } from "../store/calendarStore.js";
 
-function ClinicalDirectorHome({ user, onOpenChild, onCalendarDateChange, onConnectGcal }) {
+function ClinicalDirectorHome({ user, onOpenChild, onCalendarDateChange }) {
   const children = useDataStore((s) => s.children);
   const users = useDataStore((s) => s.users);
   const sessions = useDataStore((s) => s.sessions);
@@ -107,7 +107,7 @@ function ClinicalDirectorHome({ user, onOpenChild, onCalendarDateChange, onConne
       <CalendarAgenda
         events={calendarEvents} loading={calendarLoading} error={calendarError}
         date={calendarDate} onDateChange={onCalendarDateChange}
-        children={children} onOpenChild={onOpenChild} onConnectGcal={onConnectGcal}
+        children={children} onOpenChild={onOpenChild}
       />
       <ActivityFeed activityLog={activityLog} users={users} onMarkSeen={onMarkSeen} />
 

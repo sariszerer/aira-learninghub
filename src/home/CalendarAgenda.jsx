@@ -3,7 +3,7 @@ import { Calendar, X } from "lucide-react";
 import { T, SPECIALIST_COLORS } from "../theme.js";
 import { Btn, Card, EmptyNote, Eyebrow } from "../ui/index.js";
 
-function CalendarAgenda({ events, loading, error, date, onDateChange, children, onOpenChild, onConnectGcal }) {
+function CalendarAgenda({ events, loading, error, date, onDateChange, children, onOpenChild }) {
   const [links, setLinks] = useState({}); // eventIndex -> childId
   const [linking, setLinking] = useState(null); // index of event being linked
   const [search, setSearch] = useState("");
@@ -55,19 +55,12 @@ function CalendarAgenda({ events, loading, error, date, onDateChange, children, 
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
-      {error === "conectar" ? (
-        <div style={{
-          display: "flex", alignItems: "center", justifyContent: "center", gap: 12,
-          padding: "14px 0",
-        }}>
-          <span style={{ fontSize: 13, color: T.inkSoft }}>
-            Conecta Google Calendar para ver la agenda
-          </span>
-          <Btn size="sm" onClick={onConnectGcal}>Conectar</Btn>
-        </div>
-      ) : error ? (
+      {/* El motivo se muestra entero. Un "no se pudo cargar" generico obliga a
+          adivinar si es permiso, sesion o configuracion del servidor, y cada una
+          se arregla en un sitio distinto y por una persona distinta. */}
+      {error && (
         <div style={{ fontSize: 13, color: "#B56060", padding: "10px 14px", background: "#FFF0F0", borderRadius: 10, marginBottom: 12 }}>{error}</div>
-      ) : null}
+      )}
 
       {!loading && !error && events.length === 0 && (
         <EmptyNote text="No hay eventos en el calendario para este día." dentroDeCaja />

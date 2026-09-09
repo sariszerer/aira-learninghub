@@ -31,7 +31,6 @@ const CONOCIDOS = [
   'User', 'Users', 'FileText', 'LayoutGrid', 'ClipboardList', 'TrendingUp',
   'AlertTriangle', 'LogOut', 'Sparkles', 'ArrowRight', 'Printer', 'Filter',
   'ChevronDown',
-  'signInToGoogle', 'getStoredToken', 'clearToken',
   'useNavigate', 'useLocation', 'useSearchParams', 'useParams', 'Navigate',
   'Routes', 'Route', 'Login', 'create',
 ]
