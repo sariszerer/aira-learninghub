@@ -19,6 +19,8 @@ import { Avatar } from "../ui/index.js";
 import { contar } from "../lib/format.js";
 import { avisar } from "../store/avisosStore.js";
 import { queFalta } from "../lib/validacion.js";
+import TerapeutaModal from "./TerapeutaModal.jsx";
+import { terapeutasDeColegio, aQuienAcompana } from "./terapeutas.js";
 
 function GabinetePanel({ onAddSession }) {
   const schools = useDataStore((s) => s.schools);
@@ -39,14 +41,10 @@ function GabinetePanel({ onAddSession }) {
   const [selectedSchool, setSelectedSchool] = useState(null);
   const [addingSchool, setAddingSchool] = useState(false);
   const [sessionForm, setSessionForm] = useState(null);
+  const [editandoTerapeuta, setEditandoTerapeuta] = useState(null);
   const VACIA = {
     name: "", contact: "", phone: "", email: "", contractStart: "", contractEnd: "",
     specialty: "", assignedSpecialists: [], notes: "", programa: "tutoria",
-    // La especialista que AIRA coloca en el centro. Son datos del CONTRATO con
-    // ese colegio — a quién se colocó y cómo localizarla — y por eso viven en la
-    // ficha del colegio y no en la de cada estudiante.
-    especialistaNombre: "", especialistaCedula: "",
-    especialistaTelefono: "", especialistaEmail: "",
   };
   const [newSchool, setNewSchool] = useState(VACIA);
 
@@ -56,6 +54,7 @@ function GabinetePanel({ onAddSession }) {
   const allSpecialists = users.filter((u) => ROLES[u.role]?.esClinico);
   const delColegio = school ? estudiantesGabinete.filter((e) => e.schoolId === school.id) : [];
   const esTutoria = (school?.programa || "tutoria") === "tutoria";
+  const terapeutas = school ? terapeutasDeColegio(tutores, estudiantesGabinete, school.id) : [];
 
   const emptySession = () => ({ specialistId: "", specialty: "", date: TODAY, participants: "", duration: 60, area: "", notes: "" });
 
@@ -72,8 +71,6 @@ function GabinetePanel({ onAddSession }) {
     setSessionForm(null);
   };
 
-  const [contrato, setContrato] = useState(null);
-
   const handleSaveSchool = async () => {
     const falta = queFalta([[!!newSchool.name.trim(), "el nombre del colegio"]]);
     if (falta) { avisar.error(falta); return; }
@@ -86,17 +83,6 @@ function GabinetePanel({ onAddSession }) {
     } catch {
       return;
     }
-    // El contrato va DESPUÉS y solo si la escuela se guardó: es un documento que
-    // cuelga del colegio, y adjuntarlo antes lo dejaría huérfano si el alta falla.
-    if (contrato) {
-      await agregarDocumentoDeColegio(id, {
-        type: "contrato",
-        title: `Contrato firmado — ${newSchool.name.trim()}`,
-        date: newSchool.contractStart || TODAY,
-        notes: "",
-        fields: { modo: "pdf", pdfNombre: contrato.nombre, pdfDatos: contrato.datos },
-      });
-    }
     // Confirmación explícita, y no solo aquí por gusto: este es el flujo en el
     // que un guardado fallido pasó por bueno — la escuela aparecía en la lista y
     // solo al refrescar se supo que la base nunca la recibió. Si algo falla, el
@@ -105,7 +91,6 @@ function GabinetePanel({ onAddSession }) {
     avisar.exito(`Escuela "${newSchool.name.trim()}" guardada`);
     setAddingSchool(false);
     setNewSchool(VACIA);
-    setContrato(null);
   };
 
 
@@ -143,21 +128,6 @@ function GabinetePanel({ onAddSession }) {
           </div>
           <Field2 label="Especialidades contratadas" value={newSchool.specialty} onChange={(v) => setNewSchool({ ...newSchool, specialty: v })} />
 
-          <div style={{ borderTop: `1px solid ${T.border}`, margin: "6px 0 16px", paddingTop: 16 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: T.inkSoft, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              Especialista contratada
-            </div>
-            <div style={{ fontSize: 12, color: T.inkFaint, marginBottom: 12 }}>
-              Quien AIRA coloca en este centro.
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 20px" }}>
-              <Field2 label="Nombre completo" value={newSchool.especialistaNombre} onChange={(v) => setNewSchool({ ...newSchool, especialistaNombre: v })} />
-              <Field2 label="Cédula" value={newSchool.especialistaCedula} onChange={(v) => setNewSchool({ ...newSchool, especialistaCedula: v })} />
-              <Field2 label="Teléfono" value={newSchool.especialistaTelefono} onChange={(v) => setNewSchool({ ...newSchool, especialistaTelefono: v })} />
-              <Field2 label="Correo electrónico" value={newSchool.especialistaEmail} onChange={(v) => setNewSchool({ ...newSchool, especialistaEmail: v })} type="email" />
-            </div>
-            <AdjuntoContrato valor={contrato} onChange={setContrato} />
-          </div>
           <div style={{ marginBottom: 14 }}>
             <div style={{ fontSize: 12, fontWeight: 600, color: T.inkSoft, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em" }}>Especialistas asignados</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
@@ -273,19 +243,6 @@ function GabinetePanel({ onAddSession }) {
                     </div>
                   ))}
                 </div>
-                {school.especialistaNombre && (
-                  <div style={{ marginBottom: 14, padding: "12px 14px", background: T.surfaceSunk, borderRadius: 10 }}>
-                    <div style={{ fontSize: 11.5, color: T.inkSoft, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600 }}>
-                      Especialista contratada
-                    </div>
-                    <div style={{ fontSize: 15, fontWeight: 600, color: T.ink, marginBottom: 4 }}>{school.especialistaNombre}</div>
-                    <div style={{ display: "flex", gap: 18, flexWrap: "wrap", fontSize: 12.5, color: T.inkSoft }}>
-                      {school.especialistaCedula && <span>Cédula {school.especialistaCedula}</span>}
-                      {school.especialistaTelefono && <span>{school.especialistaTelefono}</span>}
-                      {school.especialistaEmail && <span>{school.especialistaEmail}</span>}
-                    </div>
-                  </div>
-                )}
 
                 <div style={{ marginBottom: 10 }}>
                   <div style={{ fontSize: 12, color: T.inkSoft, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600 }}>Especialistas asignados</div>
@@ -309,6 +266,66 @@ function GabinetePanel({ onAddSession }) {
                     borderRadius: T.radiusSm, padding: "9px 12px", fontSize: 13,
                   }}>
                     {errorColegio}
+                  </div>
+                )}
+              </Card>
+
+              {/* Terapeutas contratados. La lista crece con el programa: AIRA
+                  coloca una por nino, y cuando el centro contrata otro caso
+                  entra otra. Debajo de cada una, a quien acompana. */}
+              <Card style={{ marginBottom: 22 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: terapeutas.length ? 14 : 0 }}>
+                  <div>
+                    <Eyebrow>Terapeutas contratados</Eyebrow>
+                    <div style={{ fontSize: 12.5, color: T.inkFaint, marginTop: 3 }}>
+                      {terapeutas.length
+                        ? contar(terapeutas.length, "terapeuta en este centro", "terapeutas en este centro")
+                        : "Todavia no hay ninguna"}
+                    </div>
+                  </div>
+                  {can(currentUser, "gabinete:session:create") && (
+                    <Btn size="sm" variant="secondary" icon={Plus} onClick={() => setEditandoTerapeuta({ nueva: true })}>
+                      Agregar terapeuta
+                    </Btn>
+                  )}
+                </div>
+
+                {terapeutas.length > 0 && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {terapeutas.map((t) => {
+                      const sinAsignar = t.acompana.length === 0;
+                      return (
+                        <button
+                          key={t.id} type="button"
+                          onClick={() => setEditandoTerapeuta(t)}
+                          style={{
+                            display: "flex", alignItems: "center", gap: 12, width: "100%",
+                            padding: "11px 13px", borderRadius: 10, cursor: "pointer",
+                            textAlign: "left", fontFamily: T.font,
+                            border: `1px solid ${T.border}`, background: T.surface,
+                          }}
+                        >
+                          <Avatar name={t.name} bg={t.avatarBg} size={34} />
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 14, fontWeight: 600, color: T.ink }}>{t.name}</div>
+                            <div style={{
+                              fontSize: 12.5, marginTop: 2,
+                              color: sinAsignar ? T.apoyo : T.inkSoft,
+                              fontStyle: sinAsignar ? "italic" : "normal",
+                            }}>
+                              {aQuienAcompana(t.acompana)}
+                            </div>
+                          </div>
+                          <div style={{ display: "flex", gap: 14, flexWrap: "wrap", justifyContent: "flex-end", fontSize: 12, color: T.inkFaint }}>
+                            {t.cedula && <span>{t.cedula}</span>}
+                            {t.telefono && <span>{t.telefono}</span>}
+                            {!t.userId && (
+                              <span style={{ color: T.proceso, fontWeight: 600 }}>Sin cuenta</span>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
               </Card>
@@ -435,6 +452,14 @@ function GabinetePanel({ onAddSession }) {
                   programa={school.programa || "tutoria"}
                   onClose={() => setEditandoEstudiante(null)}
                   onGuardar={guardarEstudiante}
+                />
+              )}
+
+              {editandoTerapeuta && (
+                <TerapeutaModal
+                  terapeuta={editandoTerapeuta.nueva ? null : editandoTerapeuta}
+                  schoolId={school.id}
+                  onClose={() => setEditandoTerapeuta(null)}
                 />
               )}
 

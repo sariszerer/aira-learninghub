@@ -94,7 +94,8 @@ export function dbEstudianteToApp(e) {
 export function dbTutorToApp(t) {
   return { id: t.id, name: t.name, role: t.role, schoolId: t.school_id, school: t.school,
     assignedChildId: t.assigned_child_id, avatarBg: t.avatar_bg,
-    startDate: t.start_date, activo: t.activo !== false, userId: t.user_id || null }
+    startDate: t.start_date, activo: t.activo !== false, userId: t.user_id || null,
+    cedula: t.cedula, telefono: t.telefono, email: t.email }
 }
 export function dbObjectiveToApp(o) {
   return { id: o.id, childId: o.child_id, name: o.name, area: o.area,
@@ -112,6 +113,7 @@ export function dbSessionToApp(s) {
 export function dbDocumentToApp(d) {
   return { id: d.id, childId: d.child_id, type: d.type, title: d.title,
     date: d.date, authorId: d.author_id, notes: d.notes, fields: d.fields || {},
+    tutorId: d.tutor_id || null,
     schoolId: d.school_id, studentId: d.student_id }
 }
 export function dbMeetingToApp(m) {
@@ -121,8 +123,6 @@ export function dbMeetingToApp(m) {
 export function dbSchoolToApp(s) {
   return { id: s.id, name: s.name, contact: s.contact, phone: s.phone, email: s.email,
     contractStart: s.contract_start, contractEnd: s.contract_end,
-    especialistaNombre: s.especialista_nombre, especialistaCedula: s.especialista_cedula,
-    especialistaTelefono: s.especialista_telefono, especialistaEmail: s.especialista_email,
     assignedSpecialists: s.assigned_specialists || [], specialty: s.specialty,
     students: s.students || [], notes: s.notes, programa: s.programa || 'tutoria' }
 }
@@ -367,7 +367,7 @@ export const db = {
   async insertDocument(d) {
     const { error } = await supabase.from('documents').insert({
       id: d.id, child_id: d.childId ?? null, school_id: d.schoolId ?? null,
-      student_id: d.studentId ?? null,
+      student_id: d.studentId ?? null, tutor_id: d.tutorId ?? null,
       type: d.type, title: d.title,
       date: fecha(d.date), author_id: d.authorId, notes: d.notes, fields: d.fields || {},
     })
@@ -447,6 +447,7 @@ export const db = {
       school: t.school ?? null, assigned_child_id: t.assignedChildId ?? null,
       avatar_bg: t.avatarBg ?? null, start_date: fecha(t.startDate),
       user_id: t.userId ?? null,
+      cedula: t.cedula || null, telefono: t.telefono || null, email: t.email || null,
       activo: t.activo !== false,
     })
     if (error) throw error
@@ -464,10 +465,6 @@ export const db = {
       id: s.id, name: s.name, contact: s.contact, phone: s.phone, email: s.email,
       programa: s.programa || 'tutoria',
       contract_start: fecha(s.contractStart), contract_end: fecha(s.contractEnd),
-      especialista_nombre: s.especialistaNombre || null,
-      especialista_cedula: s.especialistaCedula || null,
-      especialista_telefono: s.especialistaTelefono || null,
-      especialista_email: s.especialistaEmail || null,
       assigned_specialists: s.assignedSpecialists, specialty: s.specialty,
       students: s.students || [], notes: s.notes,
     })
