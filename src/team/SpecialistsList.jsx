@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { Plus, Check, X, Mail } from "lucide-react";
+import { Plus, Check, X, Link2, Mail } from "lucide-react";
 import { T } from "../theme.js";
 import { ROLES } from "../permissions.js";
 import { useDataStore } from "../store/dataStore.js";
@@ -49,6 +49,36 @@ export default function SpecialistsList() {
   const enviarInvitacion = useDataStore((s) => s.enviarInvitacion);
   const [enviando, setEnviando] = useState(null);
   const [aviso, setAviso] = useState(null);
+
+  // Copiar el enlace en vez de enviarlo.
+  //
+  // Sin SMTP propio Supabase limita a dos correos por hora, y el equipo son
+  // nueve personas: cinco horas de espera para repartir accesos. Esto genera el
+  // mismo enlace y lo deja en el portapapeles para pasarlo por donde sea.
+  const [copiado, setCopiado] = useState(null);
+
+  const copiarEnlace = async (u) => {
+    setError(null); setAviso(null); setEnviando(u.id);
+    try {
+      const res = await enviarInvitacion(u.id, { soloEnlace: true });
+      if (!res?.enlace) throw new Error("El servidor no devolvió ningún enlace.");
+      await navigator.clipboard.writeText(res.enlace);
+      setCopiado(u.id);
+      setTimeout(() => setCopiado((c) => (c === u.id ? null : c)), 2500);
+      setAviso(
+        `Enlace de ${u.name} copiado. Pásaselo en privado: quien lo tenga puede ` +
+        `poner la contraseña de esa cuenta. Caduca en 24 horas.`
+      );
+    } catch (e) {
+      // clipboard falla en contextos sin HTTPS y con el permiso denegado.
+      const dePortapapeles = /clipboard|denied|not allowed/i.test(e.message || "");
+      setError(dePortapapeles
+        ? "El navegador no dejó copiar al portapapeles. Prueba con otro navegador o envíalo por correo."
+        : e.message || "No se pudo generar el enlace.");
+    } finally {
+      setEnviando(null);
+    }
+  };
 
   const mandarAcceso = async (u) => {
     setError(null); setAviso(null); setEnviando(u.id);
@@ -191,12 +221,22 @@ export default function SpecialistsList() {
               celda: (u) => <span style={{ color: T.inkSoft }}>{u.sesiones}</span>,
             },
             {
-              clave: "acciones", titulo: "", ancho: "170px", alinear: "derecha", ordenable: false,
+              clave: "acciones", titulo: "", ancho: "210px", alinear: "derecha", ordenable: false,
               celda: (u) => puedeGestionar ? (
                 <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
                   <IconBtn
+                    icon={copiado === u.id ? Check : Link2}
+                    tone={copiado === u.id ? "marca" : "neutro"}
+                    title={u.email
+                      ? `Copiar el enlace para que ${u.name} ponga su contraseña`
+                      : "Sin correo registrado"}
+                    size="sm"
+                    disabled={!u.email || u.activo === false || enviando === u.id}
+                    onClick={() => copiarEnlace(u)}
+                  />
+                  <IconBtn
                     icon={Mail}
-                    title={u.email ? `Enviar acceso a ${u.email}` : "Sin correo registrado"}
+                    title={u.email ? `Enviar acceso por correo a ${u.email}` : "Sin correo registrado"}
                     size="sm"
                     disabled={!u.email || u.activo === false || enviando === u.id}
                     onClick={() => mandarAcceso(u)}

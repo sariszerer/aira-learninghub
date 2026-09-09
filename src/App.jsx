@@ -19,6 +19,8 @@ import RoleEditor from "./team/RoleEditor.jsx";
 import GabinetePanel from "./gabinete/GabinetePanel.jsx";
 import EscuelaDetalle from "./gabinete/EscuelaDetalle.jsx";
 import FirmaConsentimientoPublic from "./consent/FirmaConsentimientoPublic.jsx";
+import EstablecerContrasena from "./EstablecerContrasena.jsx";
+import { esEnlaceDeContrasena } from "./lib/contrasena.js";
 
 // Raiz de la aplicacion: sesion, enrutado y cascaron. Nada mas.
 // Los datos viven en los stores y cada pantalla lee lo que necesita; el estado
@@ -61,6 +63,13 @@ export default function App() {
       setAuthLoading(false);
     });
     const { data: { subscription } } = auth.onAuthStateChange(async (event, session) => {
+      // El enlace de acceso abre sesion y ademas avisa con este evento. Sin
+      // atenderlo la persona entraba una vez y a la siguiente ya no podia,
+      // porque nunca llego a poner una contrasena.
+      if (event === "PASSWORD_RECOVERY") {
+        setEstableciendoClave(true);
+        return;
+      }
       if (event === "SIGNED_IN" && session) {
         const appUser = await getAppUser(session.user.id);
         if (appUser) setCurrentUser(appUser);
@@ -92,6 +101,22 @@ export default function App() {
   // El plegado del menu vive aqui porque el area de trabajo necesita el ancho
   // para su margen: si viviera dentro del Sidebar, App no podria seguirlo.
   const [menuAbierto, setMenuAbierto] = useState(true);
+
+  // Se mira la URL ademas del evento: si la sesion ya estaba abierta, Supabase
+  // procesa el fragmento antes de que este componente se suscriba y el evento
+  // se pierde.
+  const [estableciendoClave, setEstableciendoClave] = useState(
+    () => esEnlaceDeContrasena(window.location.href)
+  );
+
+  if (estableciendoClave) {
+    return (
+      <>
+        <Avisos />
+        <EstablecerContrasena onListo={() => setEstableciendoClave(false)} />
+      </>
+    );
+  }
 
   if (consentToken) {
     // Con su propio Avisos: esta pantalla vive fuera del cascaron y sin el, el
