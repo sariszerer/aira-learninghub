@@ -3,9 +3,12 @@ import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { T, TODAY } from "../theme.js";
 import { Card, EmptyNote, Eyebrow, Tabs } from "../ui/index.js";
 import { useCalendarStore } from "../store/calendarStore.js";
-import { agruparPorDia, diasDeSemana, sumarDias } from "../lib/semana.js";
+import {
+  agruparPorDia, diasDeMes, diasDeSemana, etiquetaMes, sumarDias, sumarMeses,
+} from "../lib/semana.js";
 import { contar, fmtDate } from "../lib/format.js";
 import RejillaHoraria from "./RejillaHoraria.jsx";
+import RejillaMes from "./RejillaMes.jsx";
 
 // Agenda del centro, en tres vistas.
 //
@@ -15,13 +18,15 @@ import RejillaHoraria from "./RejillaHoraria.jsx";
 //
 //   Día     rejilla horaria de ese día
 //   Semana  las mismas horas en siete columnas; se pulsa un día y se baja a él
-//   Lista   todo el rango en filas, agrupado por día — es la que deja vincular
+//   Mes     la forma del mes entero; se pulsa un día y se baja a él
+//   Lista   la semana en filas, agrupada por día — es la que deja vincular
 //
 // El rango que se le pide a Google lo decide la vista, no esta pantalla.
 
 const VISTAS = [
   { id: "dia", label: "Día" },
   { id: "semana", label: "Semana" },
+  { id: "mes", label: "Mes" },
   { id: "lista", label: "Lista" },
 ];
 
@@ -59,10 +64,18 @@ function CalendarAgenda({ children, onOpenChild }) {
   const [elegido, setElegido] = useState(null);
 
   const esDia = vista === "dia";
-  const dias = useMemo(() => (esDia ? [fecha] : diasDeSemana(fecha)), [esDia, fecha]);
+  const esMes = vista === "mes";
+  const dias = useMemo(
+    () => (esDia ? [fecha] : esMes ? diasDeMes(fecha) : diasDeSemana(fecha)),
+    [esDia, esMes, fecha]
+  );
   const porDia = useMemo(() => agruparPorDia(eventos), [eventos]);
 
-  const saltar = (n) => setFecha(sumarDias(fecha, esDia ? n : n * 7));
+  // La flecha avanza lo que la vista abarca: un día, una semana, un mes.
+  const saltar = (n) =>
+    setFecha(esMes ? sumarMeses(fecha, n) : sumarDias(fecha, esDia ? n : n * 7));
+
+  const irAlDia = (d) => { setFecha(d); setVista("dia"); setElegido(null); };
 
   const candidatos = children
     .filter((c) => `${c.name} ${c.lastName}`.toLowerCase().includes(busca.toLowerCase()))
@@ -84,7 +97,9 @@ function CalendarAgenda({ children, onOpenChild }) {
         <div>
           <Eyebrow>Agenda — Google Calendar</Eyebrow>
           <div style={{ fontSize: 13, color: T.inkSoft, marginTop: 3 }}>
-            {esDia ? fmtDate(fecha) : `${fmtDate(dias[0])} — ${fmtDate(dias[6])}`}
+            {esDia ? fmtDate(fecha)
+              : esMes ? etiquetaMes(fecha)
+              : `${fmtDate(dias[0])} — ${fmtDate(dias[6])}`}
           </div>
         </div>
 
@@ -122,10 +137,20 @@ function CalendarAgenda({ children, onOpenChild }) {
         </div>
       )}
 
-      {!error && eventos.length === 0 && !cargando && (
+      {/* En mes la rejilla se dibuja igual sin citas: enseña la forma del mes y
+          se puede navegar. Un aviso en su lugar dejaría la pantalla sin nada
+          donde pulsar. */}
+      {!error && eventos.length === 0 && !cargando && !esMes && (
         <EmptyNote
           text={esDia ? "No hay eventos en el calendario para este día." : "No hay eventos esta semana."}
           dentroDeCaja
+        />
+      )}
+
+      {!error && esMes && (
+        <RejillaMes
+          dias={dias} mes={fecha} porDia={porDia} hoy={TODAY}
+          color={colorDe} onElegirDia={irAlDia}
         />
       )}
 
@@ -163,12 +188,12 @@ function CalendarAgenda({ children, onOpenChild }) {
         </div>
       )}
 
-      {!error && eventos.length > 0 && vista !== "lista" && (
+      {!error && eventos.length > 0 && !esMes && vista !== "lista" && (
         <>
           <RejillaHoraria
             dias={dias} eventos={eventos} hoy={TODAY} color={colorDe}
             seleccionado={elegido}
-            onElegirDia={(d) => { setFecha(d); setVista("dia"); setElegido(null); }}
+            onElegirDia={irAlDia}
             onElegirEvento={(e) => setElegido(elegido === e.id ? null : e.id)}
           />
 

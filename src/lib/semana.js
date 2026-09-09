@@ -33,7 +33,9 @@ export function diasDeSemana(fecha) {
 // El rango que se le pide a Google, con el huso fijo de Panamá: no tiene
 // horario de verano, así que el desfase es el mismo todo el año.
 export function rangoDeVista(vista, fecha) {
-  const dias = vista === "dia" ? [fecha] : diasDeSemana(fecha);
+  const dias = vista === "dia" ? [fecha]
+    : vista === "mes" ? diasDeMes(fecha)
+    : diasDeSemana(fecha);
   return {
     desde: `${dias[0]}T00:00:00-05:00`,
     hasta: `${dias[dias.length - 1]}T23:59:59-05:00`,
@@ -109,4 +111,54 @@ export function franjaHoraria(eventos = [], { desde = 7, hasta = 19 } = {}) {
     desde: Math.max(0, Math.floor(min / 60) - 1),
     hasta: Math.min(24, Math.ceil(max / 60) + 1),
   };
+}
+
+// ── Mes ──────────────────────────────────────────────────────────────────────
+
+// La rejilla del mes se dibuja por SEMANAS COMPLETAS, así que arranca en el
+// lunes anterior al día 1 y termina en el domingo posterior al último día. Los
+// días que sobran son del mes vecino y se pintan apagados, pero llevan sus
+// citas: si no, la primera fila del mes saldría medio vacía sin motivo visible.
+//
+// El número de filas se calcula, no se fija en 6. Febrero de un año no bisiesto
+// que empieza en lunes cabe en 4, y la mayoría de meses en 5; una rejilla de 6
+// fijas deja una fila entera en blanco al pie.
+export function diasDeMes(fecha) {
+  const [a, m] = fecha.split("-").map(Number);
+  const primero = `${a}-${String(m).padStart(2, "0")}-01`;
+  const ultimo = new Date(Date.UTC(a, m, 0)).toISOString().slice(0, 10);
+
+  const arranque = inicioDeSemana(primero);
+  const cierre = sumarDias(inicioDeSemana(ultimo), 6);
+
+  const dias = [];
+  for (let d = arranque; d <= cierre; d = sumarDias(d, 1)) dias.push(d);
+  return dias;
+}
+
+export function esDelMes(dia, fecha) {
+  return dia.slice(0, 7) === fecha.slice(0, 7);
+}
+
+// Mover de mes conserva el día cuando existe y lo recorta cuando no.
+//
+// Sin recortar, ir de 31 de enero a febrero daría "2026-02-31", que Date
+// interpreta como 3 de marzo: pulsar la flecha una vez saltaría dos meses.
+export function sumarMeses(fecha, n) {
+  const [a, m, d] = fecha.split("-").map(Number);
+  const total = (a * 12 + (m - 1)) + n;
+  const anio = Math.floor(total / 12);
+  const mes = (total % 12) + 1;
+  const ultimo = new Date(Date.UTC(anio, mes, 0)).getUTCDate();
+  return `${anio}-${String(mes).padStart(2, "0")}-${String(Math.min(d, ultimo)).padStart(2, "0")}`;
+}
+
+const MESES = [
+  "enero", "febrero", "marzo", "abril", "mayo", "junio",
+  "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+];
+
+export function etiquetaMes(fecha) {
+  const [a, m] = fecha.split("-").map(Number);
+  return `${MESES[m - 1]} de ${a}`;
 }

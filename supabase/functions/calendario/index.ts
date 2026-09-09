@@ -166,6 +166,9 @@ Deno.serve(async (req) => {
     url.searchParams.set("timeMax", hasta);
     url.searchParams.set("singleEvents", "true");
     url.searchParams.set("orderBy", "startTime");
+    // Sin esto Google pagina a 250 y un mes de este centro son mas de 300: la
+    // ultima semana saldria vacia sin decir por que.
+    url.searchParams.set("maxResults", "2500");
 
     const res = await fetch(url, { headers: { Authorization: `Bearer ${acceso}` } });
     const datos = await res.json();
@@ -180,7 +183,21 @@ Deno.serve(async (req) => {
       return json({ error: detalle }, 502);
     }
 
-    return json({ eventos: datos.items ?? [] });
+    // Se recorta a lo que la agenda usa. Google devuelve el evento entero —
+    // asistentes, enlaces, recordatorios, metadatos de la serie — y en un mes de
+    // este centro eso son 317 eventos y 528 KB para pintar una rejilla que
+    // muestra el titulo y la hora. Recortado baja a una fraccion.
+    const eventos = (datos.items ?? []).map((e: Record<string, unknown>) => ({
+      id: e.id,
+      summary: e.summary,
+      description: e.description,
+      status: e.status,
+      start: e.start,
+      end: e.end,
+      organizer: e.organizer ? { responseStatus: (e.organizer as Record<string, unknown>).responseStatus } : undefined,
+    }));
+
+    return json({ eventos });
   } catch (e) {
     return json({ error: (e as Error).message }, 502);
   }
