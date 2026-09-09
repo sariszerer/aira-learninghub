@@ -11,6 +11,22 @@ import { DIAS, franjaHoraria, repartirSolapes } from "../lib/semana.js";
 const ALTO_HORA = 52;
 const ANCHO_HORAS = 52;
 
+// Ancho mínimo de una columna de día en la vista de semana. Por debajo, la
+// rejilla se desplaza en horizontal en vez de encogerse.
+const MIN_DIA = 160;
+
+// Cuántas citas simultáneas caben todavía con el título legible.
+//
+// Medido con el día más cargado del centro, que tiene tres a la vez: a tres
+// columnas quedan 48px por cita, y ahí un título no es un título — es "B..",
+// "S..", una letra suelta. Enseñar una letra recortada es peor que no enseñar
+// nada: ocupa sitio, no dice qué es, y hace creer que la aplicación está rota.
+//
+// Con tres o más simultáneas el bloque se queda como bloque de color: dice
+// CUÁNDO y CUÁNTAS, que es lo que una semana puede decir. El qué está a un
+// clic, en el panel de detalle y en la vista de Día.
+const MAX_CON_TEXTO = 2;
+
 export default function RejillaHoraria({ dias, eventos, hoy, onElegirDia, onElegirEvento, seleccionado, color }) {
   const franja = franjaHoraria(eventos);
   const horas = [];
@@ -20,8 +36,12 @@ export default function RejillaHoraria({ dias, eventos, hoy, onElegirDia, onEleg
   const conHora = repartirSolapes(eventos.filter((e) => !e.diaCompleto));
   const completos = eventos.filter((e) => e.diaCompleto);
 
+  // Un solo día ya tiene todo el ancho; no hay nada que desplazar.
+  const anchoMinimo = dias.length > 1 ? ANCHO_HORAS + dias.length * MIN_DIA : undefined;
+
   return (
-    <div>
+    <div style={{ overflowX: "auto" }}>
+    <div style={{ minWidth: anchoMinimo }}>
       {/* Los de día completo no caben en la rejilla — no tienen hora — y son
           justo los que más importa ver de un vistazo: quién está de vacaciones.
           Van en su propia banda arriba. */}
@@ -126,14 +146,18 @@ export default function RejillaHoraria({ dias, eventos, hoy, onElegirDia, onEleg
                       opacity: e.cancelled ? 0.55 : 1,
                     }}
                   >
-                    <div style={{
-                      fontSize: 11.5, fontWeight: 600, lineHeight: 1.25,
-                      whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-                    }}>
-                      {e.title}
-                    </div>
-                    {altoEv > 34 && (
-                      <div style={{ fontSize: 10.5, opacity: 0.8, whiteSpace: "nowrap" }}>{e.time}</div>
+                    {caben(dias.length, e.columnas) && (
+                      <>
+                        <div style={{
+                          fontSize: 11.5, fontWeight: 600, lineHeight: 1.25,
+                          whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                        }}>
+                          {e.title}
+                        </div>
+                        {altoEv > 34 && e.columnas === 1 && (
+                          <div style={{ fontSize: 10.5, opacity: 0.8, whiteSpace: "nowrap" }}>{e.time}</div>
+                        )}
+                      </>
                     )}
                   </button>
                 );
@@ -143,7 +167,14 @@ export default function RejillaHoraria({ dias, eventos, hoy, onElegirDia, onEleg
         </div>
       </div>
     </div>
+    </div>
   );
+}
+
+// En un solo día sobra ancho aunque se pisen tres: la columna es la pantalla
+// entera. El recorte solo hace falta en semana.
+function caben(numeroDeDias, columnas) {
+  return numeroDeDias === 1 || columnas <= MAX_CON_TEXTO;
 }
 
 function etiquetaHora(h) {

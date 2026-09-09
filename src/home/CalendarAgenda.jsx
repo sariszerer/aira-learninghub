@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { T, TODAY } from "../theme.js";
 import { Card, EmptyNote, Eyebrow, Tabs } from "../ui/index.js";
 import { useCalendarStore } from "../store/calendarStore.js";
@@ -198,9 +198,30 @@ function CalendarAgenda({ children, onOpenChild }) {
           />
 
           {/* Detalle de la cita pulsada. Vive fuera de la rejilla porque dentro
-              del bloque no cabe: una cita de 45 minutos son 39 píxeles de alto. */}
+              del bloque no cabe: una cita de 45 minutos son 39 píxeles de alto,
+              y en semana unos 70 de ancho. */}
           {detalle && (
             <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${T.border}` }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 8, flexWrap: "wrap" }}>
+                <Eyebrow>Cita seleccionada</Eyebrow>
+                {/* Solo en semana: la rejilla recorta los títulos por pura falta
+                    de ancho y esto lleva al sitio donde se leen enteros. En Día
+                    ya se está ahí, y el botón no llevaría a ninguna parte. */}
+                {!esDia && (
+                <button
+                  type="button" onClick={() => irAlDia(detalle.fecha)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 6,
+                    padding: "6px 12px", borderRadius: 9, cursor: "pointer",
+                    border: `1px solid ${T.brand}`, background: T.brandTint,
+                    fontFamily: T.font, fontSize: 12.5, fontWeight: 600, color: T.brand,
+                  }}
+                >
+                  <CalendarDays size={14} />
+                  Ver toda la agenda del {fmtDate(detalle.fecha)}
+                </button>
+                )}
+              </div>
               <FilaEvento
                 ev={detalle} color={colorDe(detalle.title)}
                 vinculado={children.find((c) => c.id === vinculos[detalle.id])}
