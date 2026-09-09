@@ -96,6 +96,24 @@ async function tokenDeGoogle(sa: { client_email: string; private_key: string }) 
   return cache.token;
 }
 
+// La credencial se acepta como JSON o como el mismo JSON en base64.
+//
+// El JSON trae 13 saltos de linea y 44 comillas dobles, y eso no sobrevive a
+// cualquier camino hasta aqui: al ponerlo con la CLI desde Windows, la linea de
+// comandos se vuelve a interpretar en el proceso hijo y llega troceado. Se
+// guardo asi una vez y la funcion respondia "credencial mal formada".
+//
+// base64 no tiene comillas, ni saltos, ni espacios: no hay nada que interpretar
+// por el camino. Se admiten los dos formatos porque pegarlo tal cual desde el
+// panel de Supabase si funciona, y no hay motivo para obligar a convertirlo.
+function leerCuenta(texto: string) {
+  const limpio = texto.trim();
+  if (limpio.startsWith("{")) return JSON.parse(limpio);
+  return JSON.parse(new TextDecoder().decode(
+    Uint8Array.from(atob(limpio), (c) => c.charCodeAt(0)),
+  ));
+}
+
 // ── Petición ─────────────────────────────────────────────────────────────────
 
 Deno.serve(async (req) => {
@@ -134,7 +152,7 @@ Deno.serve(async (req) => {
 
   let sa: { client_email: string; private_key: string };
   try {
-    sa = JSON.parse(CUENTA);
+    sa = leerCuenta(CUENTA);
   } catch {
     return json({ error: "La credencial de Google del servidor está mal formada." }, 500);
   }
