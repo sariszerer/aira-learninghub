@@ -17,6 +17,7 @@ import SpecialistsList from "./team/SpecialistsList.jsx";
 import RolesList from "./team/RolesList.jsx";
 import RoleEditor from "./team/RoleEditor.jsx";
 import GabinetePanel from "./gabinete/GabinetePanel.jsx";
+import EscuelaDetalle from "./gabinete/EscuelaDetalle.jsx";
 import FirmaConsentimientoPublic from "./consent/FirmaConsentimientoPublic.jsx";
 
 // Raiz de la aplicacion: sesion, enrutado y cascaron. Nada mas.
@@ -155,7 +156,15 @@ export default function App() {
 
         <Route path="/gabinete" element={
           can(currentUser, "gabinete:view")
-            ? <GabinetePanel onAddSession={addGabineteSession} />
+            ? <GabinetePanel />
+            : <Navigate to="/" replace />
+        } />
+
+        {/* La ficha del colegio es su propia pantalla: se puede enlazar, marcar
+            y volver atras con el navegador. */}
+        <Route path="/gabinete/:schoolId" element={
+          can(currentUser, "gabinete:view")
+            ? <EscuelaDetalle onAddSession={addGabineteSession} />
             : <Navigate to="/" replace />
         } />
 
