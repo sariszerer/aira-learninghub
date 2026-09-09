@@ -1,7 +1,7 @@
-import React, { useState } from "react";
-import { Check, KeyRound } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { AlertTriangle, Check, KeyRound } from "lucide-react";
 import { T, FONTS, inputStyle } from "./theme.js";
-import { supabase } from "./supabase.js";
+import { auth, supabase } from "./supabase.js";
 import { Btn, Logo } from "./ui/index.js";
 import { avisar } from "./store/avisosStore.js";
 import { MINIMO, problemaConContrasena, fuerzaDeContrasena } from "./lib/contrasena.js";
@@ -10,15 +10,31 @@ import { MINIMO, problemaConContrasena, fuerzaDeContrasena } from "./lib/contras
 //
 // Faltaba. El enlace de recuperación traía a la persona a la aplicación con la
 // sesión ya abierta, pero no había ningún sitio donde poner una contraseña: se
-// entraba esa vez y a la siguiente ya no, porque nadie tenía una que escribir.
-// Los accesos enviados hasta ahora eran un callejón sin salida.
+// entraba esa vez y a la siguiente ya no.
+//
+// SE ENSEÑA DE QUIÉN ES LA CUENTA, y es lo más importante de esta pantalla. El
+// enlace no es una invitación: ES una autenticación. Quien lo abre queda dentro
+// como esa persona, y si ya tenía sesión, la suya se sustituye. Pasó de verdad
+// al probarlo: la administración copió el enlace de una especialista, lo abrió
+// en su propio navegador y su sesión se convirtió en la de ella. Se leyó como
+// "se me cerró la sesión", que es justo lo que no era.
 export default function EstablecerContrasena({ onListo }) {
   const [clave, setClave] = useState("");
   const [repetida, setRepetida] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [hecho, setHecho] = useState(false);
+  const [cuenta, setCuenta] = useState(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setCuenta(data?.user?.email ?? null));
+  }, []);
 
   const fuerza = fuerzaDeContrasena(clave);
+
+  const salir = async () => {
+    await auth.signOut();
+    window.location.replace(window.location.pathname);
+  };
 
   const guardar = async (e) => {
     e.preventDefault();
@@ -33,15 +49,17 @@ export default function EstablecerContrasena({ onListo }) {
       const caducado = /expired|invalid|not found/i.test(error.message);
       avisar.error(
         caducado ? "El enlace ya caducó" : "No se pudo guardar la contraseña",
-        caducado
-          ? "Pide uno nuevo a la administración del centro."
-          : error.message
+        caducado ? "Pide uno nuevo a la administración del centro." : error.message
       );
       setGuardando(false);
       return;
     }
+    // Se cierra la sesión a propósito. El enlace deja dentro a quien lo abre, y
+    // quedarse dentro sin más significa que la administración, si probó el
+    // enlace, seguiría navegando como la especialista. Entrar con la contraseña
+    // recién puesta confirma además que funciona.
+    await auth.signOut();
     setHecho(true);
-    // Se limpia el fragmento para que recargar no vuelva a esta pantalla.
     window.history.replaceState(null, "", window.location.pathname);
   };
 
@@ -52,41 +70,52 @@ export default function EstablecerContrasena({ onListo }) {
     }}>
       <style>{FONTS}</style>
       <div style={{
-        width: "100%", maxWidth: 420, background: "#fff", borderRadius: 20,
+        width: "100%", maxWidth: 430, background: "#fff", borderRadius: 20,
         padding: "34px 32px", boxShadow: "0 18px 50px rgba(21,47,54,0.14)",
       }}>
         <div style={{ marginBottom: 22 }}><Logo /></div>
 
         {hecho ? (
           <>
-            <div style={{
-              width: 44, height: 44, borderRadius: 999, background: T.logradoTint,
-              display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14,
-            }}>
-              <Check size={22} color={T.logrado} strokeWidth={3} />
-            </div>
-            <h1 style={{ fontFamily: T.fontDisplay, fontSize: 21, fontWeight: 600, margin: "0 0 6px" }}>
-              Contraseña guardada
-            </h1>
-            <p style={{ fontSize: 14, color: T.inkSoft, lineHeight: 1.6, margin: "0 0 20px" }}>
-              A partir de ahora entras con tu correo y esta contraseña.
+            <Icono tono={T.logrado} fondo={T.logradoTint}><Check size={22} strokeWidth={3} /></Icono>
+            <h1 style={titulo}>Contraseña guardada</h1>
+            <p style={parrafo}>
+              Ya puedes entrar con <strong style={{ color: T.ink }}>{cuenta}</strong> y tu
+              contraseña nueva.
             </p>
-            <Btn onClick={onListo}>Entrar</Btn>
+            <Btn onClick={onListo}>Ir a entrar</Btn>
           </>
         ) : (
           <form onSubmit={guardar}>
+            <Icono tono={T.brand} fondo={T.brandTint}><KeyRound size={20} /></Icono>
+            <h1 style={titulo}>Crea tu contraseña</h1>
+
+            {/* De quién es la cuenta, antes que nada. */}
             <div style={{
-              width: 44, height: 44, borderRadius: 999, background: T.brandTint,
-              display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14,
+              display: "flex", alignItems: "flex-start", gap: 10, margin: "0 0 18px",
+              padding: "11px 13px", borderRadius: 11,
+              background: T.surfaceSunk, border: `1px solid ${T.border}`,
             }}>
-              <KeyRound size={20} color={T.brand} />
+              <AlertTriangle size={17} color={T.proceso} style={{ flexShrink: 0, marginTop: 1 }} />
+              <div style={{ fontSize: 13, lineHeight: 1.5, minWidth: 0 }}>
+                Estás creando la contraseña de{" "}
+                <strong style={{ wordBreak: "break-word" }}>{cuenta || "…"}</strong>.
+                <button
+                  type="button" onClick={salir}
+                  style={{
+                    display: "block", marginTop: 4, background: "none", border: "none",
+                    padding: 0, cursor: "pointer", fontFamily: T.font,
+                    fontSize: 12.5, fontWeight: 600, color: T.brand, textDecoration: "underline",
+                  }}
+                >
+                  Esta no es mi cuenta — salir
+                </button>
+              </div>
             </div>
-            <h1 style={{ fontFamily: T.fontDisplay, fontSize: 21, fontWeight: 600, margin: "0 0 6px" }}>
-              Crea tu contraseña
-            </h1>
-            <p style={{ fontSize: 14, color: T.inkSoft, lineHeight: 1.6, margin: "0 0 20px" }}>
-              Es la que usarás para entrar a partir de ahora. Mínimo {MINIMO} caracteres —
-              una frase que recuerdes funciona mejor que algo corto y retorcido.
+
+            <p style={parrafo}>
+              Mínimo {MINIMO} caracteres. Una frase que recuerdes funciona mejor que algo
+              corto y retorcido.
             </p>
 
             <Campo etiqueta="Contraseña nueva">
@@ -124,6 +153,20 @@ export default function EstablecerContrasena({ onListo }) {
           </form>
         )}
       </div>
+    </div>
+  );
+}
+
+const titulo = { fontFamily: T.fontDisplay, fontSize: 21, fontWeight: 600, margin: "0 0 10px" };
+const parrafo = { fontSize: 14, color: T.inkSoft, lineHeight: 1.6, margin: "0 0 20px" };
+
+function Icono({ tono, fondo, children }) {
+  return (
+    <div style={{
+      width: 44, height: 44, borderRadius: 999, background: fondo, color: tono,
+      display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14,
+    }}>
+      {children}
     </div>
   );
 }
