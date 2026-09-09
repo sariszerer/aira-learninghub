@@ -4,7 +4,7 @@ import { auth, getAppUser } from "./supabase.js";
 import { can } from "./permissions.js";
 import Login from "./Login.jsx";
 import { T, FONTS, MobileStyles } from "./theme.js";
-import AvisoDeFallo from "./ui/AvisoDeFallo.jsx";
+import Avisos from "./ui/Avisos.jsx";
 import { useAuthStore } from "./store/authStore.js";
 import { useDataStore } from "./store/dataStore.js";
 import { useCalendarStore } from "./store/calendarStore.js";
@@ -96,7 +96,16 @@ export default function App() {
   const [menuAbierto, setMenuAbierto] = useState(true);
 
   if (consentToken) {
-    return <FirmaConsentimientoPublic token={consentToken} />;
+    // Con su propio Avisos: esta pantalla vive fuera del cascaron y sin el, el
+    // padre que no dibuja la firma no veria por que no se envia.
+    return (
+      <>
+        <style>{FONTS}</style>
+        <MobileStyles />
+        <Avisos />
+        <FirmaConsentimientoPublic token={consentToken} />
+      </>
+    );
   }
 
   if (authLoading) {
@@ -112,6 +121,7 @@ export default function App() {
       <>
         <style>{FONTS}</style>
         <MobileStyles />
+        <Avisos />
         <Login />
       </>
     );
@@ -122,7 +132,7 @@ export default function App() {
       <style>{FONTS}</style>
       <MobileStyles />
 
-      <AvisoDeFallo />
+      <Avisos />
 
       <Sidebar abierto={menuAbierto} onAlternar={() => setMenuAbierto((a) => !a)} />
 

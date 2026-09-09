@@ -2,6 +2,8 @@ import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AlertTriangle, ArrowLeft } from "lucide-react";
 import { T } from "../theme.js";
+import { avisar } from "../store/avisosStore.js";
+import { queFalta } from "../lib/validacion.js";
 import { PERMISSIONS } from "../permissions.js";
 import { useDataStore } from "../store/dataStore.js";
 import { Btn, Card, Chip } from "../ui/index.js";
@@ -96,16 +98,22 @@ export default function RoleEditor() {
   };
 
   const idValido = /^[a-z][a-z0-9_-]{2,30}$/.test(form.id);
-  const valido = form.nombre.trim() && form.etiqueta.trim() && (!esNuevo || idValido);
   const bloqueado = original?.esSistema;
 
   const guardar = async () => {
+    const falta = queFalta([
+      [!!form.nombre.trim(), "el nombre del rol"],
+      [!!form.etiqueta.trim(), "la etiqueta"],
+      [esNuevo ? idValido : true, "un identificador válido"],
+    ]);
+    if (falta) { avisar.error(falta); return; }
     setError(null); setGuardando(true);
     try {
       await guardarRol({ ...form, nombre: form.nombre.trim(), etiqueta: form.etiqueta.trim() }, esNuevo);
       navigate("/roles");
     } catch (e) {
       setError(e.message || "No se pudo guardar el rol.");
+      avisar.error("No se pudo guardar el rol", e);
       setGuardando(false);
     }
   };
@@ -170,7 +178,7 @@ export default function RoleEditor() {
           <>
             <Btn variant="secondary" icon={ArrowLeft} onClick={() => navigate("/roles")}>Volver</Btn>
             {!bloqueado && (
-              <Btn onClick={guardar} disabled={!valido || guardando}>
+              <Btn onClick={guardar} disabled={guardando}>
                 {guardando ? "Guardando…" : esNuevo ? "Crear rol" : "Guardar"}
               </Btn>
             )}

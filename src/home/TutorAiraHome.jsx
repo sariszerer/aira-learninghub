@@ -4,6 +4,8 @@ import { fmtDate } from "../lib/format.js";
 import { Eyebrow, Card, Btn } from "../ui/index.js";
 import { useDataStore } from "../store/dataStore.js";
 import { Plus } from "lucide-react";
+import { avisar } from "../store/avisosStore.js";
+import { queFalta } from "../lib/validacion.js";
 
 function TutorAiraHome({ user, onOpenChild }) {
   const children = useDataStore((s) => s.children);
@@ -27,6 +29,8 @@ function TutorAiraHome({ user, onOpenChild }) {
   });
 
   const handleSubmit = () => {
+    const falta = queFalta([[!!form.logros.trim(), "los logros de la jornada"]]);
+    if (falta) { avisar.error(falta); return; }
     const report = {
       id: `sr-${Date.now()}`, shadowId: user.id, childId: user.assignedChildId,
       date: TODAY, school: user.school,
@@ -148,7 +152,7 @@ function TutorAiraHome({ user, onOpenChild }) {
 
           <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
             <button onClick={() => setForm(null)} style={{ padding: "10px 18px", borderRadius: 10, border: `1px solid ${T.border}`, background: "#fff", color: T.inkSoft, fontSize: 14, fontFamily: T.font, cursor: "pointer" }}>Cancelar</button>
-            <button onClick={handleSubmit} disabled={!form.logros.trim()} style={{
+            <button onClick={handleSubmit} style={{
               padding: "10px 22px", borderRadius: 10, border: "none", background: T.brand, color: "#fff",
               fontSize: 14, fontWeight: 600, fontFamily: T.font, cursor: "pointer",
               opacity: !form.logros.trim() ? 0.5 : 1,

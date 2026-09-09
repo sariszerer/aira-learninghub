@@ -3,6 +3,7 @@ import { T, FONTS } from "../theme.js";
 import { db } from "../supabase.js";
 import { Btn } from "../ui/index.js";
 import SignaturePad from "./SignaturePad.jsx";
+import { avisar } from "../store/avisosStore.js";
 
 function FirmaConsentimientoPublic({ token }) {
   const [status, setStatus] = useState("loading"); // loading | ready | notfound | saving | done | error
@@ -27,7 +28,8 @@ function FirmaConsentimientoPublic({ token }) {
   }, [token]);
 
   const handleSave = async () => {
-    if (!signatureData || !doc) return;
+    if (!doc) return;
+    if (!signatureData) { avisar.error("Falta la firma", "Dibuja tu firma en el recuadro antes de enviar."); return; }
     setStatus("saving");
     try {
       await db.saveConsentSignature(token, signatureData);
@@ -75,7 +77,7 @@ function FirmaConsentimientoPublic({ token }) {
             </div>
             <SignaturePad onChange={setSignatureData} />
             <div style={{ marginTop: 18, display: "flex", justifyContent: "flex-end" }}>
-              <Btn variant="primary" disabled={!signatureData || status === "saving"} onClick={handleSave}>
+              <Btn variant="primary" disabled={status === "saving"} onClick={handleSave}>
                 {status === "saving" ? "Guardando…" : "Guardar firma"}
               </Btn>
             </div>

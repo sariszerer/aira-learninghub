@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { T, inputStyle, TODAY } from "../../theme.js";
 import { MEETING_TYPES } from "../../constants.js";
 import { Btn, Chip, Modal, ModalHeader, FieldLabel } from "../../ui/index.js";
+import { avisar } from "../../store/avisosStore.js";
+import { queFalta } from "../../lib/validacion.js";
 
 function AddMeetingModal({ onClose, onSave }) {
   const [date, setDate] = useState(TODAY);
@@ -9,6 +11,19 @@ function AddMeetingModal({ onClose, onSave }) {
   const [participants, setParticipants] = useState("");
   const [summary, setSummary] = useState("");
   const [agreements, setAgreements] = useState("");
+
+  const guardar = () => {
+    const falta = queFalta([
+      [!!participants.trim(), "los participantes"],
+      [!!summary.trim(), "el resumen"],
+    ]);
+    if (falta) { avisar.error(falta); return; }
+    onSave({
+      date, type, participants: participants.trim(),
+      summary: summary.trim(), agreements: agreements.trim(),
+    });
+  };
+
   return (
     <Modal onClose={onClose} width={520}>
       <ModalHeader title="Registrar minuta" subtitle="Comunicación interdisciplinaria" onClose={onClose} />
@@ -42,7 +57,7 @@ function AddMeetingModal({ onClose, onSave }) {
       </div>
       <div style={{ padding: "14px 24px", borderTop: `1px solid ${T.border}`, display: "flex", justifyContent: "flex-end", gap: 10 }}>
         <Btn variant="ghost" onClick={onClose}>Cancelar</Btn>
-        <Btn variant="primary" disabled={!summary.trim() || !participants.trim()} onClick={() => onSave({ date, type, participants: participants.trim(), summary: summary.trim(), agreements: agreements.trim() })}>Guardar minuta</Btn>
+        <Btn variant="primary" onClick={guardar}>Guardar minuta</Btn>
       </div>
     </Modal>
   );

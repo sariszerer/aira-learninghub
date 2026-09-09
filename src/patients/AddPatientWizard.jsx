@@ -3,6 +3,8 @@ import { T, CHILD_AVATAR_COLORS, TODAY } from "../theme.js";
 import { slugifyName } from "../lib/format.js";
 import { ROLES } from "../permissions.js";
 import { Btn, Chip, Modal, ModalHeader } from "../ui/index.js";
+import { avisar } from "../store/avisosStore.js";
+import { queFalta } from "../lib/validacion.js";
 
 function AddPatientWizard({ users, currentUser, onClose, onCreate }) {
   const [step, setStep] = useState(1);
@@ -33,7 +35,17 @@ function AddPatientWizard({ users, currentUser, onClose, onCreate }) {
   };
 
   const nombreCompleto = `${nombre} ${apellido}`.trim();
-  const step1Valid = nombre.trim() && apellido.trim();
+  // Avanzar de paso también es guardar algo, y el botón apagado no decía qué
+  // faltaba. Con el alta en tres pasos, el campo vacío puede quedar arriba y
+  // fuera de la vista.
+  const siguientePaso = () => {
+    const falta = step === 1 ? queFalta([
+      [!!nombre.trim(), "el nombre"],
+      [!!apellido.trim(), "el apellido"],
+    ]) : null;
+    if (falta) { avisar.error(falta); return; }
+    setStep((s) => s + 1);
+  };
 
 
 
@@ -151,7 +163,7 @@ function AddPatientWizard({ users, currentUser, onClose, onCreate }) {
           {step === 1 ? "Cancelar" : "Atrás"}
         </Btn>
         {step < 3 ? (
-          <Btn variant="primary" disabled={step === 1 && !step1Valid} onClick={() => setStep((s) => s + 1)}>Siguiente</Btn>
+          <Btn variant="primary" onClick={siguientePaso}>Siguiente</Btn>
         ) : (
           <Btn variant="primary" onClick={finish}>Guardar paciente</Btn>
         )}

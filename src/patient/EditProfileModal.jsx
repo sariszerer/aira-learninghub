@@ -3,6 +3,8 @@ import { T, inputStyle } from "../theme.js";
 import { useDataStore } from "../store/dataStore.js";
 import { Btn, Chip, Modal, ModalHeader } from "../ui/index.js";
 import { ROLES } from "../permissions.js";
+import { avisar } from "../store/avisosStore.js";
+import { queFalta } from "../lib/validacion.js";
 
 // Modal de edicion del perfil del paciente.
 //
@@ -53,6 +55,11 @@ export default function EditProfileModal({ child, onClose }) {
   const set = (k, v) => setF((x) => ({ ...x, [k]: v }));
 
   const guardar = () => {
+    const falta = queFalta([
+      [!!f.name.trim(), "el nombre"],
+      [!!f.lastName.trim(), "el apellido"],
+    ]);
+    if (falta) { avisar.error(falta); return; }
     onUpdateChild(child.id, {
       name: f.name.trim(),
       lastName: f.lastName.trim(),
@@ -207,7 +214,7 @@ export default function EditProfileModal({ child, onClose }) {
 
       <div style={{ padding: "14px 24px", borderTop: `1px solid ${T.border}`, display: "flex", justifyContent: "flex-end", gap: 10 }}>
         <Btn variant="ghost" onClick={onClose}>Cancelar</Btn>
-        <Btn onClick={guardar} disabled={!f.name.trim() || !f.lastName.trim()}>Guardar cambios</Btn>
+        <Btn onClick={guardar}>Guardar cambios</Btn>
       </div>
     </Modal>
   );
