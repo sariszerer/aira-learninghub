@@ -5,7 +5,7 @@ import { useDataStore } from "../../store/dataStore.js";
 import { useAuthStore } from "../../store/authStore.js";
 import { can } from "../../permissions.js";
 import { Btn } from "../../ui/index.js";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, Pencil, Plus, Trash2 } from "lucide-react";
 import ObjetivoModal from "../modals/ObjetivoModal.jsx";
 import { EscalaGas } from "../../reports/piezas.jsx";
 
@@ -95,6 +95,15 @@ function ObjectivesList({ objectives, compact, onUpdate, onAdd, onDelete, defaul
 // Vista de objetivos agrupados por especialista y area. Estaba en linea dentro
 // de ChildProfile como una IIFE de 155 lineas; aqui es un componente con nombre.
 function ObjetivosTab({ child }) {
+  // Que secciones de edicion estan abiertas. Se permite mas de una: un paciente
+  // con tres disciplinas se revisa comparando, no de una en una.
+  const [abiertas, setAbiertas] = useState(() => new Set());
+  const alternar = (clave) => setAbiertas((s) => {
+    const n = new Set(s);
+    if (n.has(clave)) n.delete(clave); else n.add(clave);
+    return n;
+  });
+
   const objectives = useDataStore((s) => s.objectives);
   const sessions = useDataStore((s) => s.sessions);
   const users = useDataStore((s) => s.users);
@@ -232,27 +241,80 @@ function ObjetivosTab({ child }) {
               );
             })}
           </div>
-          {/* Full edit view below columns — only for can-edit specialists */}
-          {groupList.filter(({ specId }) => canEdit(specId)).map(({ specId, area, objs }) => {
-            const color = AREA_COLORS[area] || T.inkSoft;
-            const spec = users.find(u => u.id === specId);
+          {/* Edicion, debajo de las columnas y solo de lo que uno puede tocar.
+              Antes eran dos enlaces sueltos al pie de la pagina, con un icono
+              <i class="ti ti-edit"> de una fuente que este proyecto no carga: no
+              se veia nada y quedaba un hueco antes del texto. */}
+          {(() => {
+            const editables = groupList.filter(({ specId }) => canEdit(specId));
+            if (editables.length === 0) return null;
             return (
-              <details key={`edit-${specId}__${area}`} style={{ marginBottom: 10 }}>
-                <summary style={{ fontSize: 12.5, color, cursor: "pointer", padding: "6px 0", listStyle: "none", display: "flex", alignItems: "center", gap: 6 }}>
-                  <i className="ti ti-edit" style={{ fontSize: 14 }} />
-                  Editar objetivos de {area} ({spec?.name})
-                </summary>
-                <Card style={{ padding: "6px 18px 14px", marginTop: 6 }}>
-                  <ObjectivesList
-                    objectives={objs}
-                    onUpdate={onUpdateObjective}
-                    onAdd={(data) => onAddObjective({ ...data, childId: child.id, specialistId: specId, area, createdDate: TODAY, status: "proceso" })}
-                    onDelete={onDeleteObjective}
-                  />
-                </Card>
-              </details>
+              <div style={{ marginTop: 22 }}>
+                <div style={{
+                  fontSize: 11.5, fontWeight: 700, color: T.inkFaint, marginBottom: 9,
+                  textTransform: "uppercase", letterSpacing: "0.05em",
+                }}>
+                  Editar objetivos
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {editables.map(({ specId, area, objs }) => {
+                    const color = AREA_COLORS[area] || T.inkSoft;
+                    const spec = users.find((u) => u.id === specId);
+                    const clave = `${specId}__${area}`;
+                    const abierta = abiertas.has(clave);
+                    const logrados = objs.filter((o) => o.status === "logrado").length;
+                    return (
+                      <div key={`edit-${clave}`} style={{
+                        border: `1px solid ${abierta ? color : T.border}`,
+                        borderRadius: 12, background: T.surface, overflow: "hidden",
+                      }}>
+                        <button
+                          type="button" onClick={() => alternar(clave)}
+                          style={{
+                            display: "flex", alignItems: "center", gap: 11, width: "100%",
+                            padding: "12px 14px", border: "none", cursor: "pointer",
+                            textAlign: "left", fontFamily: T.font,
+                            background: abierta ? `${color}0D` : "transparent",
+                          }}
+                        >
+                          <span style={{
+                            width: 30, height: 30, borderRadius: 9, flexShrink: 0,
+                            background: `${color}1A`, color,
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                          }}>
+                            <Pencil size={14} />
+                          </span>
+                          <span style={{ flex: 1, minWidth: 0 }}>
+                            <span style={{ display: "block", fontSize: 13.5, fontWeight: 600, color: T.ink }}>{area}</span>
+                            <span style={{ display: "block", fontSize: 12, color: T.inkSoft, marginTop: 1 }}>
+                              {spec?.name || "Sin especialista"}
+                            </span>
+                          </span>
+                          <span style={{ fontSize: 12, color: T.inkFaint, whiteSpace: "nowrap", flexShrink: 0 }}>
+                            {logrados}/{objs.length} logrados
+                          </span>
+                          <ChevronDown
+                            size={16} color={T.inkFaint}
+                            style={{ flexShrink: 0, transform: abierta ? "rotate(180deg)" : "none", transition: "transform .15s" }}
+                          />
+                        </button>
+                        {abierta && (
+                          <div style={{ padding: "4px 16px 14px", borderTop: `1px solid ${T.borderSoft}` }}>
+                            <ObjectivesList
+                              objectives={objs}
+                              onUpdate={onUpdateObjective}
+                              onAdd={(data) => onAddObjective({ ...data, childId: child.id, specialistId: specId, area, createdDate: TODAY, status: "proceso" })}
+                              onDelete={onDeleteObjective}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             );
-          })}
+          })()}
         </div>
       );
 }

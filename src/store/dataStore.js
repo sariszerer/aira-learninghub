@@ -417,6 +417,18 @@ export const useDataStore = create((set, get) => ({
     return fila
   },
 
+  // Documento que cuelga de una terapeuta y no de un colegio ni de un
+  // estudiante: su contrato es suyo, y con varias terapeutas por centro un
+  // contrato guardado contra el colegio no dice de quien es.
+  agregarDocumentoDeTerapeuta: async (tutorId, doc) => {
+    const autor = useAuthStore.getState().currentUser?.id || null
+    const fila = { id: `d-${Date.now()}`, tutorId, childId: null, schoolId: null, studentId: null, authorId: autor, ...doc }
+    set((s) => ({ documents: [fila, ...s.documents] }))
+    try { await db.insertDocument(fila) }
+    catch (e) { get().avisarFallo('Guardar el contrato de la terapeuta', e); throw e }
+    return fila
+  },
+
   // Documento del expediente de un estudiante de gabinete.
   agregarDocumentoDeEstudiante: async (studentId, doc) => {
     const autor = useAuthStore.getState().currentUser?.id || null
