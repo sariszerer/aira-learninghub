@@ -192,6 +192,12 @@ export const ROLES = {
     permisos: [
       ...TODAS_LAS_LECTURAS,
       'tutorreport:view', 'tutorreport:create',
+      // Entra al gabinete SOLO A LEER, y RLS lo estrecha a su estudiante a
+      // traves de tutors.user_id. Lo necesita para el registro de supervision,
+      // que es la devolucion que direccion le hace sobre su trabajo: no lo
+      // escribe — para eso esta gabinete:supervision:write — pero tiene que
+      // poder leerlo. Sin el vinculo en tutors.user_id no ve nada.
+      'gabinete:view',
     ],
   },
 }

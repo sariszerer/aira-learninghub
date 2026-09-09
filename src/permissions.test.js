@@ -193,9 +193,19 @@ describe('ROLES — matriz semilla', () => {
     expect(ROLES.specialist.permisos).not.toContain('session:edit:any')
   })
 
-  it('gabinete solo para admin y dirección clínica (App.jsx:5012)', () => {
+  it('el especialista no entra al gabinete', () => {
     expect(ROLES.specialist.permisos).not.toContain('gabinete:view')
-    expect(ROLES.shadow.permisos).not.toContain('gabinete:view')
+  })
+
+  it('la tutora entra al gabinete solo a leer', () => {
+    // Cambio aprobado: necesita leer el registro de supervisión, que es la
+    // devolución que dirección le hace sobre su trabajo. Verlo sí, escribirlo
+    // no — y RLS lo estrecha además a SU estudiante vía tutors.user_id, así que
+    // el permiso por sí solo no le enseña los colegios de las demás.
+    expect(ROLES.shadow.permisos).toContain('gabinete:view')
+    expect(ROLES.shadow.permisos).not.toContain('gabinete:session:create')
+    expect(ROLES.shadow.permisos).not.toContain('gabinete:supervision:write')
+    expect(ROLES.shadow.permisos).not.toContain('school:create')
   })
 
   it('guidelines:view reemplaza el id u-admin incrustado', () => {
@@ -303,6 +313,7 @@ describe('ROLES — matriz semilla', () => {
     expect([...ROLES.shadow.permisos].sort()).toEqual([
       'anamnesis:view',
       'document:view',
+      'gabinete:view',
       'meeting:view',
       'objective:view',
       'patient:view',

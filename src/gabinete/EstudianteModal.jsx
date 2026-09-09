@@ -16,6 +16,7 @@ export default function EstudianteModal({ estudiante, schoolId, programa = "tuto
   const children = useDataStore((s) => s.children);
   const tutores = useDataStore((s) => s.tutores);
   const guardarTutor = useDataStore((s) => s.guardarTutor);
+  const users = useDataStore((s) => s.users);
 
   const [f, setF] = useState({
     name: estudiante?.name || "",
@@ -36,6 +37,16 @@ export default function EstudianteModal({ estudiante, schoolId, programa = "tuto
     () => tutores.filter((t) => t.activo !== false && (!t.schoolId || t.schoolId === schoolId))
       .sort((a, b) => a.name.localeCompare(b.name)),
     [tutores, schoolId]
+  );
+
+  const tutorElegido = tutores.find((t) => t.id === f.tutorId) || null;
+
+  // Cuentas AIRA con rol de tutora. Es la lista de la que sale el vínculo que
+  // le abre a ella —y solo a ella— el expediente de su estudiante.
+  const cuentasTutora = useMemo(
+    () => users.filter((u) => u.role === "shadow" && u.activo !== false)
+      .sort((a, b) => a.name.localeCompare(b.name)),
+    [users]
   );
 
   // Buscador de pacientes: con 44 en la lista, un desplegable obliga a
@@ -140,6 +151,36 @@ export default function EstudianteModal({ estudiante, schoolId, programa = "tuto
               placeholder={delColegio.length ? "…o escribe el nombre de una tutora nueva" : "Nombre de la tutora"}
               style={{ ...inputStyle, width: "100%", boxSizing: "border-box" }}
             />
+          )}
+        </Campo>
+        )}
+
+        {/* El vínculo con su cuenta es lo que le deja ver este expediente — el
+            plan, la supervisión y el reporte quincenal — sin abrirle los
+            colegios y estudiantes de las demás. Sin vínculo no ve nada de
+            gabinete, que es el estado seguro. */}
+        {!esPreescolar && tutorElegido && (
+        <Campo
+          etiqueta="Cuenta AIRA de la tutora"
+          ayuda="Con esto ella entra a ver el expediente de este estudiante. Solo el suyo."
+        >
+          {cuentasTutora.length === 0 ? (
+            <div style={{ fontSize: 12.5, color: T.inkFaint }}>
+              No hay cuentas con rol Tutor AIRA. Se crean en Equipo.
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {cuentasTutora.map((u) => (
+                <Chip
+                  key={u.id} label={u.name}
+                  selected={tutorElegido.userId === u.id}
+                  onClick={() => guardarTutor({
+                    ...tutorElegido,
+                    userId: tutorElegido.userId === u.id ? null : u.id,
+                  })}
+                />
+              ))}
+            </div>
           )}
         </Campo>
         )}

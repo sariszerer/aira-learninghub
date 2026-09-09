@@ -7,6 +7,7 @@ import {
   especialidadesDelPaciente,
 } from "../lib/reportes.js";
 import DocumentoAira from "./DocumentoAira.jsx";
+import BloqueFirma from "./BloqueFirma.jsx";
 import VisorReporte from "./VisorReporte.jsx";
 import FiltrosReporte from "./FiltrosReporte.jsx";
 import { SeccionDoc, SinDato, TablaDoc, EscalaGas, ListaDoc } from "./piezas.jsx";
@@ -77,7 +78,8 @@ export default function HistorialClinico({
   );
 
   const contacto = child.parentContact || {};
-  const nombreUsuario = users.find((u) => u.id === currentUser?.id)?.name || currentUser?.name;
+  const quienGenera = users.find((u) => u.id === currentUser?.id) || currentUser || null;
+  const nombreUsuario = quienGenera?.name;
 
   return (
     <VisorReporte titulo="Historial Clínico Completo" onClose={onClose}>
@@ -282,6 +284,19 @@ export default function HistorialClinico({
             Dirección Clínica — firma y fecha
           </div>
         </SeccionDoc>
+
+        {/* Este historial lo emite quien lo genera — el documento lo restringe a
+            Administración y Dirección Clínica — así que firma esa persona, no un
+            especialista tratante. La rúbrica de Dirección Clínica de arriba se
+            deja: son dos validaciones distintas. */}
+        <BloqueFirma
+          responsable={quienGenera}
+          datos={[{
+            etiqueta: "N° de idoneidad",
+            valor: quienGenera?.licenseNo,
+            faltante: "Sin registrar en el perfil",
+          }]}
+        />
       </DocumentoAira>
     </VisorReporte>
   );

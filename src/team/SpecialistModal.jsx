@@ -1,8 +1,10 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
+import { Upload } from "lucide-react";
 import { T } from "../theme.js";
 import { ROLES } from "../permissions.js";
 import { useDataStore } from "../store/dataStore.js";
 import { useAuthStore } from "../store/authStore.js";
+import { validarArchivoDeFirma } from "../reports/firma.js";
 import { Btn, Chip } from "../ui/index.js";
 
 // Alta y edicion de un miembro del equipo.
@@ -48,6 +50,7 @@ export default function SpecialistModal({ usuario, onClose }) {
     specialty: usuario?.specialty || "",
     title: usuario?.title || "",
     licenseNo: usuario?.licenseNo || "",
+    firma: usuario?.firma || null,
     avatarBg: usuario?.avatarBg || PALETA[0],
   });
   const [guardando, setGuardando] = useState(false);
@@ -83,6 +86,7 @@ export default function SpecialistModal({ usuario, onClose }) {
           title: form.title.trim() || null,
           licenseNo: form.licenseNo.trim() || null,
           avatarBg: form.avatarBg,
+          firma: form.firma,
         };
         // El rol solo viaja si de verdad cambio, y nunca el propio: la base lo
         // rechaza con un trigger y es mejor no ofrecerlo que fallar despues.
@@ -173,6 +177,14 @@ export default function SpecialistModal({ usuario, onClose }) {
             licencia/idoneidad" junto al nombre y la especialidad. */}
         {campo("N° de idoneidad", "licenseNo", { placeholder: "Aparece en la firma de los reportes" })}
 
+        {/* La rúbrica solo la sube su dueña. Es lo mismo que impide firmar un
+            reporte ajeno: si la administración pudiera cargar la firma de otra
+            persona, el sistema podría emitir documentos que esa persona nunca
+            validó. */}
+        {!esNuevo && esUnoMismo && (
+          <CampoFirma valor={form.firma} onChange={(v) => set("firma", v)} />
+        )}
+
         <div style={{ marginBottom: 14 }}>
           <div style={{
             fontSize: 11.5, fontWeight: 600, color: T.inkSoft, marginBottom: 5,
@@ -246,3 +258,71 @@ export default function SpecialistModal({ usuario, onClose }) {
     </div>
   );
 }
+
+// Rúbrica del especialista: se sube una vez y se reutiliza en los tres reportes.
+//
+// A nivel de módulo, no dentro del modal: un componente definido en el cuerpo es
+// un tipo nuevo en cada render y React lo desmonta y lo remonta en cada tecla.
+function CampoFirma({ valor, onChange }) {
+  const entrada = useRef(null);
+  const [error, setError] = useState(null);
+
+  const elegir = (e) => {
+    const archivo = e.target.files?.[0];
+    e.target.value = "";
+    const problema = validarArchivoDeFirma(archivo);
+    if (problema) { setError(problema); return; }
+    setError(null);
+    const lector = new FileReader();
+    lector.onload = () => onChange(lector.result);
+    lector.readAsDataURL(archivo);
+  };
+
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <div style={{
+        fontSize: 11.5, fontWeight: 600, color: T.inkSoft, marginBottom: 5,
+        textTransform: "uppercase", letterSpacing: "0.05em",
+      }}>
+        Mi firma
+      </div>
+      <div style={{ fontSize: 11.5, color: T.inkFaint, marginBottom: 7 }}>
+        PNG con fondo transparente, máximo 300 KB. Se estampa en los reportes que firmes.
+      </div>
+      {valor ? (
+        <div style={{
+          display: "flex", alignItems: "center", gap: 12, padding: "10px 12px",
+          border: `1px solid ${T.border}`, borderRadius: T.radiusSm, background: T.surfaceSunk,
+        }}>
+          <img src={valor} alt="Firma" style={{ maxHeight: 46, maxWidth: 190 }} />
+          <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
+            <button type="button" onClick={() => entrada.current?.click()} style={enlaceBoton}>Cambiar</button>
+            <button type="button" onClick={() => onChange(null)} style={{ ...enlaceBoton, color: T.apoyo }}>Quitar</button>
+          </div>
+        </div>
+      ) : (
+        <button
+          type="button" onClick={() => entrada.current?.click()}
+          style={{
+            display: "flex", alignItems: "center", gap: 8, width: "100%",
+            padding: "12px", borderRadius: T.radiusSm, cursor: "pointer",
+            border: `1px dashed ${T.border}`, background: T.surface,
+            fontFamily: T.font, fontSize: 13, color: T.inkSoft,
+          }}
+        >
+          <Upload size={14} /> Elegir imagen de la firma
+        </button>
+      )}
+      <input
+        ref={entrada} type="file" accept="image/png,image/jpeg,image/webp"
+        onChange={elegir} style={{ display: "none" }}
+      />
+      {error && <div style={{ fontSize: 11.5, color: T.apoyo, marginTop: 5 }}>{error}</div>}
+    </div>
+  );
+}
+
+const enlaceBoton = {
+  background: "none", border: "none", cursor: "pointer", padding: 0,
+  fontFamily: T.font, fontSize: 12, fontWeight: 600, color: T.brand,
+};
