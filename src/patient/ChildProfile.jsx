@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import { Plus, Pencil } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 import { T, SPECIALIST_COLORS, TODAY } from "../theme.js";
 import { fmtDate } from "../lib/format.js";
 import { can } from "../permissions.js";
@@ -9,6 +9,7 @@ import ResumenTab from "./tabs/ResumenTab.jsx";
 import SesionesTab from "./tabs/SesionesTab.jsx";
 import ObjetivosTab, { ObjectivesList } from "./tabs/ObjetivosTab.jsx";
 import EditProfileModal from "./EditProfileModal.jsx";
+import BorrarPacienteModal from "./BorrarPacienteModal.jsx";
 import PlanTrabajoTab from "./tabs/PlanTrabajoTab.jsx";
 import AnamnesisTab from "./tabs/AnamnesisTab.jsx";
 import ReportesTab from "./tabs/ReportesTab.jsx";
@@ -60,6 +61,8 @@ function ChildProfile({ child, onOpenSessionForm, onViewReport, onGenerateFull, 
     setSearchParams(next, { replace: true });
   };
   const [editingProfile, setEditingProfile] = useState(false);
+  const [borrando, setBorrando] = useState(false);
+  const navegar = useNavigate();
 
   const specialistIdsFromSessions = [...new Set(
     sessions.filter(s => s.childId === child.id).map(s => s.specialistId).filter(Boolean)
@@ -116,10 +119,23 @@ function ChildProfile({ child, onOpenSessionForm, onViewReport, onGenerateFull, 
           {can(currentUser, "patient:edit") && (
             <Btn variant="secondary" size="sm" icon={Pencil} onClick={() => setEditingProfile(true)}>Editar perfil</Btn>
           )}
+          {/* Discreto a proposito: borra el expediente entero en cascada y no
+              es la accion que nadie viene a hacer a esta pantalla. La ficha que
+              se cierra al terminar el tratamiento se cierra desde Resumen. */}
+          {can(currentUser, "patient:delete") && (
+            <Btn variant="ghost" size="sm" icon={Trash2} onClick={() => setBorrando(true)}>Borrar paciente</Btn>
+          )}
         </div>
       </div>
 
       {editingProfile && <EditProfileModal child={child} onClose={() => setEditingProfile(false)} />}
+      {borrando && (
+        <BorrarPacienteModal
+          child={child}
+          onClose={() => setBorrando(false)}
+          onBorrado={() => navegar("/pacientes")}
+        />
+      )}
 
         <div style={{ marginLeft: -3, marginRight: -3 }}>
           <Tabs tabs={tabs} activo={tab} onCambiar={setTab} />

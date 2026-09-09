@@ -6,10 +6,10 @@ const usuario = (perms, extra = {}) => ({
 })
 
 describe('PERMISSIONS', () => {
-  it('tiene 35 claves únicas', () => {
+  it('tiene 37 claves únicas', () => {
     const keys = PERMISSIONS.map(p => p.key)
-    expect(keys).toHaveLength(35)
-    expect(new Set(keys).size).toBe(35)
+    expect(keys).toHaveLength(37)
+    expect(new Set(keys).size).toBe(37)
   })
 
   it('cada permiso declara grupo y descripción no vacíos', () => {
@@ -255,11 +255,11 @@ describe('ROLES — matriz semilla', () => {
     expect([...ROLES.admin.permisos].sort()).toEqual([
       'anamnesis:edit', 'anamnesis:view',
       'document:create', 'document:edit:any', 'document:view',
-      'gabinete:session:create', 'gabinete:view',
+      'gabinete:session:create', 'gabinete:supervision:write', 'gabinete:view',
       'guidelines:view',
       'meeting:create', 'meeting:view',
       'objective:create', 'objective:edit:any', 'objective:view',
-      'patient:close', 'patient:create', 'patient:edit', 'patient:renew_package', 'patient:view',
+      'patient:close', 'patient:create', 'patient:delete', 'patient:edit', 'patient:renew_package', 'patient:view',
       'report:evolution:generate', 'report:history:generate', 'report:parent:generate', 'report:view',
       'role:manage',
       'school:create',
@@ -273,11 +273,11 @@ describe('ROLES — matriz semilla', () => {
     expect([...ROLES.clinical_director.permisos].sort()).toEqual([
       'anamnesis:edit', 'anamnesis:view',
       'document:create', 'document:edit:any', 'document:view',
-      'gabinete:session:create', 'gabinete:view',
+      'gabinete:session:create', 'gabinete:supervision:write', 'gabinete:view',
       'guidelines:view',
       'meeting:create', 'meeting:view',
       'objective:create', 'objective:edit:any', 'objective:view',
-      'patient:close', 'patient:edit', 'patient:renew_package', 'patient:view',
+      'patient:close', 'patient:delete', 'patient:edit', 'patient:renew_package', 'patient:view',
       'report:evolution:generate', 'report:history:generate', 'report:parent:generate', 'report:view',
       'school:create',
       'session:create', 'session:edit:any', 'session:view',
@@ -376,5 +376,30 @@ describe('buildUser con rol desde la base', () => {
     const u = buildUser({ id: 'u-1', role: 'x' }, { ...filaRol, role_permissions: [] })
     expect(u.permissions.size).toBe(0)
     expect(can(u, 'patient:view')).toBe(false)
+  })
+})
+
+describe('borrar paciente', () => {
+  // Borrar arrastra en cascada sesiones, objetivos, documentos, reuniones y
+  // reportes de un menor. Quien tiene pacientes asignados NO puede vaciar un
+  // expediente entero: eso es de dirección.
+  const con = (rol) => buildUser({ id: 'u', name: 'X', role: rol })
+
+  it('dirección puede', () => {
+    expect(can(con('admin'), 'patient:delete')).toBe(true)
+    expect(can(con('clinical_director'), 'patient:delete')).toBe(true)
+  })
+
+  it('especialista y tutor no', () => {
+    expect(can(con('specialist'), 'patient:delete')).toBe(false)
+    expect(can(con('shadow'), 'patient:delete')).toBe(false)
+  })
+
+  it('poder cerrar el proceso no implica poder borrar', () => {
+    // El motivo de que sea un permiso propio: el especialista da de alta a sus
+    // pacientes — cerrar conserva la historia clínica — pero destruirla no.
+    const esp = con('specialist')
+    expect(can(esp, 'patient:close')).toBe(true)
+    expect(can(esp, 'patient:delete')).toBe(false)
   })
 })

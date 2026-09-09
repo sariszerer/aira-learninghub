@@ -45,6 +45,19 @@ export default function ExpedienteEstudiante({ estudiante, onVolver, programa = 
   const paciente = children.find((c) => c.id === estudiante.childId) || null;
   const puedeEscribir = can(currentUser, "gabinete:session:create");
 
+  // Quién puede crear CADA formato. No es uniforme: el registro de supervisión
+  // es la valoración que se hace sobre la tutora, así que solo lo escribe
+  // dirección aunque la tutora sí lo vea en su expediente. El resto lo sube
+  // ella y dirección también puede editarlo.
+  //
+  // El permiso lo declara el propio formato en formatosTutor.js, no una lista
+  // de tipos aquí: así el día que se añada otro documento restringido no hay
+  // que acordarse de tocar esta pantalla.
+  const puedeCrear = (tipo) => {
+    const requerido = FORMATOS_TUTOR[tipo]?.permisoEscritura;
+    return requerido ? can(currentUser, requerido) : puedeEscribir;
+  };
+
   const suyos = useMemo(
     () => documents.filter((d) => d.studentId === estudiante.id),
     [documents, estudiante.id]
@@ -220,9 +233,15 @@ export default function ExpedienteEstudiante({ estudiante, onVolver, programa = 
                     </div>
                   </div>
                 </div>
-                {puedeEscribir && (
+                {puedeCrear(tipo) ? (
                   <Btn size="sm" variant="secondary" icon={Plus} onClick={() => setCreando(tipo)}>Nuevo</Btn>
-                )}
+                ) : formato.permisoEscritura ? (
+                  // Se dice por qué no hay botón. Un hueco donde los demás
+                  // formatos tienen uno se lee como un fallo, no como una regla.
+                  <span style={{ fontSize: 11.5, color: T.inkFaint, fontStyle: "italic" }}>
+                    Lo registra dirección
+                  </span>
+                ) : null}
               </div>
 
               {suyosDelTipo.length > 0 && (

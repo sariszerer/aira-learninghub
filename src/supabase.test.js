@@ -82,3 +82,33 @@ describe('dbEvolutionReportToApp', () => {
     expect(dbEvolutionReportToApp({ id: 'er1', content: null }).content).toEqual({})
   })
 })
+
+// ── Ninguna columna DATE recibe la cadena vacía ──────────────────────────────
+//
+// Un <input type="date"> en blanco vale "", y Postgres responde 22007 invalid
+// input syntax for type date. Así se perdió la primera escuela de gabinete: el
+// insert reventaba, el error se tragaba y la pantalla seguía mostrándola.
+//
+// Se comprueba leyendo el código en vez de espiar al cliente porque lo que hay
+// que garantizar es la regla completa — TODA columna de fecha, no la que hoy
+// falló. Acordarse caso por caso es justo lo que no funcionó.
+describe('columnas de fecha al escribir', () => {
+  const FECHAS = [
+    'birth_date', 'admission_date', 'discharge_date', 'next_session', 'package_start',
+    'contract_start', 'contract_end', 'start_date', 'fecha_ruta', 'created_date',
+    'from_date', 'to_date', 'generated_date', 'date', 'fecha',
+  ]
+
+  it('todas pasan por fecha()', async () => {
+    const fs = await import('node:fs')
+    const src = fs.readFileSync(new URL('./supabase.js', import.meta.url), 'utf8')
+    // Solo las escrituras: en los mappers de lectura la base ya devuelve date.
+    const escrituras = src.slice(src.indexOf('export const db'))
+    const crudas = []
+    for (const col of FECHAS) {
+      const asignaciones = escrituras.match(new RegExp(`\b${col}(?::| =) *[^,\n}]+`, 'g')) || []
+      for (const a of asignaciones) if (!a.includes('fecha(')) crudas.push(a.trim())
+    }
+    expect(crudas).toEqual([])
+  })
+})

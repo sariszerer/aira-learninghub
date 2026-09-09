@@ -204,3 +204,40 @@ describe('asistencia', () => {
     expect(useDataStore.getState().sessions.slice(-1)[0].attendance).toBe('asistio')
   })
 })
+
+describe('un guardado que falla no puede parecer exitoso', () => {
+  it('avisa cuando la base rechaza el colegio', async () => {
+    // El caso real: contract_start iba vacío, Postgres respondió 22007 y el
+    // error se perdía en un console.error. La escuela seguía en pantalla y
+    // desaparecía al refrescar.
+    db.insertSchool.mockRejectedValueOnce(new Error('invalid input syntax for type date: ""'))
+    await useDataStore.getState().addSchool({ id: 's-1', name: 'MDA' })
+
+    const [fallo] = useDataStore.getState().fallosDeGuardado
+    expect(fallo).toBeTruthy()
+    expect(fallo.detalle).toContain('invalid input syntax')
+  })
+
+  it('también avisa cuando la escritura propaga el error', async () => {
+    // Estas no se tragaban el error: lo lanzaban. Si el componente que llama no
+    // lo captura — y ninguno lo hacía — el resultado para el usuario era el
+    // mismo silencio.
+    db.upsertEstudianteGabinete.mockRejectedValueOnce(new Error('sin permiso'))
+    await expect(
+      useDataStore.getState().guardarEstudianteGabinete({ name: 'Asher', schoolId: 's-1' })
+    ).rejects.toThrow('sin permiso')
+    expect(useDataStore.getState().fallosDeGuardado).toHaveLength(1)
+  })
+
+  it('no inventa avisos cuando todo sale bien', async () => {
+    await useDataStore.getState().addSchool({ id: 's-2', name: 'MDA' })
+    expect(useDataStore.getState().fallosDeGuardado).toEqual([])
+  })
+
+  it('el usuario puede descartar los avisos', async () => {
+    db.insertSchool.mockRejectedValueOnce(new Error('boom'))
+    await useDataStore.getState().addSchool({ id: 's-3', name: 'MDA' })
+    useDataStore.getState().descartarFallos()
+    expect(useDataStore.getState().fallosDeGuardado).toEqual([])
+  })
+})

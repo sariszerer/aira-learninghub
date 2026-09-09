@@ -17,10 +17,15 @@ import { useAuthStore } from './authStore.js'
 
 // Datos clinicos y sus mutaciones.
 //
-// Cada mutacion actualiza el estado primero y persiste despues, tragandose el
-// error de red: es el comportamiento que ya tenia la app y se conserva tal cual.
-// Si Supabase falla, la interfaz queda adelantada respecto a la base — esta
-// anotado como deuda conocida, no se corrige en este refactor.
+// Cada mutacion actualiza el estado primero y persiste despues. Cuando la
+// escritura falla se AVISA: `fallosDeGuardado` recoge lo que no llego a la base
+// y la aplicacion lo muestra en un aviso que no se va solo.
+//
+// Antes se tragaba el error con un console.error y la pantalla seguia mostrando
+// el dato recien creado. Asi se perdio la primera escuela de gabinete con su
+// estudiante: todo el trabajo parecia guardado y al refrescar no existia nada.
+// Una interfaz adelantada respecto a la base no es un desfase tecnico, es
+// decirle al usuario que su trabajo esta a salvo cuando no lo esta.
 //
 // El id del usuario actual se lee del store de sesion cuando hace falta.
 // Zustand permite ese acceso puntual fuera de React; Context no.
@@ -44,6 +49,21 @@ export const useDataStore = create((set, get) => ({
   tutorReports: [],
   activityLog: [],
   rolesDisponibles: [],
+
+  // Escrituras que la base rechazo. La interfaz las muestra hasta que el
+  // usuario las descarta: son trabajo que el usuario cree hecho y no lo esta.
+  fallosDeGuardado: [],
+
+  avisarFallo: (que, e) => {
+    console.error(`${que}:`, e)
+    set((s) => ({
+      fallosDeGuardado: [
+        ...s.fallosDeGuardado,
+        { id: `f-${Date.now()}-${s.fallosDeGuardado.length}`, que, detalle: e?.message || String(e) },
+      ],
+    }))
+  },
+  descartarFallos: () => set({ fallosDeGuardado: [] }),
 
   appLoading: false,
   // Distinto de appLoading: sigue en false hasta que la primera carga termina.
@@ -89,9 +109,7 @@ export const useDataStore = create((set, get) => ({
         tutores: dbTutores,
         tamizajes: dbTamizajes,
       })
-    } catch (e) {
-      console.error('Supabase load error:', e)
-    } finally {
+    } catch (e) { get().avisarFallo('Supabase load error', e) } finally {
       set({ appLoading: false, dataLoaded: true })
     }
   },
@@ -158,7 +176,7 @@ export const useDataStore = create((set, get) => ({
         seen: false,
       }, ...s.activityLog],
     }))
-    try { db.insertSession(newSession) } catch (e) { console.error('Save session:', e) }
+    try { db.insertSession(newSession) } catch (e) { get().avisarFallo('Save session', e) }
     return newSession
   },
 
@@ -171,17 +189,17 @@ export const useDataStore = create((set, get) => ({
         return updated
       }),
     }))
-    try { await db.updateChild(childId, updates) } catch (e) { console.error('Update child:', e) }
+    try { await db.updateChild(childId, updates) } catch (e) { get().avisarFallo('Update child', e) }
   },
 
   updateSession: async (session) => {
     set((s) => ({ sessions: s.sessions.map((x) => (x.id === session.id ? session : x)) }))
-    try { await db.updateSession(session) } catch (e) { console.error('Update session:', e) }
+    try { await db.updateSession(session) } catch (e) { get().avisarFallo('Update session', e) }
   },
 
   updateDocument: async (doc) => {
     set((s) => ({ documents: s.documents.map((d) => (d.id === doc.id ? doc : d)) }))
-    try { await db.updateDocument(doc) } catch (e) { console.error('Update document:', e) }
+    try { await db.updateDocument(doc) } catch (e) { get().avisarFallo('Update document', e) }
   },
 
   closeProcess: async (childId, note, objectives, totalSessions) => {
@@ -214,7 +232,7 @@ export const useDataStore = create((set, get) => ({
         seen: false,
       }, ...s.activityLog],
     }))
-    try { await db.insertDocument(doc) } catch (e) { console.error('Close process:', e) }
+    try { await db.insertDocument(doc) } catch (e) { get().avisarFallo('Close process', e) }
   },
 
   renewPackage: async (childId) => {
@@ -229,23 +247,23 @@ export const useDataStore = create((set, get) => ({
     set((s) => ({
       children: s.children.map((c) => (c.id === childId ? { ...c, packageStart: today, packageNum } : c)),
     }))
-    try { await db.updateChild(childId, { packageStart: today, packageNum }) } catch (e) { console.error('Renew package:', e) }
+    try { await db.updateChild(childId, { packageStart: today, packageNum }) } catch (e) { get().avisarFallo('Renew package', e) }
   },
 
   updateObjective: async (updated) => {
     set((s) => ({ objectives: s.objectives.map((o) => (o.id === updated.id ? updated : o)) }))
-    try { await db.upsertObjective(updated) } catch (e) { console.error('Update objective:', e) }
+    try { await db.upsertObjective(updated) } catch (e) { get().avisarFallo('Update objective', e) }
   },
 
   addObjective: async (obj) => {
     const newObj = { id: `o-${Date.now()}`, ...obj }
     set((s) => ({ objectives: [...s.objectives, newObj] }))
-    try { await db.upsertObjective(newObj) } catch (e) { console.error('Add objective:', e) }
+    try { await db.upsertObjective(newObj) } catch (e) { get().avisarFallo('Add objective', e) }
   },
 
   deleteObjective: async (id) => {
     set((s) => ({ objectives: s.objectives.filter((o) => o.id !== id) }))
-    try { await db.deleteObjective(id) } catch (e) { console.error('Delete objective:', e) }
+    try { await db.deleteObjective(id) } catch (e) { get().avisarFallo('Delete objective', e) }
   },
 
   // childId llega explicito: antes se leia de `selectedChildId` en el scope de
@@ -269,7 +287,7 @@ export const useDataStore = create((set, get) => ({
     const fila = { id: `er-${Date.now()}`, ...reporte }
     set((s) => ({ evolutionReports: [fila, ...s.evolutionReports] }))
     try { await db.insertEvolutionReport(fila) }
-    catch (e) { console.error('Guardar reporte de evolucion:', e) }
+    catch (e) { get().avisarFallo('Guardar reporte de evolucion', e) }
     return fila
   },
 
@@ -280,13 +298,13 @@ export const useDataStore = create((set, get) => ({
   // Los especialistas son filas de la misma tabla `users` que ya se carga al
   // inicio, asi que la pantalla de gestion recarga esa lista tras cada cambio.
   recargarUsuarios: async () => {
-    try { set({ users: await db.getUsers() }) } catch (e) { console.error('Reload users:', e) }
+    try { set({ users: await db.getUsers() }) } catch (e) { get().avisarFallo('Reload users', e) }
   },
 
   updateUser: async (id, updates) => {
     set((s) => ({ users: s.users.map((u) => (u.id === id ? { ...u, ...updates } : u)) }))
     try { await db.updateUser(id, updates) } catch (e) {
-      console.error('Update user:', e)
+      get().avisarFallo('Actualizar usuario', e)
       // A diferencia de las demas mutaciones, aqui se revierte: un cambio de rol
       // que la base rechazo y la interfaz muestra como aplicado es enganoso.
       await get().recargarUsuarios()
@@ -330,12 +348,12 @@ export const useDataStore = create((set, get) => ({
 
   addTutorReport: async (report) => {
     set((s) => ({ tutorReports: [...s.tutorReports, report] }))
-    try { await db.insertTutorReport(report) } catch (e) { console.error('Add tutor report:', e) }
+    try { await db.insertTutorReport(report) } catch (e) { get().avisarFallo('Add tutor report', e) }
   },
 
   addGabineteSession: async (session) => {
     set((s) => ({ gabineteSessions: [...s.gabineteSessions, session] }))
-    try { await db.insertGabineteSession(session) } catch (e) { console.error('Add gabinete session:', e) }
+    try { await db.insertGabineteSession(session) } catch (e) { get().avisarFallo('Add gabinete session', e) }
   },
 
   guardarEstudianteGabinete: async (est) => {
@@ -345,7 +363,7 @@ export const useDataStore = create((set, get) => ({
         ? s.estudiantesGabinete.map((x) => (x.id === fila.id ? fila : x))
         : [...s.estudiantesGabinete, fila],
     }))
-    await db.upsertEstudianteGabinete(fila)
+    try { await db.upsertEstudianteGabinete(fila) } catch (e) { get().avisarFallo('Guardar estudiante de gabinete', e); throw e }
     return fila
   },
 
@@ -354,7 +372,7 @@ export const useDataStore = create((set, get) => ({
       estudiantesGabinete: s.estudiantesGabinete.filter((x) => x.id !== id),
       documents: s.documents.filter((x) => x.studentId !== id),
     }))
-    await db.deleteEstudianteGabinete(id)
+    try { await db.deleteEstudianteGabinete(id) } catch (e) { get().avisarFallo('Borrar estudiante de gabinete', e); throw e }
   },
 
   guardarTamizaje: async (t) => {
@@ -364,7 +382,7 @@ export const useDataStore = create((set, get) => ({
         ? s.tamizajes.map((x) => (x.id === fila.id ? fila : x))
         : [fila, ...s.tamizajes],
     }))
-    await db.upsertTamizaje(fila)
+    try { await db.upsertTamizaje(fila) } catch (e) { get().avisarFallo('Guardar tamizaje', e); throw e }
     return fila
   },
 
@@ -390,7 +408,7 @@ export const useDataStore = create((set, get) => ({
       referralReason: `Derivado desde el programa de preescolar${est.nivel ? ` (${est.nivel})` : ''}.`,
     }
     set((s) => ({ children: [...s.children, paciente] }))
-    await db.insertChild(paciente)
+    try { await db.insertChild(paciente) } catch (e) { get().avisarFallo('Abrir expediente del estudiante', e); throw e }
     await get().guardarEstudianteGabinete({ ...est, childId: id })
     return id
   },
@@ -402,7 +420,7 @@ export const useDataStore = create((set, get) => ({
         ? s.tutores.map((x) => (x.id === fila.id ? fila : x))
         : [...s.tutores, fila],
     }))
-    await db.upsertTutor(fila)
+    try { await db.upsertTutor(fila) } catch (e) { get().avisarFallo('Guardar tutor', e); throw e }
     return fila
   },
 
@@ -412,7 +430,7 @@ export const useDataStore = create((set, get) => ({
     const fila = { id: `d-${Date.now()}`, studentId, childId: null, schoolId: null, authorId: autor, ...doc }
     set((s) => ({ documents: [fila, ...s.documents] }))
     try { await db.insertDocument(fila) }
-    catch (e) { console.error('Documento de estudiante:', e) }
+    catch (e) { get().avisarFallo('Documento de estudiante', e) }
     return fila
   },
 
@@ -423,7 +441,7 @@ export const useDataStore = create((set, get) => ({
       estudiantesGabinete: s.estudiantesGabinete.filter((x) => x.schoolId !== id),
       documents: s.documents.filter((x) => x.schoolId !== id),
     }))
-    await db.deleteSchool(id)
+    try { await db.deleteSchool(id) } catch (e) { get().avisarFallo('Borrar colegio', e); throw e }
   },
 
   // Documento que cuelga de un colegio y no de un paciente. addDocument exige
@@ -433,21 +451,39 @@ export const useDataStore = create((set, get) => ({
     const fila = { id: `d-${Date.now()}`, schoolId, childId: null, authorId: autor, ...doc }
     set((s) => ({ documents: [fila, ...s.documents] }))
     try { await db.insertDocument(fila) }
-    catch (e) { console.error('Documento de colegio:', e) }
+    catch (e) { get().avisarFallo('Documento de colegio', e) }
     return fila
   },
 
   addSchool: async (school) => {
     set((s) => ({ schools: [...s.schools, school] }))
-    try { await db.insertSchool(school) } catch (e) { console.error('Add school:', e) }
+    try { await db.insertSchool(school) } catch (e) { get().avisarFallo('Add school', e) }
+  },
+
+  // Borrar paciente. El estado local se limpia igual que la cascada de la base:
+  // si se quitara solo de `children`, las sesiones y objetivos del paciente
+  // borrado seguirian contando en los totales de la pantalla hasta recargar.
+  borrarPaciente: async (id) => {
+    set((s) => ({
+      children: s.children.filter((x) => x.id !== id),
+      sessions: s.sessions.filter((x) => x.childId !== id),
+      objectives: s.objectives.filter((x) => x.childId !== id),
+      documents: s.documents.filter((x) => x.childId !== id),
+      meetings: s.meetings.filter((x) => x.childId !== id),
+      evolutionReports: s.evolutionReports.filter((x) => x.childId !== id),
+      tutorReports: s.tutorReports.filter((x) => x.childId !== id),
+      estudiantesGabinete: s.estudiantesGabinete.map((x) =>
+        x.childId === id ? { ...x, childId: null } : x),
+    }))
+    try { await db.deleteChild(id) } catch (e) { get().avisarFallo('Borrar paciente', e); throw e }
   },
 
   addChild: async (child, anamnesisDoc) => {
     set((s) => ({ children: [...s.children, child] }))
-    try { await db.insertChild(child) } catch (e) { console.error('Add child:', e) }
+    try { await db.insertChild(child) } catch (e) { get().avisarFallo('Add child', e) }
     if (anamnesisDoc) {
       set((s) => ({ documents: [...s.documents, anamnesisDoc] }))
-      try { await db.insertDocument(anamnesisDoc) } catch (e) { console.error('Add anamnesis doc:', e) }
+      try { await db.insertDocument(anamnesisDoc) } catch (e) { get().avisarFallo('Add anamnesis doc', e) }
     }
   },
 }))

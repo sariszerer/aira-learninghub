@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { buildUser } from './permissions.js'
+import { fecha } from './lib/fechas.js'
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://wxsxtevvxepgjfxphdxt.supabase.co'
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4c3h0ZXZ2eGVwZ2pmeHBoZHh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4MzQ5NDcsImV4cCI6MjEwMjQxMDk0N30.AlyZM8R9wMCYBaTvYV6QfDSJC5Y5l2m46OZ43P2Im0Y'
@@ -246,15 +247,22 @@ export const db = {
     if (error) throw error
     return data.map(dbChildToApp)
   },
+  // Borra el paciente y, en cascada desde la base, sus sesiones, objetivos,
+  // documentos, reuniones y reportes. Irreversible: la unica proteccion real
+  // esta en la confirmacion de la interfaz, que obliga a escribir el nombre.
+  async deleteChild(id) {
+    const { error } = await supabase.from('children').delete().eq('id', id)
+    if (error) throw error
+  },
   async updateChild(id, updates) {
     const m = {}
     if ('name' in updates) m.name = updates.name
     if ('lastName' in updates) m.last_name = updates.lastName
-    if ('packageStart' in updates) m.package_start = updates.packageStart
+    if ('packageStart' in updates) m.package_start = fecha(updates.packageStart)
     if ('packageNum' in updates) m.package_num = updates.packageNum
-    if ('nextSession' in updates) m.next_session = updates.nextSession
-    if ('birthDate' in updates) m.birth_date = updates.birthDate
-    if ('admissionDate' in updates) m.admission_date = updates.admissionDate
+    if ('nextSession' in updates) m.next_session = fecha(updates.nextSession)
+    if ('birthDate' in updates) m.birth_date = fecha(updates.birthDate)
+    if ('admissionDate' in updates) m.admission_date = fecha(updates.admissionDate)
     if ('parentContact' in updates) m.parent_contact = updates.parentContact
     // status, specialties y assignedSpecialists faltaban en la lista blanca:
     // la interfaz los podia cambiar y el cambio no llegaba nunca a la base.
@@ -265,20 +273,20 @@ export const db = {
     if ('recordNo' in updates) m.record_no = updates.recordNo
     if ('school' in updates) m.school = updates.school
     if ('referralReason' in updates) m.referral_reason = updates.referralReason
-    if ('dischargeDate' in updates) m.discharge_date = updates.dischargeDate || null
+    if ('dischargeDate' in updates) m.discharge_date = fecha(updates.dischargeDate)
     if ('dischargeReason' in updates) m.discharge_reason = updates.dischargeReason
     const { error } = await supabase.from('children').update(m).eq('id', id)
     if (error) throw error
   },
   async insertChild(c) {
     const { error } = await supabase.from('children').insert({
-      id: c.id, name: c.name, last_name: c.lastName, birth_date: c.birthDate,
-      admission_date: c.admissionDate, specialties: c.specialties,
+      id: c.id, name: c.name, last_name: c.lastName, birth_date: fecha(c.birthDate),
+      admission_date: fecha(c.admissionDate), specialties: c.specialties,
       assigned_specialists: c.assignedSpecialists, avatar_bg: c.avatarBg,
-      next_session: c.nextSession, next_session_time: c.nextSessionTime,
-      parent_contact: c.parentContact, package_start: c.packageStart, package_num: c.packageNum || 1,
+      next_session: fecha(c.nextSession), next_session_time: c.nextSessionTime,
+      parent_contact: c.parentContact, package_start: fecha(c.packageStart), package_num: c.packageNum || 1,
       record_no: c.recordNo, school: c.school, referral_reason: c.referralReason,
-      discharge_date: c.dischargeDate || null, discharge_reason: c.dischargeReason,
+      discharge_date: fecha(c.dischargeDate), discharge_reason: c.dischargeReason,
     })
     if (error) throw error
   },
@@ -295,8 +303,8 @@ export const db = {
   async insertEvolutionReport(r) {
     const { error } = await supabase.from('evolution_reports').insert({
       id: r.id, child_id: r.childId, specialty: r.specialty,
-      specialist_id: r.specialistId, from_date: r.fromDate, to_date: r.toDate,
-      generated_date: r.generatedDate, generated_by: r.generatedBy,
+      specialist_id: r.specialistId, from_date: fecha(r.fromDate), to_date: fecha(r.toDate),
+      generated_date: fecha(r.generatedDate), generated_by: r.generatedBy,
       content: r.content || {},
     })
     if (error) throw error
@@ -313,7 +321,7 @@ export const db = {
   async upsertObjective(o) {
     const { error } = await supabase.from('objectives').upsert({
       id: o.id, child_id: o.childId, name: o.name, area: o.area,
-      status: o.status, specialist_id: o.specialistId, created_date: o.createdDate,
+      status: o.status, specialist_id: o.specialistId, created_date: fecha(o.createdDate),
       gas_baseline: o.gasBaseline ?? null, gas_target: o.gasTarget ?? null,
       gas_current: o.gasCurrent ?? null, methodology: o.methodology ?? null,
     })
@@ -331,7 +339,7 @@ export const db = {
   async insertSession(s) {
     const { error } = await supabase.from('sessions').insert({
       id: s.id, child_id: s.childId, specialist_id: s.specialistId,
-      specialty: s.specialty, date: s.date, duration: s.duration,
+      specialty: s.specialty, date: fecha(s.date), duration: s.duration,
       objectives_worked: s.objectivesWorked, activities: s.activities,
       observation: s.observation, next_steps: s.nextSteps,
       attendance: s.attendance || 'asistio',
@@ -341,7 +349,7 @@ export const db = {
   async updateSession(s) {
     const { error } = await supabase.from('sessions').update({
       child_id: s.childId, specialist_id: s.specialistId,
-      specialty: s.specialty, date: s.date, duration: s.duration,
+      specialty: s.specialty, date: fecha(s.date), duration: s.duration,
       objectives_worked: s.objectivesWorked, activities: s.activities,
       observation: s.observation, next_steps: s.nextSteps,
       attendance: s.attendance || 'asistio',
@@ -358,14 +366,14 @@ export const db = {
       id: d.id, child_id: d.childId ?? null, school_id: d.schoolId ?? null,
       student_id: d.studentId ?? null,
       type: d.type, title: d.title,
-      date: d.date, author_id: d.authorId, notes: d.notes, fields: d.fields || {},
+      date: fecha(d.date), author_id: d.authorId, notes: d.notes, fields: d.fields || {},
     })
     if (error) throw error
   },
   async updateDocument(d) {
     const { error } = await supabase.from('documents').update({
       child_id: d.childId, type: d.type, title: d.title,
-      date: d.date, author_id: d.authorId, notes: d.notes, fields: d.fields || {},
+      date: fecha(d.date), author_id: d.authorId, notes: d.notes, fields: d.fields || {},
     }).eq('id', d.id)
     if (error) throw error
   },
@@ -376,7 +384,7 @@ export const db = {
   },
   async insertMeeting(m) {
     const { error } = await supabase.from('meetings').insert({
-      id: m.id, child_id: m.childId, date: m.date, type: m.type,
+      id: m.id, child_id: m.childId, date: fecha(m.date), type: m.type,
       participants: m.participants, summary: m.summary,
       agreements: m.agreements, created_by: m.createdBy,
     })
@@ -398,9 +406,9 @@ export const db = {
     const { error } = await supabase.from('gabinete_estudiantes').upsert({
       id: e.id, school_id: e.schoolId, child_id: e.childId ?? null,
       tutor_id: e.tutorId ?? null, name: e.name, last_name: e.lastName ?? null,
-      grade: e.grade ?? null, start_date: e.startDate || null,
+      grade: e.grade ?? null, start_date: fecha(e.startDate),
       nivel: e.nivel ?? null, ruta: e.ruta || 'sin_evaluar',
-      fecha_ruta: e.fechaRuta || null,
+      fecha_ruta: fecha(e.fechaRuta),
       activo: e.activo !== false, notas: e.notas ?? null,
     })
     if (error) throw error
@@ -417,7 +425,7 @@ export const db = {
   },
   async upsertTamizaje(t) {
     const { error } = await supabase.from('tamizajes').upsert({
-      id: t.id, student_id: t.studentId, fecha: t.fecha,
+      id: t.id, student_id: t.studentId, fecha: fecha(t.fecha),
       instrumento: t.instrumento ?? null, aplicado_por: t.aplicadoPor ?? null,
       resultado: t.resultado || 'pendiente', areas_alerta: t.areasAlerta || [],
       observaciones: t.observaciones ?? null, recomendacion: t.recomendacion ?? null,
@@ -434,7 +442,7 @@ export const db = {
     const { error } = await supabase.from('tutors').upsert({
       id: t.id, name: t.name, role: t.role ?? 'shadow', school_id: t.schoolId ?? null,
       school: t.school ?? null, assigned_child_id: t.assignedChildId ?? null,
-      avatar_bg: t.avatarBg ?? null, start_date: t.startDate || null,
+      avatar_bg: t.avatarBg ?? null, start_date: fecha(t.startDate),
       activo: t.activo !== false,
     })
     if (error) throw error
@@ -451,7 +459,7 @@ export const db = {
     const { error } = await supabase.from('schools').insert({
       id: s.id, name: s.name, contact: s.contact, phone: s.phone, email: s.email,
       programa: s.programa || 'tutoria',
-      contract_start: s.contractStart, contract_end: s.contractEnd,
+      contract_start: fecha(s.contractStart), contract_end: fecha(s.contractEnd),
       assigned_specialists: s.assignedSpecialists, specialty: s.specialty,
       students: s.students || [], notes: s.notes,
     })
@@ -465,7 +473,7 @@ export const db = {
   async insertGabineteSession(s) {
     const { error } = await supabase.from('gabinete_sessions').insert({
       id: s.id, school_id: s.schoolId, specialist_id: s.specialistId,
-      specialty: s.specialty, date: s.date, participants: s.participants,
+      specialty: s.specialty, date: fecha(s.date), participants: s.participants,
       duration: s.duration, area: s.area, notes: s.notes,
     })
     if (error) throw error
@@ -477,7 +485,7 @@ export const db = {
   },
   async insertTutorReport(r) {
     const { error } = await supabase.from('tutor_reports').insert({
-      id: r.id, tutor_id: r.tutorId, child_id: r.childId, date: r.date,
+      id: r.id, tutor_id: r.tutorId, child_id: r.childId, date: fecha(r.date),
       school: r.school, logros: r.logros, dificultades: r.dificultades,
       solicitudes: r.solicitudes, objetivo_status: r.objetivoStatus || {},
     })
