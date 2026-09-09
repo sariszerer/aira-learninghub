@@ -106,6 +106,9 @@ export default function VisorReporte({ titulo, onClose, acciones, children, refD
         style={{
           position: "fixed", inset: 0, zIndex: 1000,
           background: "rgba(17,24,39,0.55)",
+          // Igual que Modal: este portal cuelga de <body> y se queda fuera del
+          // div raiz de App, donde vive la tipografia de la aplicacion.
+          fontFamily: T.font, color: T.ink,
           display: "flex", flexDirection: "column", alignItems: "center",
           overflowY: "auto", padding: "24px 16px",
         }}
