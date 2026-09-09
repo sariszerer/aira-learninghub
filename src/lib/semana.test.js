@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   inicioDeSemana, sumarDias, diasDeSemana, rangoDeVista,
   agruparPorDia, repartirSolapes, franjaHoraria,
+  diasDeMes, esDelMes, sumarMeses, etiquetaMes,
 } from './semana.js'
 
 describe('inicioDeSemana', () => {
@@ -151,5 +152,91 @@ describe('franjaHoraria', () => {
   it('ignora los de día completo al calcular la franja', () => {
     expect(franjaHoraria([{ inicioMin: null, finMin: null }, { inicioMin: 600, finMin: 660 }]))
       .toEqual({ desde: 9, hasta: 12 })
+  })
+})
+
+describe('diasDeMes', () => {
+  it('empieza en lunes y termina en domingo', () => {
+    const d = diasDeMes('2026-09-15')
+    expect(inicioDeSemana(d[0])).toBe(d[0])
+    expect(d.length % 7).toBe(0)
+  })
+
+  it('incluye los días del mes vecino que completan la semana', () => {
+    // Septiembre de 2026 empieza en martes, así que la primera fila arranca el
+    // lunes 31 de agosto. Sin esos días la fila saldría medio vacía y sin sus
+    // citas, que sí existen.
+    const d = diasDeMes('2026-09-15')
+    expect(d[0]).toBe('2026-08-31')
+    expect(d).toContain('2026-09-01')
+  })
+
+  it('cubre el mes entero', () => {
+    const d = diasDeMes('2026-09-15')
+    expect(d).toContain('2026-09-01')
+    expect(d).toContain('2026-09-30')
+  })
+
+  it('no fija seis filas: usa las que hagan falta', () => {
+    // Febrero de 2027 tiene 28 días y empieza en lunes: cabe exacto en 4.
+    expect(diasDeMes('2027-02-10')).toHaveLength(28)
+  })
+
+  it('un mes largo que empieza en domingo necesita seis', () => {
+    // Agosto de 2026 empieza en sábado y tiene 31 días.
+    expect(diasDeMes('2026-08-10').length).toBe(42)
+  })
+
+  it('cruza el fin de año', () => {
+    const d = diasDeMes('2026-12-15')
+    expect(d).toContain('2026-12-31')
+    expect(d[d.length - 1] > '2026-12-31').toBe(true)
+  })
+})
+
+describe('esDelMes', () => {
+  it('distingue los días prestados del mes vecino', () => {
+    expect(esDelMes('2026-09-01', '2026-09-15')).toBe(true)
+    expect(esDelMes('2026-08-31', '2026-09-15')).toBe(false)
+  })
+})
+
+describe('sumarMeses', () => {
+  it('avanza y retrocede', () => {
+    expect(sumarMeses('2026-09-15', 1)).toBe('2026-10-15')
+    expect(sumarMeses('2026-09-15', -1)).toBe('2026-08-15')
+  })
+
+  it('recorta el día cuando el mes destino es más corto', () => {
+    // Sin recortar daría "2026-02-31", que Date lee como 3 de marzo: una sola
+    // pulsación saltaría dos meses.
+    expect(sumarMeses('2026-01-31', 1)).toBe('2026-02-28')
+  })
+
+  it('respeta el año bisiesto al recortar', () => {
+    expect(sumarMeses('2028-01-31', 1)).toBe('2028-02-29')
+  })
+
+  it('cruza el año en los dos sentidos', () => {
+    expect(sumarMeses('2026-12-10', 1)).toBe('2027-01-10')
+    expect(sumarMeses('2026-01-10', -1)).toBe('2025-12-10')
+  })
+})
+
+describe('rangoDeVista — mes', () => {
+  it('pide desde el primer día de la rejilla hasta el último', () => {
+    // Incluye los prestados: son celdas visibles y tienen que traer sus citas.
+    expect(rangoDeVista('mes', '2026-09-15')).toEqual({
+      desde: '2026-08-31T00:00:00-05:00',
+      hasta: '2026-10-04T23:59:59-05:00',
+    })
+  })
+})
+
+describe('etiquetaMes', () => {
+  it('nombra el mes en español, sin abreviar', () => {
+    expect(etiquetaMes('2026-09-15')).toBe('septiembre de 2026')
+    expect(etiquetaMes('2026-01-01')).toBe('enero de 2026')
+    expect(etiquetaMes('2026-12-31')).toBe('diciembre de 2026')
   })
 })
