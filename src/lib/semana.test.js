@@ -240,3 +240,55 @@ describe('etiquetaMes', () => {
     expect(etiquetaMes('2026-12-31')).toBe('diciembre de 2026')
   })
 })
+
+describe('repartirSolapes — cada día por su cuenta', () => {
+  const enDia = (fecha, inicioMin, finMin, id) => ({ id, fecha, inicioMin, finMin })
+
+  it('la misma hora en días distintos NO es un solape', () => {
+    // El fallo que hacía ilegible la semana: se comparaban solo las horas, así
+    // que una semana con una cita diaria a las 4 partía cada día en cinco
+    // columnas y los bloques salían a un quinto de ancho.
+    const r = repartirSolapes([
+      enDia('2026-09-07', 960, 1005, 'a'),
+      enDia('2026-09-08', 960, 1005, 'b'),
+      enDia('2026-09-09', 960, 1005, 'c'),
+      enDia('2026-09-10', 960, 1005, 'd'),
+      enDia('2026-09-11', 960, 1005, 'e'),
+    ])
+    expect(r.every((e) => e.columnas === 1)).toBe(true)
+  })
+
+  it('dentro de un mismo día sí se reparten', () => {
+    const r = repartirSolapes([
+      enDia('2026-09-09', 885, 930, 'a'),
+      enDia('2026-09-09', 885, 930, 'b'),
+      enDia('2026-09-10', 885, 930, 'c'),
+    ])
+    const porId = Object.fromEntries(r.map((e) => [e.id, e]))
+    expect(porId.a.columnas).toBe(2)
+    expect(porId.b.columnas).toBe(2)
+    expect(porId.c.columnas).toBe(1)
+  })
+
+  it('no pierde ni duplica citas al repartir por día', () => {
+    const entrada = [
+      enDia('2026-09-07', 600, 660, 'a'), enDia('2026-09-07', 610, 700, 'b'),
+      enDia('2026-09-08', 600, 660, 'c'),
+    ]
+    const r = repartirSolapes(entrada)
+    expect(r).toHaveLength(3)
+    expect(new Set(r.map((e) => e.id)).size).toBe(3)
+  })
+
+  it('un mes entero no se reparte como si fuera un solo día', () => {
+    // Al bajar de Mes a Día, el store todavía tiene el mes cargado mientras
+    // llega la petición del día. Si el reparto ignora la fecha, ese instante se
+    // dibuja con las 300 citas del mes apiladas en una jornada.
+    const mes = []
+    for (let d = 1; d <= 20; d++) {
+      const f = `2026-09-${String(d).padStart(2, '0')}`
+      mes.push(enDia(f, 960, 1005, `x${d}`))
+    }
+    expect(repartirSolapes(mes).every((e) => e.columnas === 1)).toBe(true)
+  })
+})

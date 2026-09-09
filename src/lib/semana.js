@@ -62,7 +62,23 @@ export function agruparPorDia(eventos = []) {
 // racimo cada una toma la primera columna libre. El ancho lo fija el racimo
 // entero, no la cita: así dos que se pisan ocupan media caja cada una y se ven
 // las dos completas.
+//
+// SE REPARTE POR DÍA. Sin eso, la comparación era solo de horas y dos citas de
+// días distintos a la misma hora contaban como solapadas: una semana con una
+// cita diaria a las 4 partía cada día en cinco columnas y los bloques salían a
+// un quinto de ancho, ilegibles. Y al bajar de Mes a Día, mientras llegaban los
+// datos del día, el mes entero se repartía como si fuera una sola jornada.
 export function repartirSolapes(eventos = []) {
+  const porDia = new Map();
+  for (const e of eventos) {
+    const dia = e.fecha || "";
+    if (!porDia.has(dia)) porDia.set(dia, []);
+    porDia.get(dia).push(e);
+  }
+  return [...porDia.values()].flatMap(repartirUnDia);
+}
+
+function repartirUnDia(eventos) {
   const conHora = eventos
     .filter((e) => e.inicioMin != null)
     .sort((a, b) => a.inicioMin - b.inicioMin || a.finMin - b.finMin);

@@ -54,6 +54,7 @@ function CalendarAgenda({ children, onOpenChild }) {
   const vista = useCalendarStore((s) => s.vista);
   const setFecha = useCalendarStore((s) => s.setDate);
   const setVista = useCalendarStore((s) => s.setVista);
+  const verDia = useCalendarStore((s) => s.verDia);
 
   // Los vínculos se guardan por id de evento, no por posición en la lista.
   // Con el índice, cambiar de día dejaba el vínculo apuntando a la cita que
@@ -75,7 +76,9 @@ function CalendarAgenda({ children, onOpenChild }) {
   const saltar = (n) =>
     setFecha(esMes ? sumarMeses(fecha, n) : sumarDias(fecha, esDia ? n : n * 7));
 
-  const irAlDia = (d) => { setFecha(d); setVista("dia"); setElegido(null); };
+  // Una sola peticion: setFecha y setVista por separado lanzaban dos rangos
+  // distintos y se pintaba el que llegara ultimo.
+  const irAlDia = (d) => { verDia(d); setElegido(null); };
 
   const candidatos = children
     .filter((c) => `${c.name} ${c.lastName}`.toLowerCase().includes(busca.toLowerCase()))
