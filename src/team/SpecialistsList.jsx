@@ -65,9 +65,14 @@ export default function SpecialistsList() {
       await navigator.clipboard.writeText(res.enlace);
       setCopiado(u.id);
       setTimeout(() => setCopiado((c) => (c === u.id ? null : c)), 2500);
+      // El aviso dice EXPRESAMENTE que no lo abra quien lo copia. El enlace no
+      // es una invitación: es una autenticación. Abrirlo con sesión iniciada la
+      // sustituye por la de esa persona, y se lee como "se me cerró la sesión".
+      // Pasó al probarlo por primera vez.
       setAviso(
-        `Enlace de ${u.name} copiado. Pásaselo en privado: quien lo tenga puede ` +
-        `poner la contraseña de esa cuenta. Caduca en 24 horas.`
+        `Enlace de ${u.name} copiado. Pásaselo en privado y NO lo abras tú: ` +
+        `quien abre el enlace entra como ${u.name.split(" ")[0]}, y si tenías sesión ` +
+        `la pierdes. Caduca en 24 horas.`
       );
     } catch (e) {
       // clipboard falla en contextos sin HTTPS y con el permiso denegado.
