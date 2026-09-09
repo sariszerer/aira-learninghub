@@ -3,6 +3,8 @@ import { T, inputStyle, TODAY } from "../../theme.js";
 import { DOC_TYPES } from "../../constants.js";
 import { Btn, Modal, ModalHeader, FieldLabel } from "../../ui/index.js";
 import { FileText, Upload } from "lucide-react";
+import { avisar } from "../../store/avisosStore.js";
+import { queFalta } from "../../lib/validacion.js";
 
 // meta llega desde fuera cuando el tipo no vive en DOC_TYPES: los documentos de
 // gabinete cuelgan de un colegio y tienen su propio catalogo, pero el modal de
@@ -28,6 +30,11 @@ function AddDocumentModal({ type, meta: metaExterna, onClose, onSave }) {
   };
 
   const handleSave = () => {
+    const falta = queFalta([
+      [!!title.trim(), "el título del documento"],
+      [mode !== "pdf" || !!pdfFile, "el PDF"],
+    ]);
+    if (falta) { avisar.error(falta); return; }
     const fields = mode === "pdf" && pdfData ? { pdfData, pdfName: pdfFile?.name } : {};
     onSave({ type, title: title.trim(), date, notes: notes.trim(), fields });
   };
@@ -92,7 +99,7 @@ function AddDocumentModal({ type, meta: metaExterna, onClose, onSave }) {
       </div>
       <div style={{ padding: "14px 24px", borderTop: `1px solid ${T.border}`, display: "flex", justifyContent: "flex-end", gap: 10 }}>
         <Btn variant="ghost" onClick={onClose}>Cancelar</Btn>
-        <Btn variant="primary" disabled={!title.trim() || (mode === "pdf" && !pdfFile)} onClick={handleSave}>Guardar</Btn>
+        <Btn variant="primary" onClick={handleSave}>Guardar</Btn>
       </div>
     </Modal>
   );

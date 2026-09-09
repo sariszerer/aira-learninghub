@@ -40,12 +40,14 @@ vi.mock('../supabase.js', () => ({
 const { db } = await import('../supabase.js')
 const { useDataStore } = await import('./dataStore.js')
 const { useAuthStore } = await import('./authStore.js')
+const { useAvisosStore } = await import('./avisosStore.js')
 
 const inicial = useDataStore.getState()
 
 beforeEach(() => {
   useDataStore.setState(inicial, true)
   useAuthStore.setState({ currentUser: { id: 'u-1', name: 'Ana' }, authLoading: false })
+  useAvisosStore.setState({ avisos: [] })
   vi.clearAllMocks()
 })
 
@@ -206,14 +208,24 @@ describe('asistencia', () => {
 })
 
 describe('un guardado que falla no puede parecer exitoso', () => {
+  it('un alta rechazada propaga, para que nadie confirme lo que no pasó', async () => {
+    // Se escribió primero sin propagar: el panel mostraba "Escuela guardada"
+    // JUNTO al error, porque addSchool se tragaba la excepción y el flujo
+    // seguía. Quien llama tiene que poder cortar.
+    db.insertSchool.mockRejectedValueOnce(new Error('sin permiso'))
+    await expect(
+      useDataStore.getState().addSchool({ id: 's-9', name: 'MDA' })
+    ).rejects.toThrow('sin permiso')
+  })
+
   it('avisa cuando la base rechaza el colegio', async () => {
     // El caso real: contract_start iba vacío, Postgres respondió 22007 y el
     // error se perdía en un console.error. La escuela seguía en pantalla y
     // desaparecía al refrescar.
     db.insertSchool.mockRejectedValueOnce(new Error('invalid input syntax for type date: ""'))
-    await useDataStore.getState().addSchool({ id: 's-1', name: 'MDA' })
+    await expect(useDataStore.getState().addSchool({ id: 's-1', name: 'MDA' })).rejects.toThrow()
 
-    const [fallo] = useDataStore.getState().fallosDeGuardado
+    const [fallo] = useAvisosStore.getState().avisos
     expect(fallo).toBeTruthy()
     expect(fallo.detalle).toContain('invalid input syntax')
   })
@@ -226,18 +238,18 @@ describe('un guardado que falla no puede parecer exitoso', () => {
     await expect(
       useDataStore.getState().guardarEstudianteGabinete({ name: 'Asher', schoolId: 's-1' })
     ).rejects.toThrow('sin permiso')
-    expect(useDataStore.getState().fallosDeGuardado).toHaveLength(1)
+    expect(useAvisosStore.getState().avisos).toHaveLength(1)
   })
 
   it('no inventa avisos cuando todo sale bien', async () => {
     await useDataStore.getState().addSchool({ id: 's-2', name: 'MDA' })
-    expect(useDataStore.getState().fallosDeGuardado).toEqual([])
+    expect(useAvisosStore.getState().avisos).toEqual([])
   })
 
   it('el usuario puede descartar los avisos', async () => {
     db.insertSchool.mockRejectedValueOnce(new Error('boom'))
-    await useDataStore.getState().addSchool({ id: 's-3', name: 'MDA' })
-    useDataStore.getState().descartarFallos()
-    expect(useDataStore.getState().fallosDeGuardado).toEqual([])
+    await expect(useDataStore.getState().addSchool({ id: 's-3', name: 'MDA' })).rejects.toThrow()
+    useAvisosStore.getState().descartarTodos()
+    expect(useAvisosStore.getState().avisos).toEqual([])
   })
 })

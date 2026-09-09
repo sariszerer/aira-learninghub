@@ -3,6 +3,8 @@ import { FileText, Upload } from "lucide-react";
 import { T, TODAY, inputStyle } from "../theme.js";
 import { Btn, Modal, ModalHeader } from "../ui/index.js";
 import { FORMATOS_TUTOR, vacioDeFormato } from "./formatosTutor.js";
+import { avisar } from "../store/avisosStore.js";
+import { queFalta } from "../lib/validacion.js";
 
 // Captura de un documento del expediente del estudiante.
 //
@@ -35,17 +37,21 @@ export default function FormatoTutorModal({ tipo, estudiante, tutor, onGuardar, 
     const f = e.target.files?.[0];
     if (!f) return;
     setError(null);
-    if (f.type !== "application/pdf") { setError("El archivo tiene que ser un PDF."); return; }
+    if (f.type !== "application/pdf") { setError("El archivo tiene que ser un PDF."); avisar.error("No se pudo adjuntar el PDF", "El archivo tiene que ser un PDF."); return; }
     // El PDF se guarda dentro de la fila como data URI: no hay almacenamiento
     // de archivos todavia. El limite evita que una fila crezca hasta romper la
     // carga del expediente entero.
-    if (f.size > PESO_MAXIMO) { setError("El PDF pesa más de 4 MB. Comprímelo o súbelo por partes."); return; }
+    if (f.size > PESO_MAXIMO) { setError("El PDF pesa más de 4 MB. Comprímelo o súbelo por partes."); avisar.error("No se pudo adjuntar el PDF", "Pesa más de 4 MB. Comprímelo o súbelo por partes."); return; }
     const lector = new FileReader();
     lector.onload = () => setPdf({ nombre: f.name, datos: lector.result });
     lector.readAsDataURL(f);
   };
 
   const guardar = () => {
+    // En modo PDF el archivo es el documento entero: sin el no hay nada que
+    // guardar. En modo formato basta con la fecha, que siempre viene puesta.
+    const falta = queFalta([[modo !== "pdf" || !!pdf, "el PDF del formato"]]);
+    if (falta) { avisar.error(falta); return; }
     const titulo = `${formato.titulo} — ${fecha}`;
     onGuardar({
       type: tipo,
@@ -58,8 +64,6 @@ export default function FormatoTutorModal({ tipo, estudiante, tutor, onGuardar, 
     });
     onClose();
   };
-
-  const puedeGuardar = modo === "pdf" ? !!pdf : true;
 
   return (
     <Modal onClose={onClose} width={720}>
@@ -191,7 +195,7 @@ export default function FormatoTutorModal({ tipo, estudiante, tutor, onGuardar, 
 
       <div style={{ padding: "14px 24px", borderTop: `1px solid ${T.border}`, display: "flex", justifyContent: "flex-end", gap: 10 }}>
         <Btn variant="ghost" onClick={onClose}>Cancelar</Btn>
-        <Btn onClick={guardar} disabled={!puedeGuardar}>Guardar</Btn>
+        <Btn onClick={guardar}>Guardar</Btn>
       </div>
     </Modal>
   );

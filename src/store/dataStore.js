@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { db } from '../supabase.js'
 import { TODAY } from '../theme.js'
 import { useAuthStore } from './authStore.js'
+import { avisar } from './avisosStore.js'
 // Sin datos semilla. La aplicacion arranca vacia y se llena con lo que hay en
 // la base.
 //
@@ -18,8 +19,9 @@ import { useAuthStore } from './authStore.js'
 // Datos clinicos y sus mutaciones.
 //
 // Cada mutacion actualiza el estado primero y persiste despues. Cuando la
-// escritura falla se AVISA: `fallosDeGuardado` recoge lo que no llego a la base
-// y la aplicacion lo muestra en un aviso que no se va solo.
+// escritura falla se AVISA: el fallo sale por avisosStore, el mismo canal que
+// usan los formularios, y la aplicacion lo muestra en un toast que no se va
+// solo hasta que el usuario lo descarta.
 //
 // Antes se tragaba el error con un console.error y la pantalla seguia mostrando
 // el dato recien creado. Asi se perdio la primera escuela de gabinete con su
@@ -50,20 +52,11 @@ export const useDataStore = create((set, get) => ({
   activityLog: [],
   rolesDisponibles: [],
 
-  // Escrituras que la base rechazo. La interfaz las muestra hasta que el
-  // usuario las descarta: son trabajo que el usuario cree hecho y no lo esta.
-  fallosDeGuardado: [],
-
-  avisarFallo: (que, e) => {
-    console.error(`${que}:`, e)
-    set((s) => ({
-      fallosDeGuardado: [
-        ...s.fallosDeGuardado,
-        { id: `f-${Date.now()}-${s.fallosDeGuardado.length}`, que, detalle: e?.message || String(e) },
-      ],
-    }))
-  },
-  descartarFallos: () => set({ fallosDeGuardado: [] }),
+  // Una escritura que la base rechazo va al canal de avisos, el mismo por el
+  // que los formularios sacan sus errores de validacion: para el usuario es el
+  // mismo hecho — algo no se guardo — y verlo en dos sitios distintos segun de
+  // donde venga el fallo no ayuda a nadie.
+  avisarFallo: (que, e) => avisar.error(que, e instanceof Error ? e : new Error(String(e))),
 
   appLoading: false,
   // Distinto de appLoading: sigue en false hasta que la primera carga termina.
@@ -455,9 +448,13 @@ export const useDataStore = create((set, get) => ({
     return fila
   },
 
+  // Propaga el fallo ademas de avisarlo. Quien llama necesita saberlo: el panel
+  // confirma "escuela guardada" y adjunta el contrato despues, y las dos cosas
+  // estarian mintiendo si el insert se hubiera perdido por el camino.
   addSchool: async (school) => {
     set((s) => ({ schools: [...s.schools, school] }))
-    try { await db.insertSchool(school) } catch (e) { get().avisarFallo('Add school', e) }
+    try { await db.insertSchool(school) }
+    catch (e) { get().avisarFallo('Guardar colegio', e); throw e }
   },
 
   // Borrar paciente. El estado local se limpia igual que la cascada de la base:

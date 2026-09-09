@@ -3,6 +3,7 @@ import { Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { auth } from "./supabase.js";
 import { T } from "./theme.js";
 import { Btn, Logo } from "./ui/index.js";
+import { avisar } from "./store/avisosStore.js";
 
 // Pantalla de acceso. Antes traia quince colores del tema anterior escritos a
 // mano y un logotipo SVG propio en el azul viejo; ahora sale todo de los tokens
@@ -18,6 +19,7 @@ export default function Login() {
     e.preventDefault();
     if (!email.trim() || !password.trim()) {
       setError("Ingresa tu correo y contraseña.");
+      avisar.error("Ingresa tu correo y contraseña.");
       return;
     }
     setLoading(true);
@@ -27,7 +29,10 @@ export default function Login() {
     } catch {
       // Mismo mensaje para correo inexistente y contraseña incorrecta: decir
       // cual de los dos falla le confirma a quien sondea que esa cuenta existe.
+      // Mismo mensaje para correo inexistente y contraseña mala: decir cuál de
+      // los dos falla le confirma a quien sondea que esa cuenta existe.
       setError("Correo o contraseña incorrectos.");
+      avisar.error("No se pudo entrar", "Correo o contraseña incorrectos.");
     } finally {
       setLoading(false);
     }

@@ -3,6 +3,8 @@ import { T, inputStyle } from "../theme.js";
 import { useDataStore } from "../store/dataStore.js";
 import { Btn, Chip, Modal, ModalHeader } from "../ui/index.js";
 import { NIVELES, RUTAS } from "./preescolar.js";
+import { avisar } from "../store/avisosStore.js";
+import { queFalta } from "../lib/validacion.js";
 
 // Alta y edicion de un estudiante del gabinete.
 //
@@ -62,6 +64,8 @@ export default function EstudianteModal({ estudiante, schoolId, programa = "tuto
   const enlazado = children.find((c) => c.id === f.childId) || null;
 
   const guardar = async () => {
+    const falta = queFalta([[!!f.name.trim(), "el nombre del estudiante"]]);
+    if (falta) { avisar.error(falta); return; }
     let tutorId = f.tutorId;
     // Crear la tutora aqui evita salir de la pantalla a mitad del alta. Queda
     // ligada al colegio, que es donde trabaja.
@@ -221,7 +225,7 @@ export default function EstudianteModal({ estudiante, schoolId, programa = "tuto
 
       <div style={{ padding: "14px 24px", borderTop: `1px solid ${T.border}`, display: "flex", justifyContent: "flex-end", gap: 10 }}>
         <Btn variant="ghost" onClick={onClose}>Cancelar</Btn>
-        <Btn onClick={guardar} disabled={!f.name.trim()}>{nuevo ? "Crear estudiante" : "Guardar"}</Btn>
+        <Btn onClick={guardar}>{nuevo ? "Crear estudiante" : "Guardar"}</Btn>
       </div>
     </Modal>
   );

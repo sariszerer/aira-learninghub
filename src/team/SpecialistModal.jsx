@@ -5,6 +5,8 @@ import { ROLES } from "../permissions.js";
 import { useDataStore } from "../store/dataStore.js";
 import { useAuthStore } from "../store/authStore.js";
 import { validarArchivoDeFirma } from "../reports/firma.js";
+import { avisar } from "../store/avisosStore.js";
+import { queFalta } from "../lib/validacion.js";
 import { Btn, Chip } from "../ui/index.js";
 
 // Alta y edicion de un miembro del equipo.
@@ -61,11 +63,14 @@ export default function SpecialistModal({ usuario, onClose }) {
 
   const CORREO = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
   const correoCambia = !esNuevo && form.email.trim().toLowerCase() !== (usuario?.email || "").toLowerCase();
-  const valido = form.name.trim()
-    && (!esNuevo || CORREO.test(form.email.trim()))
-    && (!correoCambia || CORREO.test(form.email.trim()));
 
   const guardar = async () => {
+    const falta = queFalta([
+      [!!form.name.trim(), "el nombre"],
+      [!esNuevo || CORREO.test(form.email.trim()), "un correo válido"],
+      [!correoCambia || CORREO.test(form.email.trim()), "un correo válido"],
+    ]);
+    if (falta) { avisar.error(falta); return; }
     setError(null); setAviso(null); setGuardando(true);
     try {
       if (esNuevo) {
@@ -102,7 +107,10 @@ export default function SpecialistModal({ usuario, onClose }) {
       }
       onClose();
     } catch (e) {
+      // Inline Y toast: el inline dice dónde, el toast garantiza que se vea
+      // aunque el usuario esté mirando otro campo o el modal se cierre.
       setError(e.message || "No se pudo guardar.");
+      avisar.error(esNuevo ? "No se pudo crear el especialista" : "No se pudo guardar el perfil", e);
       setGuardando(false);
     }
   };
@@ -252,7 +260,7 @@ export default function SpecialistModal({ usuario, onClose }) {
 
         <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
           <Btn variant="secondary" size="md" onClick={onClose}>Cancelar</Btn>
-          <Btn variant="primary" size="md" onClick={guardar} disabled={!valido || guardando}>{guardando ? "Guardando…" : esNuevo ? "Crear e invitar" : "Guardar"}</Btn>
+          <Btn variant="primary" size="md" onClick={guardar} disabled={guardando}>{guardando ? "Guardando…" : esNuevo ? "Crear e invitar" : "Guardar"}</Btn>
         </div>
       </div>
     </div>
@@ -271,7 +279,7 @@ function CampoFirma({ valor, onChange }) {
     const archivo = e.target.files?.[0];
     e.target.value = "";
     const problema = validarArchivoDeFirma(archivo);
-    if (problema) { setError(problema); return; }
+    if (problema) { setError(problema); avisar.error("No se pudo cargar la firma", problema); return; }
     setError(null);
     const lector = new FileReader();
     lector.onload = () => onChange(lector.result);

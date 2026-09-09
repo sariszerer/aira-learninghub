@@ -3,6 +3,8 @@ import { T, STATUS, inputStyle } from "../../theme.js";
 import { NIVELES_GAS } from "../../lib/reportes.js";
 import { Btn, Modal, ModalHeader, StatusIcon } from "../../ui/index.js";
 import { EscalaGas } from "../../reports/piezas.jsx";
+import { avisar } from "../../store/avisosStore.js";
+import { queFalta } from "../../lib/validacion.js";
 
 // Editor completo de un objetivo.
 //
@@ -32,7 +34,10 @@ export default function ObjetivoModal({ objetivo, areasSugeridas = [], onGuardar
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
   const guardar = () => {
-    if (!form.name.trim()) return;
+    // El boton ya no se desactiva: pulsar y que no pase nada no es una
+    // validacion, es un error mudo. Se dice que falta.
+    const falta = queFalta([[!!form.name.trim(), "el nombre del objetivo"]]);
+    if (falta) { avisar.error(falta); return; }
     onGuardar({
       ...objetivo,
       ...form,
@@ -142,7 +147,7 @@ export default function ObjetivoModal({ objetivo, areasSugeridas = [], onGuardar
 
       <div style={{ padding: "14px 24px", borderTop: `1px solid ${T.border}`, display: "flex", justifyContent: "flex-end", gap: 10 }}>
         <Btn variant="ghost" onClick={onClose}>Cancelar</Btn>
-        <Btn variant="primary" onClick={guardar} disabled={!form.name.trim()}>
+        <Btn variant="primary" onClick={guardar}>
           {nuevo ? "Crear objetivo" : "Guardar"}
         </Btn>
       </div>

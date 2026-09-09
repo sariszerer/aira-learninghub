@@ -17,6 +17,8 @@ import PanelPreescolar from "./PanelPreescolar.jsx";
 import { GraduationCap, Users } from "lucide-react";
 import { Avatar } from "../ui/index.js";
 import { contar } from "../lib/format.js";
+import { avisar } from "../store/avisosStore.js";
+import { queFalta } from "../lib/validacion.js";
 
 function GabinetePanel({ onAddSession }) {
   const schools = useDataStore((s) => s.schools);
@@ -58,6 +60,11 @@ function GabinetePanel({ onAddSession }) {
   const emptySession = () => ({ specialistId: "", specialty: "", date: TODAY, participants: "", duration: 60, area: "", notes: "" });
 
   const handleSaveSession = () => {
+    const falta = queFalta([
+      [!!sessionForm.date, "la fecha"],
+      [!!sessionForm.specialistId, "quién impartió la sesión"],
+    ]);
+    if (falta) { avisar.error(falta); return; }
     // La especialidad no se pide en el formulario y se guardaba vacia: sale de
     // quien imparte, que si se elige.
     const especialidad = allSpecialists.find((u) => u.id === sessionForm.specialistId)?.specialty || "";
@@ -68,8 +75,17 @@ function GabinetePanel({ onAddSession }) {
   const [contrato, setContrato] = useState(null);
 
   const handleSaveSchool = async () => {
+    const falta = queFalta([[!!newSchool.name.trim(), "el nombre del colegio"]]);
+    if (falta) { avisar.error(falta); return; }
     const id = `sch-${Date.now()}`;
-    await onAddSchool({ id, ...newSchool, students: [] });
+    // Si el alta falla, addSchool ya publicó el error y aquí se corta: ni se
+    // adjunta el contrato ni se confirma nada. El formulario se queda abierto
+    // con lo escrito, que es lo que permite reintentar sin volver a teclearlo.
+    try {
+      await onAddSchool({ id, ...newSchool, students: [] });
+    } catch {
+      return;
+    }
     // El contrato va DESPUÉS y solo si la escuela se guardó: es un documento que
     // cuelga del colegio, y adjuntarlo antes lo dejaría huérfano si el alta falla.
     if (contrato) {
@@ -81,6 +97,12 @@ function GabinetePanel({ onAddSession }) {
         fields: { modo: "pdf", pdfNombre: contrato.nombre, pdfDatos: contrato.datos },
       });
     }
+    // Confirmación explícita, y no solo aquí por gusto: este es el flujo en el
+    // que un guardado fallido pasó por bueno — la escuela aparecía en la lista y
+    // solo al refrescar se supo que la base nunca la recibió. Si algo falla, el
+    // store publica el error por este mismo canal y no se llega a esta línea con
+    // un "guardada" falso, porque addSchool ya avisó.
+    avisar.exito(`Escuela "${newSchool.name.trim()}" guardada`);
     setAddingSchool(false);
     setNewSchool(VACIA);
     setContrato(null);
@@ -162,7 +184,7 @@ function GabinetePanel({ onAddSession }) {
           </div>
           <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
             <Btn variant="secondary" onClick={() => setAddingSchool(false)}>Cancelar</Btn>
-            <Btn onClick={handleSaveSchool} disabled={!newSchool.name.trim()}>Guardar escuela</Btn>
+            <Btn onClick={handleSaveSchool}>Guardar escuela</Btn>
           </div>
         </Card>
       )}
@@ -232,6 +254,7 @@ function GabinetePanel({ onAddSession }) {
                             setSelectedSchool(null);
                           } catch (e) {
                             setErrorColegio(e.message || "No se pudo eliminar el colegio.");
+                            avisar.error("No se pudo eliminar el colegio", e);
                           }
                         }}
                       />
@@ -471,7 +494,7 @@ function GabinetePanel({ onAddSession }) {
                   </div>
                   <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
                     <button onClick={() => setSessionForm(null)} style={{ padding: "9px 16px", borderRadius: 10, border: `1px solid ${T.border}`, background: "#fff", color: T.inkSoft, fontSize: 13.5, fontFamily: T.font, cursor: "pointer" }}>Cancelar</button>
-                    <Btn onClick={handleSaveSession} disabled={!sessionForm.date || !sessionForm.specialistId}>Guardar sesión</Btn>
+                    <Btn onClick={handleSaveSession}>Guardar sesión</Btn>
                   </div>
                 </Card>
               )}
@@ -539,8 +562,11 @@ function AdjuntoContrato({ valor, onChange }) {
     const f = e.target.files?.[0];
     e.target.value = "";
     if (!f) return;
-    if (f.type !== "application/pdf") { setError("El contrato tiene que ser un PDF."); return; }
-    if (f.size > PESO_MAXIMO) { setError("El PDF pesa más de 4 MB. Comprímelo antes de subirlo."); return; }
+    const problema =
+      f.type !== "application/pdf" ? "El contrato tiene que ser un PDF."
+      : f.size > PESO_MAXIMO ? "El PDF pesa más de 4 MB. Comprímelo antes de subirlo."
+      : null;
+    if (problema) { setError(problema); avisar.error("No se pudo adjuntar el contrato", problema); return; }
     setError(null);
     const lector = new FileReader();
     lector.onload = () => onChange({ nombre: f.name, datos: lector.result });

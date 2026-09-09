@@ -7,6 +7,8 @@ import { Btn, Chip, EmptyNote, Modal, ModalHeader, SelectorAsistencia } from "..
 import { useAuthStore } from "../../store/authStore.js";
 import { T } from "../../theme.js";
 import { Check, ChevronDown } from "lucide-react";
+import { avisar } from "../../store/avisosStore.js";
+import { queFalta } from "../../lib/validacion.js";
 
 function SessionWizard({ child, objectives, onClose, onSave }) {
   const currentUser = useAuthStore((s) => s.currentUser);
@@ -57,7 +59,11 @@ function SessionWizard({ child, objectives, onClose, onSave }) {
   const toggleObj = (id) => setSelectedObjIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
 
   const handleSave = () => {
-    if (!date || !specialty.trim()) return;
+    const falta = queFalta([
+      [!!date, "la fecha"],
+      [!!specialty.trim(), "la especialidad"],
+    ]);
+    if (falta) { avisar.error(falta); return; }
     // El objetivo puntual se recogia en customObjText y no se enviaba a ninguna
     // parte: se escribia en el campo y desaparecia al guardar. saveSession ya
     // sabia crearlo — espera el nombre en _newObjectiveNames y una referencia
@@ -215,7 +221,7 @@ function SessionWizard({ child, objectives, onClose, onSave }) {
         <div style={{ fontSize: 13, color: "#aaa" }}>{currentUser.name}{specialty ? ` · ${specialty}` : ""}</div>
         <div style={{ display: "flex", gap: 10 }}>
           <Btn variant="ghost" onClick={onClose}>Cancelar</Btn>
-          <Btn variant="primary" disabled={!date || !specialty.trim()} onClick={handleSave}>Guardar sesión</Btn>
+          <Btn variant="primary" onClick={handleSave}>Guardar sesión</Btn>
         </div>
       </div>
     </Modal>

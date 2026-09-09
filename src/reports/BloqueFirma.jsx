@@ -7,6 +7,7 @@ import { useDataStore } from "../store/dataStore.js";
 import { useAuthStore } from "../store/authStore.js";
 import { SeccionDoc } from "./piezas.jsx";
 import { estadoDeFirma, validarArchivoDeFirma } from "./firma.js";
+import { avisar } from "../store/avisosStore.js";
 
 // Bloque de firma de los tres reportes.
 //
@@ -31,7 +32,7 @@ export default function BloqueFirma({ responsable, datos = [] }) {
     const archivo = e.target.files?.[0];
     e.target.value = "";
     const problema = validarArchivoDeFirma(archivo);
-    if (problema) { setError(problema); return; }
+    if (problema) { setError(problema); avisar.error("No se pudo cargar la firma", problema); return; }
     setError(null);
     const lector = new FileReader();
     lector.onload = async () => {
@@ -41,7 +42,7 @@ export default function BloqueFirma({ responsable, datos = [] }) {
         await actualizarUsuario(responsable.id, { firma: lector.result });
         setAplicada(true);
       } catch {
-        // El aviso de fallo lo publica el store.
+        // El aviso lo publica el store por el mismo canal.
       }
     };
     lector.readAsDataURL(archivo);
