@@ -6,10 +6,10 @@ const usuario = (perms, extra = {}) => ({
 })
 
 describe('PERMISSIONS', () => {
-  it('tiene 37 claves únicas', () => {
+  it('tiene 38 claves únicas', () => {
     const keys = PERMISSIONS.map(p => p.key)
-    expect(keys).toHaveLength(37)
-    expect(new Set(keys).size).toBe(37)
+    expect(keys).toHaveLength(38)
+    expect(new Set(keys).size).toBe(38)
   })
 
   it('cada permiso declara grupo y descripción no vacíos', () => {
@@ -264,6 +264,7 @@ describe('ROLES — matriz semilla', () => {
   it('admin tiene exactamente este conjunto de permisos', () => {
     expect([...ROLES.admin.permisos].sort()).toEqual([
       'anamnesis:edit', 'anamnesis:view',
+      'calendar:view',
       'document:create', 'document:edit:any', 'document:view',
       'gabinete:session:create', 'gabinete:supervision:write', 'gabinete:view',
       'guidelines:view',
@@ -282,6 +283,7 @@ describe('ROLES — matriz semilla', () => {
   it('clinical_director tiene exactamente este conjunto de permisos', () => {
     expect([...ROLES.clinical_director.permisos].sort()).toEqual([
       'anamnesis:edit', 'anamnesis:view',
+      'calendar:view',
       'document:create', 'document:edit:any', 'document:view',
       'gabinete:session:create', 'gabinete:supervision:write', 'gabinete:view',
       'guidelines:view',
@@ -299,6 +301,7 @@ describe('ROLES — matriz semilla', () => {
   it('specialist tiene exactamente este conjunto de permisos', () => {
     expect([...ROLES.specialist.permisos].sort()).toEqual([
       'anamnesis:edit', 'anamnesis:view',
+      'calendar:view',
       'document:create', 'document:edit:own', 'document:view',
       'meeting:create', 'meeting:view',
       'objective:create', 'objective:edit:own', 'objective:view',
@@ -412,5 +415,22 @@ describe('borrar paciente', () => {
     const esp = con('specialist')
     expect(can(esp, 'patient:close')).toBe(true)
     expect(can(esp, 'patient:delete')).toBe(false)
+  })
+})
+
+describe('agenda del centro', () => {
+  const con = (rol) => buildUser({ id: 'u', name: 'X', role: rol })
+
+  it('la ve quien atiende y quien dirige', () => {
+    expect(can(con('admin'), 'calendar:view')).toBe(true)
+    expect(can(con('clinical_director'), 'calendar:view')).toBe(true)
+    expect(can(con('specialist'), 'calendar:view')).toBe(true)
+  })
+
+  it('la tutora no', () => {
+    // Su alcance es un solo niño y la agenda lleva los títulos de las citas de
+    // todos los pacientes del centro. Antes esto no se decidía aquí: lo decidía
+    // Google, según quién hubiera autorizado su cuenta.
+    expect(can(con('shadow'), 'calendar:view')).toBe(false)
   })
 })

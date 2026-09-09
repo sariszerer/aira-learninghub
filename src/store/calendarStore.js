@@ -1,13 +1,16 @@
 import { create } from 'zustand'
-import { signInToGoogle, fetchCalendarEvents as gcalFetch, getStoredToken } from '../googleCalendar.js'
+import { fetchCalendarEvents as gcalFetch } from '../googleCalendar.js'
 import { TODAY } from '../theme.js'
 
 // Agenda de Google Calendar. Store propio porque depende de un servicio externo
-// que puede fallar por su cuenta: su estado de error y de conexion no tiene nada
-// que ver con el de los datos clinicos.
-export const useCalendarStore = create((set, get) => ({
+// que puede fallar por su cuenta: su estado de error no tiene nada que ver con
+// el de los datos clinicos.
+//
+// Ya no hay estado "conectado" ni accion de conectar. El calendario es el del
+// centro y lo lee el servidor: o se tiene permiso para verlo o no, y eso no es
+// algo que el usuario pueda arreglar pulsando un boton.
+export const useCalendarStore = create((set) => ({
   events: [],
-  connected: !!localStorage.getItem('gcal_token'),
   loading: false,
   error: null,
   date: TODAY,
@@ -15,35 +18,16 @@ export const useCalendarStore = create((set, get) => ({
   setDate: (date) => set({ date }),
 
   fetchEvents: async (date) => {
-    // Solo carga si ya hay un token guardado.
-    const token = getStoredToken()
-    if (!token) {
-      set({ connected: false, error: 'conectar', loading: false })
-      return
-    }
     set({ loading: true, error: null })
     try {
-      const events = await gcalFetch(date)
-      set({ events, connected: true })
+      set({ events: await gcalFetch(date) })
     } catch (e) {
-      if (e.message === 'NOT_AUTHENTICATED') {
-        set({ connected: false, error: 'conectar' })
-      } else {
-        set({ error: 'No se pudo cargar el calendario' })
-      }
-      set({ events: [] })
+      // El mensaje de la funcion llega tal cual: distingue "no tienes permiso"
+      // de "el calendario no esta compartido con la cuenta de servicio", y esa
+      // diferencia es la que dice a quien hay que ir a buscar.
+      set({ error: e.message || 'No se pudo cargar la agenda', events: [] })
     } finally {
       set({ loading: false })
-    }
-  },
-
-  connect: async () => {
-    try {
-      await signInToGoogle()
-      set({ connected: true })
-      get().fetchEvents(get().date)
-    } catch (e) {
-      set({ error: 'No se pudo conectar con Google' })
     }
   },
 }))
