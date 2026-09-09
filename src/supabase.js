@@ -46,7 +46,7 @@ export function dbUserToApp(u) {
     id: u.id, name: u.name, email: u.email, role: u.role,
     specialty: u.specialty, title: u.title, avatarBg: u.avatar_bg,
     school: u.school, assignedChildId: u.assigned_child_id, authId: u.auth_id,
-    licenseNo: u.license_no,
+    licenseNo: u.license_no, firma: u.firma || null,
     activo: u.activo !== false,
   }
 }
@@ -94,7 +94,7 @@ export function dbEstudianteToApp(e) {
 export function dbTutorToApp(t) {
   return { id: t.id, name: t.name, role: t.role, schoolId: t.school_id, school: t.school,
     assignedChildId: t.assigned_child_id, avatarBg: t.avatar_bg,
-    startDate: t.start_date, activo: t.activo !== false }
+    startDate: t.start_date, activo: t.activo !== false, userId: t.user_id || null }
 }
 export function dbObjectiveToApp(o) {
   return { id: o.id, childId: o.child_id, name: o.name, area: o.area,
@@ -121,6 +121,8 @@ export function dbMeetingToApp(m) {
 export function dbSchoolToApp(s) {
   return { id: s.id, name: s.name, contact: s.contact, phone: s.phone, email: s.email,
     contractStart: s.contract_start, contractEnd: s.contract_end,
+    especialistaNombre: s.especialista_nombre, especialistaCedula: s.especialista_cedula,
+    especialistaTelefono: s.especialista_telefono, especialistaEmail: s.especialista_email,
     assignedSpecialists: s.assigned_specialists || [], specialty: s.specialty,
     students: s.students || [], notes: s.notes, programa: s.programa || 'tutoria' }
 }
@@ -153,6 +155,7 @@ export const db = {
     if ('assignedChildId' in updates) m.assigned_child_id = updates.assignedChildId
     if ('activo' in updates) m.activo = updates.activo
     if ('licenseNo' in updates) m.license_no = updates.licenseNo
+    if ('firma' in updates) m.firma = updates.firma
     const { error } = await supabase.from('users').update(m).eq('id', id)
     if (error) throw error
   },
@@ -443,6 +446,7 @@ export const db = {
       id: t.id, name: t.name, role: t.role ?? 'shadow', school_id: t.schoolId ?? null,
       school: t.school ?? null, assigned_child_id: t.assignedChildId ?? null,
       avatar_bg: t.avatarBg ?? null, start_date: fecha(t.startDate),
+      user_id: t.userId ?? null,
       activo: t.activo !== false,
     })
     if (error) throw error
@@ -460,6 +464,10 @@ export const db = {
       id: s.id, name: s.name, contact: s.contact, phone: s.phone, email: s.email,
       programa: s.programa || 'tutoria',
       contract_start: fecha(s.contractStart), contract_end: fecha(s.contractEnd),
+      especialista_nombre: s.especialistaNombre || null,
+      especialista_cedula: s.especialistaCedula || null,
+      especialista_telefono: s.especialistaTelefono || null,
+      especialista_email: s.especialistaEmail || null,
       assigned_specialists: s.assignedSpecialists, specialty: s.specialty,
       students: s.students || [], notes: s.notes,
     })

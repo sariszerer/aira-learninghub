@@ -1,11 +1,11 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { T, TODAY } from "../theme.js";
 import { fmtDate } from "../lib/format.js";
 import { ROLES } from "../permissions.js";
 import { Eyebrow, Card, Chip } from "../ui/index.js";
 import { useDataStore } from "../store/dataStore.js";
 import { Btn } from "../ui/index.js";
-import { FileText, Plus, School, Trash2 } from "lucide-react";
+import { FileText, Paperclip, Plus, School, Trash2 } from "lucide-react";
 import { DOC_TYPES_GABINETE } from "../constants.js";
 import { can } from "../permissions.js";
 import { useAuthStore } from "../store/authStore.js";
@@ -37,7 +37,15 @@ function GabinetePanel({ onAddSession }) {
   const [selectedSchool, setSelectedSchool] = useState(null);
   const [addingSchool, setAddingSchool] = useState(false);
   const [sessionForm, setSessionForm] = useState(null);
-  const VACIA = { name: "", contact: "", phone: "", email: "", contractStart: "", contractEnd: "", specialty: "", assignedSpecialists: [], notes: "", programa: "tutoria" };
+  const VACIA = {
+    name: "", contact: "", phone: "", email: "", contractStart: "", contractEnd: "",
+    specialty: "", assignedSpecialists: [], notes: "", programa: "tutoria",
+    // La especialista que AIRA coloca en el centro. Son datos del CONTRATO con
+    // ese colegio — a quién se colocó y cómo localizarla — y por eso viven en la
+    // ficha del colegio y no en la de cada estudiante.
+    especialistaNombre: "", especialistaCedula: "",
+    especialistaTelefono: "", especialistaEmail: "",
+  };
   const [newSchool, setNewSchool] = useState(VACIA);
 
   const school = schools.find((s) => s.id === selectedSchool) || schools[0] || null;
@@ -57,10 +65,25 @@ function GabinetePanel({ onAddSession }) {
     setSessionForm(null);
   };
 
-  const handleSaveSchool = () => {
-    onAddSchool({ id: `sch-${Date.now()}`, ...newSchool, students: [] });
+  const [contrato, setContrato] = useState(null);
+
+  const handleSaveSchool = async () => {
+    const id = `sch-${Date.now()}`;
+    await onAddSchool({ id, ...newSchool, students: [] });
+    // El contrato va DESPUÉS y solo si la escuela se guardó: es un documento que
+    // cuelga del colegio, y adjuntarlo antes lo dejaría huérfano si el alta falla.
+    if (contrato) {
+      await agregarDocumentoDeColegio(id, {
+        type: "contrato",
+        title: `Contrato firmado — ${newSchool.name.trim()}`,
+        date: newSchool.contractStart || TODAY,
+        notes: "",
+        fields: { modo: "pdf", pdfNombre: contrato.nombre, pdfDatos: contrato.datos },
+      });
+    }
     setAddingSchool(false);
     setNewSchool(VACIA);
+    setContrato(null);
   };
 
 
@@ -71,7 +94,9 @@ function GabinetePanel({ onAddSession }) {
           <div style={{ fontFamily: T.font, fontSize: 17, fontWeight: 700, color: T.ink }}>Gabinete Externo</div>
           <div style={{ fontSize: 13.5, color: T.inkSoft, marginTop: 4 }}>{schools.length} escuela{schools.length !== 1 ? "s" : ""} con contrato activo</div>
         </div>
-        <Btn icon={Plus} onClick={() => setAddingSchool(true)}>Agregar escuela</Btn>
+        {can(currentUser, "school:create") && (
+          <Btn icon={Plus} onClick={() => setAddingSchool(true)}>Agregar escuela</Btn>
+        )}
       </div>
 
       {/* Add school modal */}
@@ -95,6 +120,22 @@ function GabinetePanel({ onAddSession }) {
             </div>
           </div>
           <Field2 label="Especialidades contratadas" value={newSchool.specialty} onChange={(v) => setNewSchool({ ...newSchool, specialty: v })} />
+
+          <div style={{ borderTop: `1px solid ${T.border}`, margin: "6px 0 16px", paddingTop: 16 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: T.inkSoft, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              Especialista contratada
+            </div>
+            <div style={{ fontSize: 12, color: T.inkFaint, marginBottom: 12 }}>
+              Quien AIRA coloca en este centro.
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 20px" }}>
+              <Field2 label="Nombre completo" value={newSchool.especialistaNombre} onChange={(v) => setNewSchool({ ...newSchool, especialistaNombre: v })} />
+              <Field2 label="Cédula" value={newSchool.especialistaCedula} onChange={(v) => setNewSchool({ ...newSchool, especialistaCedula: v })} />
+              <Field2 label="Teléfono" value={newSchool.especialistaTelefono} onChange={(v) => setNewSchool({ ...newSchool, especialistaTelefono: v })} />
+              <Field2 label="Correo electrónico" value={newSchool.especialistaEmail} onChange={(v) => setNewSchool({ ...newSchool, especialistaEmail: v })} type="email" />
+            </div>
+            <AdjuntoContrato valor={contrato} onChange={setContrato} />
+          </div>
           <div style={{ marginBottom: 14 }}>
             <div style={{ fontSize: 12, fontWeight: 600, color: T.inkSoft, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em" }}>Especialistas asignados</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
@@ -209,6 +250,20 @@ function GabinetePanel({ onAddSession }) {
                     </div>
                   ))}
                 </div>
+                {school.especialistaNombre && (
+                  <div style={{ marginBottom: 14, padding: "12px 14px", background: T.surfaceSunk, borderRadius: 10 }}>
+                    <div style={{ fontSize: 11.5, color: T.inkSoft, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600 }}>
+                      Especialista contratada
+                    </div>
+                    <div style={{ fontSize: 15, fontWeight: 600, color: T.ink, marginBottom: 4 }}>{school.especialistaNombre}</div>
+                    <div style={{ display: "flex", gap: 18, flexWrap: "wrap", fontSize: 12.5, color: T.inkSoft }}>
+                      {school.especialistaCedula && <span>Cédula {school.especialistaCedula}</span>}
+                      {school.especialistaTelefono && <span>{school.especialistaTelefono}</span>}
+                      {school.especialistaEmail && <span>{school.especialistaEmail}</span>}
+                    </div>
+                  </div>
+                )}
+
                 <div style={{ marginBottom: 10 }}>
                   <div style={{ fontSize: 12, color: T.inkSoft, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600 }}>Especialistas asignados</div>
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -376,7 +431,9 @@ function GabinetePanel({ onAddSession }) {
                     este componente: pulsarlo lanzaba un ReferenceError en vez
                     de abrir el formulario. emptySession ya estaba escrito y
                     sin usar. */}
-                <Btn icon={Plus} onClick={() => setSessionForm(emptySession())}>Registrar sesión</Btn>
+                {can(currentUser, "gabinete:session:create") && (
+                  <Btn icon={Plus} onClick={() => setSessionForm(emptySession())}>Registrar sesión</Btn>
+                )}
               </div>
 
               {sessionForm && (
@@ -460,6 +517,56 @@ function Field2({ label, value, onChange, type = "text" }) {
       <div style={{ fontSize: 12, fontWeight: 600, color: T.inkSoft, marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</div>
       <input type={type} value={value} onChange={(e) => onChange(e.target.value)}
         style={{ width: "100%", padding: "9px 12px", borderRadius: 10, border: `1px solid ${T.border}`, fontSize: 14, fontFamily: T.font, boxSizing: "border-box", outline: "none" }} />
+    </div>
+  );
+}
+
+// Adjunto del contrato firmado.
+//
+// A nivel de módulo, como Field2: un componente definido dentro del panel es un
+// tipo nuevo en cada render, y React lo desmonta y lo vuelve a montar. Ese
+// patrón es el que causó aquí el fallo de "solo escribe la primera letra".
+function AdjuntoContrato({ valor, onChange }) {
+  const entrada = useRef(null);
+  const [error, setError] = useState(null);
+
+  // El PDF se guarda como data URL dentro de la fila del documento: no hay
+  // almacenamiento de archivos todavía. El tope evita que una fila crezca hasta
+  // reventar la carga del expediente entero, igual que en los formatos de tutor.
+  const PESO_MAXIMO = 4 * 1024 * 1024;
+
+  const elegir = (e) => {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (!f) return;
+    if (f.type !== "application/pdf") { setError("El contrato tiene que ser un PDF."); return; }
+    if (f.size > PESO_MAXIMO) { setError("El PDF pesa más de 4 MB. Comprímelo antes de subirlo."); return; }
+    setError(null);
+    const lector = new FileReader();
+    lector.onload = () => onChange({ nombre: f.name, datos: lector.result });
+    lector.readAsDataURL(f);
+  };
+
+  return (
+    <div style={{ marginTop: 6, marginBottom: 14 }}>
+      <div style={{ fontSize: 12, fontWeight: 600, color: T.inkSoft, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+        Contrato firmado
+      </div>
+      <button
+        type="button" onClick={() => entrada.current?.click()}
+        style={{
+          display: "flex", alignItems: "center", gap: 8, width: "100%",
+          padding: "11px 12px", borderRadius: 10, cursor: "pointer", textAlign: "left",
+          border: `1px dashed ${valor ? T.brand : T.border}`,
+          background: valor ? T.brandTint : T.surface,
+          fontFamily: T.font, fontSize: 13, color: valor ? T.brand : T.inkSoft,
+        }}
+      >
+        <Paperclip size={14} />
+        {valor ? `${valor.nombre} — pulsa para cambiarlo` : "Elegir el PDF del contrato firmado"}
+      </button>
+      <input ref={entrada} type="file" accept="application/pdf" onChange={elegir} style={{ display: "none" }} />
+      {error && <div style={{ fontSize: 11.5, color: T.apoyo, marginTop: 5 }}>{error}</div>}
     </div>
   );
 }

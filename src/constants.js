@@ -23,6 +23,7 @@ export const DOC_TYPES_GABINETE = {
   tutor_quincenal: { label: "Reporte Quincenal de Tutor", plural: "Reportes Quincenales de Tutor" },
   supervision: { label: "Registro de Supervisión y Observación", plural: "Registros de Supervisión y Observación" },
   minuta_interdisciplinaria: { label: "Minuta de Reunión Interdisciplinaria", plural: "Minutas de Reunión Interdisciplinaria" },
+  contrato: { label: "Contrato firmado", plural: "Contratos firmados" },
 };
 
 export const MEETING_TYPES = ["Escuela", "Especialista externo", "Familia", "Otro"];

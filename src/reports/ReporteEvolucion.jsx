@@ -10,6 +10,7 @@ import { Btn } from "../ui/index.js";
 import DocumentoAira from "./DocumentoAira.jsx";
 import VisorReporte from "./VisorReporte.jsx";
 import FiltrosReporte from "./FiltrosReporte.jsx";
+import BloqueFirma from "./BloqueFirma.jsx";
 import { SeccionDoc, SinDato, TablaDoc, EscalaGas, ListaDoc } from "./piezas.jsx";
 
 // Reporte de Evolución — seccion 1 de Formatos_Reportes_AIRA.docx.
@@ -277,21 +278,17 @@ export default function ReporteEvolucion({
           />
         </SeccionDoc>
 
-        <SeccionDoc titulo="Firma y validación">
-          <div style={{
-            display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px 24px",
-            fontSize: 11.5, marginTop: 22,
-          }}>
-            <FirmaLinea etiqueta="Especialista" valor={responsable?.name} />
-            <FirmaLinea etiqueta="Especialidad" valor={responsable?.specialty} />
-            <FirmaLinea
-              etiqueta="N° de idoneidad"
-              valor={responsable?.licenseNo}
-              faltante="Sin registrar en el perfil del especialista"
-            />
-            <FirmaLinea etiqueta="Fecha" valor={fmtDate(TODAY)} />
-          </div>
-        </SeccionDoc>
+        <BloqueFirma
+          responsable={responsable}
+          datos={[
+            { etiqueta: "Especialidad", valor: responsable?.specialty },
+            {
+              etiqueta: "N° de idoneidad",
+              valor: responsable?.licenseNo,
+              faltante: "Sin registrar en el perfil del especialista",
+            },
+          ]}
+        />
       </DocumentoAira>
     </VisorReporte>
   );
@@ -325,19 +322,5 @@ function CampoRedaccion({ valor, onChange, placeholder }) {
         </div>
       )}
     </>
-  );
-}
-
-function FirmaLinea({ etiqueta, valor, faltante }) {
-  return (
-    <div style={{ marginTop: 10 }}>
-      <div style={{ borderBottom: `1px solid ${T.ink}`, height: 18 }} />
-      <div style={{ fontSize: 9.5, color: T.inkFaint, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 700, marginTop: 3 }}>
-        {etiqueta}
-      </div>
-      <div style={{ fontSize: 11.5, fontWeight: 600, color: valor ? T.ink : T.inkFaint, fontStyle: valor ? "normal" : "italic" }}>
-        {valor || faltante || "—"}
-      </div>
-    </div>
   );
 }

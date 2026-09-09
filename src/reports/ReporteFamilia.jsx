@@ -249,6 +249,13 @@ export default function ReporteFamilia({
           proceso de {child.name}, escríbannos o coméntenlo en la próxima sesión.
           Nos encanta que nos pregunten.
         </div>
+
+        {/* Firma quien atiende, no quien genera: el mismo criterio que ya rige
+            el encabezado de este reporte. */}
+        <BloqueFirma
+          responsable={queAtienden[0] || null}
+          datos={[{ etiqueta: "Especialidad", valor: queAtienden[0]?.specialty }]}
+        />
       </DocumentoAira>
     </VisorReporte>
   );
