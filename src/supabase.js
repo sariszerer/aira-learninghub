@@ -213,8 +213,10 @@ export const db = {
   // Reenvia el enlace para establecer contraseña. Va por funcion edge porque
   // mandar el correo en nombre de otra persona exige service_role: desde el
   // navegador solo se puede pedir recuperacion para uno mismo.
-  async enviarInvitacion(id) {
-    const { data, error } = await supabase.functions.invoke('enviar-invitacion', { body: { id } })
+  // soloEnlace devuelve el enlace en vez de enviarlo por correo. Es la salida
+  // mientras no haya SMTP propio: Supabase limita a dos correos por hora.
+  async enviarInvitacion(id, { soloEnlace = false } = {}) {
+    const { data, error } = await supabase.functions.invoke('enviar-invitacion', { body: { id, soloEnlace } })
     if (error) {
       let detalle = null
       try { detalle = (await error.context?.json())?.error } catch { /* sin cuerpo */ }

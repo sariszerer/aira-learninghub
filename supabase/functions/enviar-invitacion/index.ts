@@ -1,4 +1,5 @@
-// Reenvia a un especialista el correo para que establezca su contraseña.
+// Da acceso a un especialista para que establezca su contraseña: por correo o
+// devolviendo el enlace para pasarselo a mano.
 //
 // Hace falta porque las nueve cuentas del equipo ya existen: se crearon con una
 // contraseña temporal que ahora esta retirada de la base. Nadie puede darles de
@@ -31,6 +32,9 @@ Deno.serve(async (req) => {
   const URL = Deno.env.get("SUPABASE_URL")!;
   const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
   const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  // A donde vuelve la persona tras pulsar el enlace. Sin esto Supabase usa la
+  // Site URL del panel, que puede no ser la de produccion.
+  const APP = Deno.env.get("APP_URL") ?? "https://aira-learninghub.vercel.app";
 
   const authHeader = req.headers.get("Authorization") ?? "";
   if (!authHeader.startsWith("Bearer ")) {
@@ -52,7 +56,7 @@ Deno.serve(async (req) => {
     return json({ error: "No tienes permiso para enviar accesos" }, 403);
   }
 
-  let cuerpo: { id?: string };
+  let cuerpo: { id?: string; soloEnlace?: boolean };
   try {
     cuerpo = await req.json();
   } catch {
@@ -75,7 +79,31 @@ Deno.serve(async (req) => {
     return json({ error: `${destino.name} está desactivada. Actívala antes de enviarle el acceso.` }, 400);
   }
 
-  const { error } = await admin.auth.resetPasswordForEmail(destino.email);
+  // Sin SMTP propio, Supabase limita a dos correos por hora: con nueve personas
+  // en el equipo eso son cinco horas de espera. Este modo genera el mismo enlace
+  // sin enviarlo, para que la administracion se lo pase por donde pueda.
+  //
+  // El enlace ES una credencial: quien lo tenga puede poner la contraseña de esa
+  // cuenta, y las cuentas de aqui abren expedientes clinicos de menores. Se pasa
+  // en privado a la persona y a nadie mas.
+  if (cuerpo.soloEnlace) {
+    const { data: generado, error: errEnlace } = await admin.auth.admin.generateLink({
+      type: "recovery",
+      email: destino.email,
+      options: { redirectTo: APP },
+    });
+    if (errEnlace) {
+      return json({ error: `No se pudo generar el enlace: ${errEnlace.message}` }, 500);
+    }
+    return json({
+      ok: true,
+      enlace: generado.properties?.action_link,
+      email: destino.email,
+      nombre: destino.name,
+    });
+  }
+
+  const { error } = await admin.auth.resetPasswordForEmail(destino.email, { redirectTo: APP });
 
   if (error) {
     // El limite de envios de Supabase es bajo y devuelve 429. Sin decirlo, la
