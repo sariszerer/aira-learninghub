@@ -275,3 +275,28 @@ export function sesionesEnRango(sesiones = [], childId, desde, hasta) {
     .filter((s) => (!desde || s.date >= desde) && (!hasta || s.date <= hasta))
     .sort((a, b) => a.date.localeCompare(b.date));
 }
+
+// ── Objetivos que se ofrecen al registrar una sesión ─────────────────────────
+
+// Separa los que quedan por trabajar de los que ya se lograron.
+//
+// Un paciente con quince objetivos de los que ocho estan cumplidos obliga a
+// leerlos todos para encontrar los siete que importan. Los logrados no
+// desaparecen — a veces se retoman, y esconder informacion clinica sin salida
+// es peor que ordenarla — pero van aparte y marcados.
+//
+// `yaMarcados` es lo que hace que esto no sea un filtro ingenuo: al EDITAR una
+// sesion antigua, un objetivo logrado que ESA sesion registro tiene que seguir
+// entre los pendientes y visible. Si cayera al grupo plegado, abrir y guardar
+// la sesion donde se alcanzo el objetivo lo borraria del registro que
+// justamente lo documenta.
+export function repartirObjetivosDeSesion(objetivos = [], yaMarcados = []) {
+  const marcados = yaMarcados instanceof Set ? yaMarcados : new Set(yaMarcados);
+  const pendientes = [];
+  const logrados = [];
+  for (const o of objetivos) {
+    if (o.status === "logrado" && !marcados.has(o.id)) logrados.push(o);
+    else pendientes.push(o);
+  }
+  return { pendientes, logrados };
+}

@@ -6,6 +6,10 @@ export const PERMISSIONS = [
   { key: 'patient:create',          grupo: 'Pacientes',          descripcion: 'Dar de alta pacientes' },
   { key: 'patient:edit',            grupo: 'Pacientes',          descripcion: 'Editar datos del paciente' },
   { key: 'patient:close',           grupo: 'Pacientes',          descripcion: 'Cerrar proceso clínico' },
+  // Distinto de patient:close: cerrar conserva la historia, borrar la elimina
+  // junto con sesiones, objetivos, documentos y reportes. Es para el expediente
+  // creado por error, no para el paciente que termina su tratamiento.
+  { key: 'patient:delete',          grupo: 'Pacientes',          descripcion: 'Borrar pacientes y todo su expediente' },
   { key: 'patient:renew_package',   grupo: 'Pacientes',          descripcion: 'Renovar paquete de sesiones' },
 
   { key: 'session:view',            grupo: 'Sesiones',           descripcion: 'Ver sesiones' },
@@ -40,6 +44,9 @@ export const PERMISSIONS = [
   { key: 'gabinete:view',           grupo: 'Gabinete',           descripcion: 'Acceder al panel de gabinete' },
   { key: 'gabinete:session:create', grupo: 'Gabinete',           descripcion: 'Registrar sesiones de gabinete' },
   { key: 'school:create',           grupo: 'Gabinete',           descripcion: 'Dar de alta colegios' },
+  // Aparte de gabinete:session:create a propósito: el registro de supervisión
+  // evalúa a la tutora, y quien es evaluada no edita su evaluación. Verla sí.
+  { key: 'gabinete:supervision:write', grupo: 'Gabinete',        descripcion: 'Escribir el registro de supervisión' },
 
   { key: 'tutorreport:view',        grupo: 'Tutores',            descripcion: 'Ver reportes de tutor' },
   { key: 'tutorreport:create',      grupo: 'Tutores',            descripcion: 'Crear reportes de tutor' },
@@ -113,6 +120,7 @@ export const ROLES = {
     permisos: [
       ...TODAS_LAS_LECTURAS,
       'patient:create', 'patient:edit', 'patient:close', 'patient:renew_package',
+      'patient:delete',
       // Admin SI registra sesiones. La exclusion venia de App.jsx:3850 y era un
       // supuesto equivocado sobre esta clinica: la directora ha impartido 19
       // sesiones de Funciones Ejecutivas. Sin este permiso no podia registrar
@@ -124,6 +132,7 @@ export const ROLES = {
       'report:evolution:generate', 'report:history:generate', 'report:parent:generate',
       'meeting:create', 'guidelines:view',
       'gabinete:view', 'gabinete:session:create', 'school:create',
+      'gabinete:supervision:write',
       // sin tutorreport:create — el único punto de creación es TutorAiraHome,
       // que solo se monta para shadow
       'user:manage', 'role:manage',
@@ -137,7 +146,7 @@ export const ROLES = {
       ...TODAS_LAS_LECTURAS,
       // tutorreport:view: hoy solo ClinicalDirectorHome muestra reportes de tutor
       'tutorreport:view',
-      'patient:edit', 'patient:close', 'patient:renew_package',
+      'patient:edit', 'patient:close', 'patient:renew_package', 'patient:delete',
       'session:create', 'session:edit:any',
       'objective:create', 'objective:edit:any',
       'document:create', 'document:edit:any',
@@ -145,6 +154,7 @@ export const ROLES = {
       'report:evolution:generate', 'report:history:generate', 'report:parent:generate',
       'meeting:create', 'guidelines:view',
       'gabinete:view', 'gabinete:session:create', 'school:create',
+      'gabinete:supervision:write',
       // sin tutorreport:create — el único punto de creación es TutorAiraHome,
       // que solo se monta para shadow
     ],

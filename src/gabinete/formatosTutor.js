@@ -43,6 +43,11 @@ export const AREAS_QUINCENAL = [
 
 export const FORMATO_SUPERVISION = {
   titulo: "Registro de Supervisión y Observación Escolar",
+  // Este formato lo escribe SOLO dirección. Es la valoración que se hace sobre
+  // la tutora — observa su intervención y califica su nivel de apoyo — y la
+  // persona evaluada no puede editar su propia evaluación. Leerla sí: es su
+  // devolución, y para eso está la lista de documentos.
+  permisoEscritura: "gabinete:supervision:write",
   // La cabecera del formato: datos de la observación concreta.
   cabecera: [
     { clave: "hora", label: "Hora", tipo: "time" },

@@ -4,6 +4,7 @@ import { auth, getAppUser } from "./supabase.js";
 import { can } from "./permissions.js";
 import Login from "./Login.jsx";
 import { T, FONTS, MobileStyles } from "./theme.js";
+import AvisoDeFallo from "./ui/AvisoDeFallo.jsx";
 import { useAuthStore } from "./store/authStore.js";
 import { useDataStore } from "./store/dataStore.js";
 import { useCalendarStore } from "./store/calendarStore.js";
@@ -120,6 +121,8 @@ export default function App() {
     <div style={{ minHeight: "100vh", background: T.bg, fontFamily: T.font, color: T.ink }}>
       <style>{FONTS}</style>
       <MobileStyles />
+
+      <AvisoDeFallo />
 
       <Sidebar abierto={menuAbierto} onAlternar={() => setMenuAbierto((a) => !a)} />
 

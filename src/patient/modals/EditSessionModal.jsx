@@ -1,8 +1,78 @@
 import React, { useMemo, useState } from "react";
-import { Check } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 import { T, STATUS, inputStyle } from "../../theme.js";
-import { fmtDate } from "../../lib/format.js";
+import { fmtDate, contar } from "../../lib/format.js";
+import { repartirObjetivosDeSesion } from "../../lib/reportes.js";
 import { Btn, EmptyNote, Field, Modal, ModalHeader, SelectorAsistencia, StatusIcon } from "../../ui/index.js";
+
+// Una fila del selector de objetivos, con su casilla y sus tres estados.
+//
+// A nivel de módulo y no dentro de EditSessionModal: un componente definido en
+// el cuerpo es un tipo nuevo en cada render y React lo desmonta y lo vuelve a
+// montar. En esta aplicación ese patrón ya causó el fallo de "solo escribe la
+// primera letra" en tres pantallas.
+function FilaObjetivo({ objetivo, activo, estado, onAlternar, onEstado, logrado = false }) {
+  const borde = activo ? T.brand : logrado ? `${T.logrado}55` : T.border;
+  return (
+    <div style={{
+      border: `1.5px solid ${borde}`,
+      background: activo ? T.brandTint : logrado ? `${T.logrado}08` : T.surface,
+      borderRadius: 8,
+    }}>
+      <button
+        type="button" onClick={onAlternar}
+        style={{
+          display: "flex", alignItems: "center", gap: 10, width: "100%",
+          padding: "10px 12px", border: "none", background: "transparent",
+          cursor: "pointer", textAlign: "left", fontFamily: T.font,
+        }}
+      >
+        <span style={{
+          width: 18, height: 18, borderRadius: 4, flexShrink: 0,
+          border: `2px solid ${activo ? T.brand : logrado ? `${T.logrado}88` : T.inkFaint}`,
+          background: activo ? T.brand : T.surface,
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          {activo && <Check size={12} strokeWidth={3} color="#fff" />}
+        </span>
+        <span style={{ fontSize: 13, color: activo ? T.brand : logrado ? T.inkSoft : T.ink, fontWeight: activo ? 600 : 400 }}>
+          {objetivo.name}
+        </span>
+        {logrado && (
+          <span style={{
+            marginLeft: "auto", flexShrink: 0, fontSize: 10.5, fontWeight: 700,
+            color: T.logrado, background: T.logradoTint, borderRadius: 999, padding: "2px 8px",
+          }}>
+            Logrado
+          </span>
+        )}
+      </button>
+      {activo && (
+        <div style={{ display: "flex", gap: 6, padding: "0 12px 10px 40px", flexWrap: "wrap" }}>
+          {ESTADOS.map((e) => {
+            const sel = estado === e;
+            return (
+              <button
+                key={e} type="button" onClick={() => onEstado(e)}
+                style={{
+                  display: "flex", alignItems: "center", gap: 5,
+                  padding: "4px 10px", borderRadius: 999, cursor: "pointer",
+                  fontFamily: T.font, fontSize: 12, fontWeight: sel ? 600 : 400,
+                  border: `1.5px solid ${sel ? STATUS[e].color : T.border}`,
+                  background: sel ? STATUS[e].tint : T.surface,
+                  color: sel ? STATUS[e].color : T.inkSoft,
+                }}
+              >
+                <StatusIcon status={e} size={13} />
+                {STATUS[e].label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const ESTADOS = ["logrado", "proceso", "apoyo"];
 
@@ -35,6 +105,19 @@ function EditSessionModal({ session, objectives, users, onClose, onSave }) {
   const [observation, setObservation] = useState(session.observation || "");
   const [nextSteps, setNextSteps] = useState(session.nextSteps || "");
 
+  const [verLogrados, setVerLogrados] = useState(false);
+
+  // Los ya logrados van plegados aparte, igual que al registrar una sesión.
+  //
+  // La excepción está en el segundo argumento: un objetivo logrado que ESTA
+  // sesión ya tenía marcado sigue entre los pendientes. Si cayera al grupo
+  // plegado, abrir y guardar la sesión donde se alcanzó el objetivo lo borraría
+  // justo del registro que lo documenta.
+  const { pendientes, logrados } = useMemo(
+    () => repartirObjetivosDeSesion(delNino, Object.keys(trabajados)),
+    [delNino, trabajados]
+  );
+
   const alternar = (id) =>
     setTrabajados((prev) => {
       const sig = { ...prev };
@@ -49,12 +132,12 @@ function EditSessionModal({ session, objectives, users, onClose, onSave }) {
   // y sin la separacion la lista es una pila plana sin jerarquia.
   const porArea = useMemo(() => {
     const m = new Map();
-    for (const o of delNino) {
+    for (const o of pendientes) {
       if (!m.has(o.area)) m.set(o.area, []);
       m.get(o.area).push(o);
     }
     return [...m.entries()];
-  }, [delNino]);
+  }, [pendientes]);
 
   const guardar = () => {
     onSave(componerSesion(session, { trabajados, huerfanas, actividades, observation, nextSteps, attendance }));
@@ -81,76 +164,52 @@ function EditSessionModal({ session, objectives, users, onClose, onSave }) {
         </Seccion>
 
         <Seccion titulo="Objetivos de la sesión">
-          {porArea.length > 0 ? (
+          {delNino.length > 0 ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               {porArea.map(([area, lista]) => (
                 <div key={area}>
                   <div style={{ fontSize: 11.5, fontWeight: 600, color: T.inkFaint, marginBottom: 6 }}>{area}</div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                    {lista.map((o) => {
-                      const activo = o.id in trabajados;
-                      return (
-                        <div
-                          key={o.id}
-                          style={{
-                            border: `1.5px solid ${activo ? T.brand : T.border}`,
-                            background: activo ? T.brandTint : T.surface,
-                            borderRadius: 8,
-                          }}
-                        >
-                          <button
-                            type="button"
-                            onClick={() => alternar(o.id)}
-                            style={{
-                              display: "flex", alignItems: "center", gap: 10, width: "100%",
-                              padding: "10px 12px", border: "none", background: "transparent",
-                              cursor: "pointer", textAlign: "left", fontFamily: T.font,
-                            }}
-                          >
-                            <span style={{
-                              width: 18, height: 18, borderRadius: 4, flexShrink: 0,
-                              border: `2px solid ${activo ? T.brand : T.inkFaint}`,
-                              background: activo ? T.brand : T.surface,
-                              display: "flex", alignItems: "center", justifyContent: "center",
-                            }}>
-                              {activo && <Check size={12} strokeWidth={3} color="#fff" />}
-                            </span>
-                            <span style={{ fontSize: 13, color: activo ? T.brand : T.ink, fontWeight: activo ? 600 : 400 }}>
-                              {o.name}
-                            </span>
-                          </button>
-                          {activo && (
-                            <div style={{ display: "flex", gap: 6, padding: "0 12px 10px 40px", flexWrap: "wrap" }}>
-                              {ESTADOS.map((e) => {
-                                const sel = trabajados[o.id] === e;
-                                return (
-                                  <button
-                                    key={e}
-                                    type="button"
-                                    onClick={() => ponerEstado(o.id, e)}
-                                    style={{
-                                      display: "flex", alignItems: "center", gap: 5,
-                                      padding: "4px 10px", borderRadius: 999, cursor: "pointer",
-                                      fontFamily: T.font, fontSize: 12,
-                                      fontWeight: sel ? 600 : 400,
-                                      border: `1.5px solid ${sel ? STATUS[e].color : T.border}`,
-                                      background: sel ? STATUS[e].tint : T.surface,
-                                      color: sel ? STATUS[e].color : T.inkSoft,
-                                    }}
-                                  >
-                                    <StatusIcon status={e} size={13} />
-                                    {STATUS[e].label}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
+                    {lista.map((o) => (
+                      <FilaObjetivo
+                        key={o.id} objetivo={o} estado={trabajados[o.id]}
+                        activo={o.id in trabajados}
+                        onAlternar={() => alternar(o.id)}
+                        onEstado={(e) => ponerEstado(o.id, e)}
+                      />
+                    ))}
                   </div>
                 </div>
               ))}
+
+              {logrados.length > 0 && (
+                <div>
+                  <button
+                    type="button" onClick={() => setVerLogrados((v) => !v)}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 6, background: "none",
+                      border: "none", cursor: "pointer", padding: "2px 0",
+                      fontFamily: T.font, fontSize: 12.5, fontWeight: 600, color: T.logrado,
+                    }}
+                  >
+                    <Check size={13} strokeWidth={3} />
+                    {contar(logrados.length, "objetivo ya logrado", "objetivos ya logrados")}
+                    <ChevronDown size={13} style={{ transform: verLogrados ? "rotate(180deg)" : "none", transition: "transform .15s" }} />
+                  </button>
+                  {verLogrados && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 6 }}>
+                      {logrados.map((o) => (
+                        <FilaObjetivo
+                          key={o.id} objetivo={o} estado={trabajados[o.id]} logrado
+                          activo={o.id in trabajados}
+                          onAlternar={() => alternar(o.id)}
+                          onEstado={(e) => ponerEstado(o.id, e)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           ) : (
             <EmptyNote

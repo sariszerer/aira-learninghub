@@ -1,10 +1,12 @@
 import React, { useMemo, useState } from "react";
 import { inputStyle, TODAY } from "../../theme.js";
 import { can } from "../../permissions.js";
+import { contar } from "../../lib/format.js";
+import { repartirObjetivosDeSesion } from "../../lib/reportes.js";
 import { Btn, Chip, EmptyNote, Modal, ModalHeader, SelectorAsistencia } from "../../ui/index.js";
 import { useAuthStore } from "../../store/authStore.js";
 import { T } from "../../theme.js";
-import { Check } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 
 function SessionWizard({ child, objectives, onClose, onSave }) {
   const currentUser = useAuthStore((s) => s.currentUser);
@@ -36,10 +38,20 @@ function SessionWizard({ child, objectives, onClose, onSave }) {
   const [nextSteps, setNextSteps] = useState("");
 
   // Only show this specialist's objectives for this child
-  const myObjectives = objectives.filter(o => 
-    o.childId === child.id && 
+  const myObjectives = objectives.filter(o =>
+    o.childId === child.id &&
     can(currentUser, "objective:edit", o)
   );
+
+  // Los ya logrados van aparte y plegados. Un paciente con once objetivos de
+  // los que ocho están cumplidos obliga a leerlos todos para dar con los tres
+  // que se trabajan hoy. No se esconden: siguen a un clic, porque un objetivo
+  // logrado se retoma a veces y el especialista tiene que poder marcarlo.
+  const { pendientes, logrados } = useMemo(
+    () => repartirObjetivosDeSesion(myObjectives, selectedObjIds),
+    [myObjectives, selectedObjIds]
+  );
+  const [verLogrados, setVerLogrados] = useState(false);
 
   // Session number for this specialist + child
   const toggleObj = (id) => setSelectedObjIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
@@ -126,30 +138,45 @@ function SessionWizard({ child, objectives, onClose, onSave }) {
         {/* Objetivos trabajados */}
         <div>
           <div style={{ fontSize: 12, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>Objetivos de la sesión</div>
-          {myObjectives.length > 0 ? (
+          {myObjectives.length > 0 ? (<>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {myObjectives.map(o => {
-                const selected = selectedObjIds.includes(o.id);
-                return (
-                  <button key={o.id} onClick={() => toggleObj(o.id)} style={{
-                    display: "flex", alignItems: "center", gap: 10, padding: "10px 12px",
-                    borderRadius: 8, border: `1.5px solid ${selected ? color : "#ddd"}`,
-                    background: selected ? `${color}10` : "#fff", cursor: "pointer", textAlign: "left",
-                    fontFamily: T.font
-                  }}>
-                    <div style={{
-                      width: 18, height: 18, borderRadius: 4, border: `2px solid ${selected ? color : "#ccc"}`,
-                      background: selected ? color : "#fff", flexShrink: 0,
-                      display: "flex", alignItems: "center", justifyContent: "center"
-                    }}>
-                      {selected && <span style={{ color: "#fff", fontSize: 12, fontWeight: 700 }}><Check size={12} strokeWidth={3} /></span>}
-                    </div>
-                    <span style={{ fontSize: 13, color: selected ? color : "#333", fontWeight: selected ? 600 : 400 }}>{o.name}</span>
-                  </button>
-                );
-              })}
+              {pendientes.map(o => (
+                <OpcionObjetivo
+                  key={o.id} objetivo={o} color={color}
+                  marcado={selectedObjIds.includes(o.id)}
+                  onToggle={() => toggleObj(o.id)}
+                />
+              ))}
             </div>
-          ) : (
+
+            {logrados.length > 0 && (
+              <div style={{ marginTop: 10 }}>
+                <button
+                  type="button" onClick={() => setVerLogrados((v) => !v)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 6, background: "none",
+                    border: "none", cursor: "pointer", padding: "4px 0",
+                    fontFamily: T.font, fontSize: 12.5, fontWeight: 600, color: T.logrado,
+                  }}
+                >
+                  <Check size={13} strokeWidth={3} />
+                  {contar(logrados.length, "objetivo ya logrado", "objetivos ya logrados")}
+                  <ChevronDown size={13} style={{ transform: verLogrados ? "rotate(180deg)" : "none", transition: "transform .15s" }} />
+                </button>
+                {verLogrados && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 6 }}>
+                    {logrados.map(o => (
+                      <OpcionObjetivo
+                        key={o.id} objetivo={o} color={color} logrado
+                        marcado={selectedObjIds.includes(o.id)}
+                        onToggle={() => toggleObj(o.id)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </>) : (
             <EmptyNote text="No hay objetivos definidos para esta disciplina aún." dentroDeCaja />
           )}
           <div style={{ marginTop: 8 }}>
@@ -196,3 +223,39 @@ function SessionWizard({ child, objectives, onClose, onSave }) {
 }
 
 export default SessionWizard;
+
+// Una opción del selector de objetivos.
+//
+// Vive en el módulo y no dentro de SessionWizard: un componente definido en el
+// cuerpo es un tipo nuevo en cada render, React desmonta y vuelve a montar, y
+// eso ya costó en esta app el fallo de "solo escribe la primera letra".
+function OpcionObjetivo({ objetivo, marcado, onToggle, color, logrado = false }) {
+  const tinta = logrado ? T.logrado : color;
+  return (
+    <button type="button" onClick={onToggle} style={{
+      display: "flex", alignItems: "center", gap: 10, padding: "10px 12px",
+      borderRadius: 8, border: `1.5px solid ${marcado ? tinta : logrado ? `${T.logrado}55` : "#ddd"}`,
+      background: marcado ? `${tinta}10` : logrado ? `${T.logrado}08` : "#fff",
+      cursor: "pointer", textAlign: "left", fontFamily: T.font,
+    }}>
+      <div style={{
+        width: 18, height: 18, borderRadius: 4, border: `2px solid ${marcado ? tinta : logrado ? `${T.logrado}88` : "#ccc"}`,
+        background: marcado ? tinta : "#fff", flexShrink: 0,
+        display: "flex", alignItems: "center", justifyContent: "center",
+      }}>
+        {marcado && <Check size={12} strokeWidth={3} color="#fff" />}
+      </div>
+      <span style={{ fontSize: 13, color: marcado ? tinta : logrado ? T.inkSoft : "#333", fontWeight: marcado ? 600 : 400 }}>
+        {objetivo.name}
+      </span>
+      {logrado && (
+        <span style={{
+          marginLeft: "auto", flexShrink: 0, fontSize: 10.5, fontWeight: 700,
+          color: T.logrado, background: T.logradoTint, borderRadius: 999, padding: "2px 8px",
+        }}>
+          Logrado
+        </span>
+      )}
+    </button>
+  );
+}

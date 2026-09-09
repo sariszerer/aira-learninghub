@@ -5,6 +5,7 @@ import {
   especialistasInvolucrados, evaluacionesIniciales, planesPorDisciplina,
   estadoDelPaciente, textoRango, sesionesEnRango, especialidadesDelPaciente,
   especialidadPrincipal, especialistasQueAtendieron,
+  repartirObjetivosDeSesion,
 } from './reportes.js'
 
 const ses = (o) => ({ childId: 'c1', date: '2026-01-01', attendance: 'asistio', objectivesWorked: [], ...o })
@@ -320,5 +321,38 @@ describe('especialistasQueAtendieron', () => {
 
   it('descarta ids que ya no corresponden a ningún usuario', () => {
     expect(especialistasQueAtendieron([ses({ specialistId: 'u-borrado' })], usuarios)).toEqual([])
+  })
+})
+
+describe('repartirObjetivosDeSesion', () => {
+  const objetivos = [
+    { id: 'o1', status: 'logrado' },
+    { id: 'o2', status: 'proceso' },
+    { id: 'o3', status: 'apoyo' },
+    { id: 'o4', status: 'logrado' },
+  ]
+
+  it('separa lo que queda por trabajar de lo ya cumplido', () => {
+    const { pendientes, logrados } = repartirObjetivosDeSesion(objetivos)
+    expect(pendientes.map((o) => o.id)).toEqual(['o2', 'o3'])
+    expect(logrados.map((o) => o.id)).toEqual(['o1', 'o4'])
+  })
+
+  it('un logrado que ESTA sesión ya marcó se queda entre los pendientes', () => {
+    // Es la excepción que evita el daño real: si cayera al grupo plegado, abrir
+    // y guardar la sesión donde se alcanzó el objetivo lo borraría justo del
+    // registro que lo documenta.
+    const { pendientes, logrados } = repartirObjetivosDeSesion(objetivos, ['o1'])
+    expect(pendientes.map((o) => o.id)).toEqual(['o1', 'o2', 'o3'])
+    expect(logrados.map((o) => o.id)).toEqual(['o4'])
+  })
+
+  it('ningun objetivo se pierde por el camino', () => {
+    const { pendientes, logrados } = repartirObjetivosDeSesion(objetivos, ['o4'])
+    expect(pendientes.length + logrados.length).toBe(objetivos.length)
+  })
+
+  it('sin objetivos devuelve dos listas vacias', () => {
+    expect(repartirObjetivosDeSesion([])).toEqual({ pendientes: [], logrados: [] })
   })
 })
