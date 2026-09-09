@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { T, CHILD_AVATAR_COLORS, TODAY } from "../theme.js";
 import { slugifyName } from "../lib/format.js";
 import { ROLES } from "../permissions.js";
-import { Btn, Chip, Modal, ModalHeader, Section } from "../ui/index.js";
+import { Btn, Chip, Modal, ModalHeader } from "../ui/index.js";
 
 function AddPatientWizard({ users, currentUser, onClose, onCreate }) {
   const [step, setStep] = useState(1);
@@ -35,27 +35,7 @@ function AddPatientWizard({ users, currentUser, onClose, onCreate }) {
   const nombreCompleto = `${nombre} ${apellido}`.trim();
   const step1Valid = nombre.trim() && apellido.trim();
 
-  const F = ({ label, value, onChange, multiline, rows = 3, placeholder, type }) => (
-    <div style={{ marginBottom: 14 }}>
-      {label && <div style={{ fontSize: 12, fontWeight: 700, color: T.inkFaint, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 5 }}>{label}</div>}
-      {multiline ? (
-        <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={rows} placeholder={placeholder}
-          style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${T.border}`, fontSize: 13.5, fontFamily: T.font, outline: "none", resize: "vertical", boxSizing: "border-box", lineHeight: 1.6 }}
-        />
-      ) : (
-        <input type={type || "text"} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
-          style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${T.border}`, fontSize: 13.5, fontFamily: T.font, outline: "none", boxSizing: "border-box" }}
-        />
-      )}
-    </div>
-  );
 
-  const Section = ({ title, children }) => (
-    <div style={{ marginBottom: 20 }}>
-      <div style={{ fontFamily: T.font, fontSize: 15, fontWeight: 500, color: T.brand, borderBottom: `1.5px solid ${T.brand}30`, paddingBottom: 6, marginBottom: 12 }}>{title}</div>
-      {children}
-    </div>
-  );
 
   const finish = () => {
     const newId = `c-${slugifyName(nombre + apellido)}-${Date.now().toString(36).slice(-5)}`;
@@ -117,31 +97,31 @@ function AddPatientWizard({ users, currentUser, onClose, onCreate }) {
             <div style={{ fontSize: 13.5, color: T.inkSoft, marginBottom: 16 }}>
               Ficha de anamnesis breve para <b>{nombreCompleto || "el paciente"}</b>. Puedes completar el resto más adelante desde la ficha del paciente.
             </div>
-            <Section title="Motivo de consulta">
+            <SeccionAlta title="Motivo de consulta">
               <F value={form.motivoConsulta} onChange={setField("motivoConsulta")} multiline rows={3} />
-            </Section>
-            <Section title="Antecedentes relevantes">
+            </SeccionAlta>
+            <SeccionAlta title="Antecedentes relevantes">
               <F label="Embarazo, parto y desarrollo temprano" value={form.antecedentes} onChange={setField("antecedentes")} multiline rows={2} />
               <F label="Salud actual (enfermedades, alergias, medicamentos)" value={form.saludActual} onChange={setField("saludActual")} multiline rows={2} />
               <F label="Evaluaciones o terapias previas" value={form.terapiasPrevias} onChange={setField("terapiasPrevias")} multiline rows={2} />
-            </Section>
-            <Section title="Información familiar">
+            </SeccionAlta>
+            <SeccionAlta title="Información familiar">
               <F label="Composición familiar (con quién vive)" value={form.composicionFamiliar} onChange={setField("composicionFamiliar")} multiline rows={2} />
               <F label="Hermanos (nombres y edades)" value={form.hermanos} onChange={setField("hermanos")} />
               <F label="Dinámica familiar relevante" value={form.dinamicaFamiliar} onChange={setField("dinamicaFamiliar")} multiline rows={2} />
-            </Section>
-            <Section title="Desarrollo y funcionamiento actual">
+            </SeccionAlta>
+            <SeccionAlta title="Desarrollo y funcionamiento actual">
               <F label="Fortalezas" value={form.fortalezas} onChange={setField("fortalezas")} multiline rows={2} />
               <F label="Dificultades observadas" value={form.dificultades} onChange={setField("dificultades")} multiline rows={2} />
               <F label="Estado emocional" value={form.estadoEmocional} onChange={setField("estadoEmocional")} multiline rows={2} />
-            </Section>
-            <Section title="Escolaridad">
+            </SeccionAlta>
+            <SeccionAlta title="Escolaridad">
               <F label="Rendimiento académico general" value={form.rendimientoAcademico} onChange={setField("rendimientoAcademico")} multiline rows={2} />
               <F label="Áreas con mayor dificultad" value={form.areasDificultad} onChange={setField("areasDificultad")} />
-            </Section>
-            <Section title="Observaciones adicionales">
+            </SeccionAlta>
+            <SeccionAlta title="Observaciones adicionales">
               <F value={form.observaciones} onChange={setField("observaciones")} multiline rows={2} />
-            </Section>
+            </SeccionAlta>
             <div style={{ fontSize: 12.5, color: T.inkFaint, background: T.surfaceSunk, borderRadius: 10, padding: 12 }}>
               El consentimiento informado y la firma del acudiente se completan después, desde la pestaña de Anamnesis del paciente — ahí puedes generar un link para que el acudiente firme desde su celular, aunque no esté presente.
             </div>
@@ -181,3 +161,35 @@ function AddPatientWizard({ users, currentUser, onClose, onCreate }) {
 }
 
 export default AddPatientWizard;
+
+// Definidos FUERA del componente a proposito.
+//
+// Estaban dentro, y eso los convertia en un TIPO de componente nuevo en cada
+// render: React desmontaba el input y montaba otro, asi que el campo perdia el
+// foco despues de cada tecla y habia que volver a hacer clic para escribir la
+// siguiente letra. Con formularios de veinte campos, imposible de usar.
+function F({ label, value, onChange, multiline, rows = 3, placeholder, type }) {
+  return (
+    <div style={{ marginBottom: 14 }}>
+      {label && <div style={{ fontSize: 12, fontWeight: 700, color: T.inkFaint, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 5 }}>{label}</div>}
+      {multiline ? (
+        <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={rows} placeholder={placeholder}
+          style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${T.border}`, fontSize: 13.5, fontFamily: T.font, outline: "none", resize: "vertical", boxSizing: "border-box", lineHeight: 1.6 }}
+        />
+      ) : (
+        <input type={type || "text"} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
+          style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${T.border}`, fontSize: 13.5, fontFamily: T.font, outline: "none", boxSizing: "border-box" }}
+        />
+      )}
+    </div>
+  );
+}
+
+function SeccionAlta({ title, children }) {
+  return (
+    <div style={{ marginBottom: 20 }}>
+      <div style={{ fontFamily: T.font, fontSize: 15, fontWeight: 500, color: T.brand, borderBottom: `1.5px solid ${T.brand}30`, paddingBottom: 6, marginBottom: 12 }}>{title}</div>
+      {children}
+    </div>
+  );
+}

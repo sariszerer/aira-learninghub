@@ -63,13 +63,6 @@ function GabinetePanel({ onAddSession }) {
     setNewSchool(VACIA);
   };
 
-  const Field2 = ({ label, value, onChange, type = "text" }) => (
-    <div style={{ marginBottom: 14 }}>
-      <div style={{ fontSize: 12, fontWeight: 600, color: T.inkSoft, marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</div>
-      <input type={type} value={value} onChange={(e) => onChange(e.target.value)}
-        style={{ width: "100%", padding: "9px 12px", borderRadius: 10, border: `1px solid ${T.border}`, fontSize: 14, fontFamily: T.font, boxSizing: "border-box", outline: "none" }} />
-    </div>
-  );
 
   return (
     <div style={{ padding: "24px 28px 48px" }}>
@@ -454,3 +447,19 @@ function GabinetePanel({ onAddSession }) {
 }
 
 export default GabinetePanel;
+
+// Definido FUERA del componente a proposito.
+//
+// Estaba dentro, y eso lo convertia en un TIPO de componente nuevo en cada
+// render: React desmontaba el input y montaba otro, asi que el campo perdia el
+// foco despues de cada tecla y habia que volver a hacer clic para escribir la
+// siguiente letra.
+function Field2({ label, value, onChange, type = "text" }) {
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <div style={{ fontSize: 12, fontWeight: 600, color: T.inkSoft, marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</div>
+      <input type={type} value={value} onChange={(e) => onChange(e.target.value)}
+        style={{ width: "100%", padding: "9px 12px", borderRadius: 10, border: `1px solid ${T.border}`, fontSize: 14, fontFamily: T.font, boxSizing: "border-box", outline: "none" }} />
+    </div>
+  );
+}

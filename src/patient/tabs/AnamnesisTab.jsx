@@ -3,7 +3,7 @@ import { Plus } from "lucide-react";
 import { T, TODAY } from "../../theme.js";
 import { fmtDateShort } from "../../lib/format.js";
 import { can } from "../../permissions.js";
-import { Btn, Card, Section } from "../../ui/index.js";
+import { Btn, Card } from "../../ui/index.js";
 
 function AnamnesisTab({ child, documents, users, currentUser, onAddDocument, onUpdateDocument }) {
   const [adding, setAdding] = useState(false);
@@ -73,29 +73,7 @@ function AnamnesisTab({ child, documents, users, currentUser, onAddDocument, onU
     }
   };
 
-  const F = ({ label, name, multiline, rows = 3 }) => (
-    <div style={{ marginBottom: 14 }}>
-      <div style={{ fontSize: 12, fontWeight: 700, color: T.inkFaint, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 5 }}>{label}</div>
-      {multiline ? (
-        <textarea value={form[name]} onChange={e => setForm(f => ({...f, [name]: e.target.value}))} rows={rows}
-          style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${T.border}`, fontSize: 13.5, fontFamily: T.font, outline: "none", resize: "vertical", boxSizing: "border-box", lineHeight: 1.6 }}
-          onFocus={e => e.target.style.borderColor = T.brand} onBlur={e => e.target.style.borderColor = T.border}
-        />
-      ) : (
-        <input value={form[name]} onChange={e => setForm(f => ({...f, [name]: e.target.value}))}
-          style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${T.border}`, fontSize: 13.5, fontFamily: T.font, outline: "none", boxSizing: "border-box" }}
-          onFocus={e => e.target.style.borderColor = T.brand} onBlur={e => e.target.style.borderColor = T.border}
-        />
-      )}
-    </div>
-  );
 
-  const Section = ({ title, children }) => (
-    <div style={{ marginBottom: 24 }}>
-      <div style={{ fontFamily: T.font, fontSize: 16, fontWeight: 500, color: T.brand, borderBottom: `1.5px solid ${T.brand}30`, paddingBottom: 6, marginBottom: 14 }}>{title}</div>
-      {children}
-    </div>
-  );
 
   const saveForm = () => {
     const notes = Object.entries(form).filter(([k,v]) => v && k !== "consentimiento").map(([k,v]) => `${k}: ${v}`).join("\n");
@@ -141,62 +119,62 @@ function AnamnesisTab({ child, documents, users, currentUser, onAddDocument, onU
             Anamnesis Breve — {child.name} {child.lastName}
           </div>
 
-          <Section title="Datos generales">
+          <SeccionAnamnesis title="Datos generales">
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-              <F label="Nombre completo" name="nombre" />
-              <F label="Fecha de nacimiento" name="fechaNacimiento" />
-              <F label="Edad" name="edad" />
-              <F label="Grado escolar / Colegio" name="gradoColegio" />
+              <F form={form} setForm={setForm} label="Nombre completo" name="nombre" />
+              <F form={form} setForm={setForm} label="Fecha de nacimiento" name="fechaNacimiento" />
+              <F form={form} setForm={setForm} label="Edad" name="edad" />
+              <F form={form} setForm={setForm} label="Grado escolar / Colegio" name="gradoColegio" />
             </div>
-            <F label="Persona acompañante (nombre y parentesco)" name="acompanante" />
+            <F form={form} setForm={setForm} label="Persona acompañante (nombre y parentesco)" name="acompanante" />
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-              <F label="Teléfono de contacto" name="telefono" />
-              <F label="Correo" name="correo" />
+              <F form={form} setForm={setForm} label="Teléfono de contacto" name="telefono" />
+              <F form={form} setForm={setForm} label="Correo" name="correo" />
             </div>
-          </Section>
+          </SeccionAnamnesis>
 
-          <Section title="Motivo de consulta">
-            <F label="" name="motivoConsulta" multiline rows={3} />
-          </Section>
+          <SeccionAnamnesis title="Motivo de consulta">
+            <F form={form} setForm={setForm} label="" name="motivoConsulta" multiline rows={3} />
+          </SeccionAnamnesis>
 
-          <Section title="Antecedentes relevantes">
-            <F label="Embarazo, parto y desarrollo temprano (complicaciones, retrasos)" name="antecedentes" multiline rows={3} />
-            <F label="Salud actual (enfermedades, alergias, medicamentos)" name="saludActual" multiline rows={2} />
-            <F label="Evaluaciones o terapias previas" name="terapiasPrevias" multiline rows={2} />
-          </Section>
+          <SeccionAnamnesis title="Antecedentes relevantes">
+            <F form={form} setForm={setForm} label="Embarazo, parto y desarrollo temprano (complicaciones, retrasos)" name="antecedentes" multiline rows={3} />
+            <F form={form} setForm={setForm} label="Salud actual (enfermedades, alergias, medicamentos)" name="saludActual" multiline rows={2} />
+            <F form={form} setForm={setForm} label="Evaluaciones o terapias previas" name="terapiasPrevias" multiline rows={2} />
+          </SeccionAnamnesis>
 
-          <Section title="Información familiar">
-            <F label="Composición familiar (con quién vive)" name="composicionFamiliar" multiline rows={2} />
-            <F label="Hermanos (nombres y edades)" name="hermanos" />
-            <F label="Situación de los padres" name="situacionPadres" />
-            <F label="Dinámica familiar relevante" name="dinamicaFamiliar" multiline rows={2} />
-          </Section>
+          <SeccionAnamnesis title="Información familiar">
+            <F form={form} setForm={setForm} label="Composición familiar (con quién vive)" name="composicionFamiliar" multiline rows={2} />
+            <F form={form} setForm={setForm} label="Hermanos (nombres y edades)" name="hermanos" />
+            <F form={form} setForm={setForm} label="Situación de los padres" name="situacionPadres" />
+            <F form={form} setForm={setForm} label="Dinámica familiar relevante" name="dinamicaFamiliar" multiline rows={2} />
+          </SeccionAnamnesis>
 
-          <Section title="Desarrollo y funcionamiento actual">
-            <F label="Fortalezas" name="fortalezas" multiline rows={2} />
-            <F label="Dificultades observadas (aprendizaje, conducta, social, emocional)" name="dificultades" multiline rows={3} />
-            <F label="Relación con pares y adultos" name="relacionPares" multiline rows={2} />
-            <F label="Estado emocional (miedos, ánimo, conducta)" name="estadoEmocional" multiline rows={2} />
-          </Section>
+          <SeccionAnamnesis title="Desarrollo y funcionamiento actual">
+            <F form={form} setForm={setForm} label="Fortalezas" name="fortalezas" multiline rows={2} />
+            <F form={form} setForm={setForm} label="Dificultades observadas (aprendizaje, conducta, social, emocional)" name="dificultades" multiline rows={3} />
+            <F form={form} setForm={setForm} label="Relación con pares y adultos" name="relacionPares" multiline rows={2} />
+            <F form={form} setForm={setForm} label="Estado emocional (miedos, ánimo, conducta)" name="estadoEmocional" multiline rows={2} />
+          </SeccionAnamnesis>
 
-          <Section title="Escolaridad">
-            <F label="Rendimiento académico general" name="rendimientoAcademico" multiline rows={2} />
-            <F label="Áreas con mayor dificultad" name="areasDificultad" />
-            <F label="Relación con maestros y compañeros" name="relacionMaestros" multiline rows={2} />
-          </Section>
+          <SeccionAnamnesis title="Escolaridad">
+            <F form={form} setForm={setForm} label="Rendimiento académico general" name="rendimientoAcademico" multiline rows={2} />
+            <F form={form} setForm={setForm} label="Áreas con mayor dificultad" name="areasDificultad" />
+            <F form={form} setForm={setForm} label="Relación con maestros y compañeros" name="relacionMaestros" multiline rows={2} />
+          </SeccionAnamnesis>
 
-          <Section title="Observaciones adicionales">
-            <F label="" name="observaciones" multiline rows={3} />
-          </Section>
+          <SeccionAnamnesis title="Observaciones adicionales">
+            <F form={form} setForm={setForm} label="" name="observaciones" multiline rows={3} />
+          </SeccionAnamnesis>
 
-          <Section title="Consentimiento informado">
+          <SeccionAnamnesis title="Consentimiento informado">
             <div style={{ fontSize: 13.5, color: T.inkSoft, lineHeight: 1.6, marginBottom: 12 }}>
               Yo, en calidad de representante legal de <b>{child.name} {child.lastName}</b>, autorizo la evaluación y acompañamiento psicopedagógico/psicosocial.
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
-              <F label="Firma acudiente (si firma en persona)" name="firmaAcudiente" />
-              <F label="Firma profesional" name="firmaProfesional" />
-              <F label="Fecha" name="fechaFirma" />
+              <F form={form} setForm={setForm} label="Firma acudiente (si firma en persona)" name="firmaAcudiente" />
+              <F form={form} setForm={setForm} label="Firma profesional" name="firmaProfesional" />
+              <F form={form} setForm={setForm} label="Fecha" name="fechaFirma" />
             </div>
             <div style={{ marginTop: 6, padding: 14, background: T.surfaceSunk, borderRadius: 10 }}>
               <div style={{ fontSize: 12.5, color: T.inkSoft, marginBottom: 10, lineHeight: 1.5 }}>
@@ -212,7 +190,7 @@ function AnamnesisTab({ child, documents, users, currentUser, onAddDocument, onU
                 </div>
               )}
             </div>
-          </Section>
+          </SeccionAnamnesis>
 
           <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 8 }}>
             <Btn variant="ghost" onClick={() => setShowForm(false)}>Cancelar</Btn>
@@ -295,3 +273,39 @@ function AnamnesisTab({ child, documents, users, currentUser, onAddDocument, onU
 }
 
 export default AnamnesisTab;
+
+// Definidos FUERA del componente a proposito.
+//
+// Estaban dentro, y eso los convertia en un TIPO de componente nuevo en cada
+// render: React desmontaba el input y montaba otro, asi que el campo perdia el
+// foco despues de cada tecla. En un formulario de veintiseis campos, imposible
+// de llenar.
+//
+// F recibe form y setForm por props porque ya no puede cerrar sobre ellos.
+function F({ label, name, multiline, rows = 3, form, setForm }) {
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <div style={{ fontSize: 12, fontWeight: 700, color: T.inkFaint, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 5 }}>{label}</div>
+      {multiline ? (
+        <textarea value={form[name]} onChange={e => setForm(f => ({...f, [name]: e.target.value}))} rows={rows}
+          style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${T.border}`, fontSize: 13.5, fontFamily: T.font, outline: "none", resize: "vertical", boxSizing: "border-box", lineHeight: 1.6 }}
+          onFocus={e => e.target.style.borderColor = T.brand} onBlur={e => e.target.style.borderColor = T.border}
+        />
+      ) : (
+        <input value={form[name]} onChange={e => setForm(f => ({...f, [name]: e.target.value}))}
+          style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${T.border}`, fontSize: 13.5, fontFamily: T.font, outline: "none", boxSizing: "border-box" }}
+          onFocus={e => e.target.style.borderColor = T.brand} onBlur={e => e.target.style.borderColor = T.border}
+        />
+      )}
+    </div>
+  );
+}
+
+function SeccionAnamnesis({ title, children }) {
+  return (
+    <div style={{ marginBottom: 24 }}>
+      <div style={{ fontFamily: T.font, fontSize: 16, fontWeight: 500, color: T.brand, borderBottom: `1.5px solid ${T.brand}30`, paddingBottom: 6, marginBottom: 14 }}>{title}</div>
+      {children}
+    </div>
+  );
+}
