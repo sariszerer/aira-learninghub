@@ -94,26 +94,38 @@ export default function SpecialistsList() {
   // Se quemaron cuatro en cinco minutos sin que nadie llegara a fijar una
   // clave. Esto genera una contraseña de tres palabras, la fija en el servidor
   // y deja el mensaje entero en el portapapeles, listo para pegar.
+  // La clave generada se QUEDA EN PANTALLA hasta que se cierre.
+  //
+  // Antes vivía solo en el portapapeles, y eso la perdía: cualquier copia
+  // posterior la borra, y entonces no hay forma de saber cuál se fijó. Pasó —
+  // a Daniella se le mandó una clave que no era la que quedó en el servidor, y
+  // desde fuera es indistinguible de "la escribió mal": el servidor solo dice
+  // credenciales inválidas.
+  //
+  // Y cada pulsación SUSTITUYE a la anterior, así que la de antes deja de
+  // servir. Eso también hay que decirlo.
+  const [claveReciente, setClaveReciente] = useState(null);
+
   const darClaveTemporal = async (u) => {
-    setError(null); setAviso(null); setEnviando(u.id);
+    setError(null); setAviso(null); setClaveReciente(null); setEnviando(u.id);
     try {
       const clave = generarClaveTemporal();
       await enviarInvitacion(u.id, { claveTemporal: clave });
-      await navigator.clipboard.writeText(mensajeDeAcceso({
-        nombre: u.name, email: u.email, clave,
-        url: window.location.origin,
-      }));
-      setCopiado(u.id);
-      setTimeout(() => setCopiado((c) => (c === u.id ? null : c)), 3000);
-      setAviso(
-        `Mensaje para ${u.name} copiado, con su contraseña temporal. Pégalo en ` +
-        `un privado. Al entrar, la aplicación le pedirá que la cambie.`
-      );
+      const mensaje = mensajeDeAcceso({
+        nombre: u.name, email: u.email, clave, url: window.location.origin,
+      });
+      // Se guarda ANTES de copiar: si el portapapeles falla, la clave ya está
+      // fijada en el servidor y perderla dejaría a la persona fuera sin remedio.
+      setClaveReciente({ nombre: u.name, email: u.email, clave, mensaje });
+      try {
+        await navigator.clipboard.writeText(mensaje);
+        setCopiado(u.id);
+        setTimeout(() => setCopiado((c) => (c === u.id ? null : c)), 3000);
+      } catch {
+        setAviso("La contraseña se fijó pero el navegador no dejó copiar. Cópiala de la caja de abajo.");
+      }
     } catch (e) {
-      const dePortapapeles = /clipboard|denied|not allowed/i.test(e.message || "");
-      setError(dePortapapeles
-        ? "La contraseña se fijó, pero el navegador no dejó copiar el mensaje. Vuelve a intentarlo."
-        : e.message || "No se pudo generar la contraseña temporal.");
+      setError(e.message || "No se pudo generar la contraseña temporal.");
     } finally {
       setEnviando(null);
     }
@@ -177,6 +189,51 @@ export default function SpecialistsList() {
             borderRadius: T.radiusSm, padding: "10px 14px", fontSize: 13, marginBottom: 16,
           }}>
             {aviso}
+          </div>
+        )}
+
+        {claveReciente && (
+          <div style={{
+            border: `1px solid ${T.brand}`, background: T.brandTint,
+            borderRadius: T.radiusSm, padding: "13px 15px", marginBottom: 16,
+          }}>
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: T.ink }}>
+                  Contraseña temporal de {claveReciente.nombre}
+                </div>
+                <div style={{ fontSize: 12.5, color: T.inkSoft, marginTop: 2 }}>
+                  {claveReciente.email}
+                </div>
+                <div style={{
+                  fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+                  fontSize: 17, fontWeight: 600, color: T.ink, marginTop: 8,
+                  letterSpacing: "0.01em", userSelect: "all", wordBreak: "break-all",
+                }}>
+                  {claveReciente.clave}
+                </div>
+                <div style={{ fontSize: 12, color: T.inkSoft, marginTop: 8, lineHeight: 1.5 }}>
+                  Queda aquí hasta que cierres este aviso. Si vuelves a pulsar la llave,
+                  se genera otra y <strong>esta deja de servir</strong>.
+                </div>
+              </div>
+              <button
+                onClick={() => setClaveReciente(null)} aria-label="Cerrar"
+                style={{ background: "none", border: "none", cursor: "pointer", color: T.inkFaint, padding: 2, lineHeight: 0 }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
+              <Btn size="sm" variant="secondary"
+                onClick={() => navigator.clipboard.writeText(claveReciente.mensaje)}>
+                Copiar el mensaje entero
+              </Btn>
+              <Btn size="sm" variant="ghost"
+                onClick={() => navigator.clipboard.writeText(claveReciente.clave)}>
+                Copiar solo la contraseña
+              </Btn>
+            </div>
           </div>
         )}
 
