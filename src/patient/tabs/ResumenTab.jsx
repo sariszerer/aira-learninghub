@@ -22,7 +22,6 @@ function ResumenTab({ child, objectives, sessions, users, onRenewPackage, onClos
   const currentInPackage = sessionsInPackage > 0 ? ((sessionsInPackage - 1) % PAQUETE) + 1 : 0;
   const pct = (currentInPackage / PAQUETE) * 100;
   const barColor = currentInPackage >= 7 ? "#E53935" : currentInPackage >= 5 ? T.amberDeep : currentInPackage >= 3 ? T.amber : "#81C784";
-  const [confirmRenew, setConfirmRenew] = useState(false);
   const [showCloseProcess, setShowCloseProcess] = useState(false);
   const [closeNote, setCloseNote] = useState("");
 

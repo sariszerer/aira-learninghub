@@ -6,7 +6,6 @@ import { can } from "../../permissions.js";
 import { Btn, Card } from "../../ui/index.js";
 
 function AnamnesisTab({ child, documents, users, currentUser, onAddDocument, onUpdateDocument }) {
-  const [adding, setAdding] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({
     nombre: child.name + " " + child.lastName,

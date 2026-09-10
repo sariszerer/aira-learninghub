@@ -1,11 +1,13 @@
 import React, { useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { T } from "../theme.js";
-import { visibleChildren } from "../permissions.js";
+import { visibleChildren, can } from "../permissions.js";
 import { useDataStore } from "../store/dataStore.js";
 import { useAuthStore } from "../store/authStore.js";
 import { fmtDateShort } from "../lib/format.js";
-import { Avatar, Chip, Table } from "../ui/index.js";
+import { Avatar, Btn, Chip, Table } from "../ui/index.js";
+import { Plus } from "lucide-react";
+import AddPatientWizard from "./AddPatientWizard.jsx";
 import PageHeader from "../shell/PageHeader.jsx";
 import { useEsMovil, paddingPagina } from "../lib/pantalla.js";
 
@@ -27,6 +29,12 @@ export default function PatientsList({ onOpenChild }) {
 
   const [query, setQuery] = useState("");
   const [especialidad, setEspecialidad] = useState("Todas");
+
+  // Dar de alta se hace desde aqui, que es donde se viene a buscar un paciente
+  // y donde se descubre que no esta. Estaba montado en el panel de inicio y sin
+  // nada que lo abriera: el asistente existia, el boton no.
+  const [dandoDeAlta, setDandoDeAlta] = useState(false);
+  const crearPaciente = useDataStore((s) => s.addChild);
 
   const alcance = useMemo(
     () => visibleChildren(currentUser, children),
@@ -125,7 +133,23 @@ export default function PatientsList({ onOpenChild }) {
         subtitulo={`${filtradas.length} de ${alcance.length}`}
         buscar={query}
         onBuscar={setQuery}
+        acciones={can(currentUser, "patient:create") && (
+          <Btn icon={Plus} onClick={() => setDandoDeAlta(true)}>Nuevo paciente</Btn>
+        )}
       />
+
+      {dandoDeAlta && (
+        <AddPatientWizard
+          users={users}
+          currentUser={currentUser}
+          onClose={() => setDandoDeAlta(false)}
+          onCreate={(child, anamnesisDoc) => {
+            crearPaciente(child, anamnesisDoc);
+            setDandoDeAlta(false);
+            onOpenChild(child.id);
+          }}
+        />
+      )}
 
       <div style={{ padding: paddingPagina(esMovil) }}>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
