@@ -10,6 +10,7 @@ import { useAuthStore } from "../store/authStore.js";
 import { useDataStore } from "../store/dataStore.js";
 import { auth } from "../supabase.js";
 import { Avatar, Logo } from "../ui/index.js";
+import { useEsMovil } from "../lib/pantalla.js";
 
 // Navegacion de dos carriles: un riel de iconos siempre visible y un panel que
 // se pliega. Plegado deja 60px y el area de trabajo gana 240.
@@ -21,6 +22,7 @@ const RIEL = 60;
 const PANEL = 240;
 
 export default function Sidebar({ abierto, onAlternar }) {
+  const esMovil = useEsMovil();
   const location = useLocation();
   const navigate = useNavigate();
   const currentUser = useAuthStore((s) => s.currentUser);
@@ -74,11 +76,36 @@ export default function Sidebar({ abierto, onAlternar }) {
     </span>
   );
 
+  // En movil el menu es un cajon, no un riel.
+  //
+  // El riel mide 60px y esta fijo: en un telefono de 390 se come el 15% de la
+  // pantalla para siempre, y si el contenido no se aparta — que es lo que hay
+  // que hacer para no dejarlo en 330 — le tapa el lado izquierdo entero.
+  // Ninguna de las dos salidas es buena, asi que en movil no hay riel: se
+  // desliza sobre el contenido cuando hace falta y se va al elegir.
+  const cajon = esMovil;
+
+  // Al elegir seccion, en movil el cajon se cierra. Si no, se queda tapando
+  // justo la pantalla que se acaba de abrir y hay que cerrarlo a mano cada vez.
+  const ir = (to) => { navigate(to); if (cajon) onAlternar(); };
+  const visible = !cajon || abierto;
+
   return (
+    <>
+    {/* Velo: pulsar fuera cierra. Sin el, el cajon solo se cierra volviendo al
+        boton, que queda debajo del propio cajon. */}
+    {cajon && abierto && (
+      <div
+        onClick={onAlternar}
+        style={{ position: "fixed", inset: 0, background: "rgba(21,47,54,0.45)", zIndex: 19 }}
+      />
+    )}
+
     <aside style={{
       position: "fixed", top: 0, left: 0, bottom: 0, zIndex: 20,
       display: "flex", width: abierto ? RIEL + PANEL : RIEL,
-      transition: "width .18s ease",
+      transition: cajon ? "transform .18s ease" : "width .18s ease",
+      transform: visible ? "none" : `translateX(-${RIEL + PANEL}px)`,
     }}>
       {/* Riel: siempre visible, solo iconos */}
       <div style={{
@@ -94,7 +121,7 @@ export default function Sidebar({ abierto, onAlternar }) {
           return (
             <button
               key={it.to}
-              onClick={() => navigate(it.to)}
+              onClick={() => ir(it.to)}
               title={it.label}
               aria-label={it.label}
               style={{
@@ -146,7 +173,7 @@ export default function Sidebar({ abierto, onAlternar }) {
                 <div key={it.to}>
                   <div style={{ display: "flex", alignItems: "center" }}>
                     <button
-                      onClick={() => navigate(it.to)}
+                      onClick={() => ir(it.to)}
                       style={{
                         flex: 1, display: "flex", alignItems: "center", gap: 10,
                         padding: "8px 10px", marginBottom: 2, borderRadius: T.radiusSm,
@@ -243,6 +270,7 @@ export default function Sidebar({ abierto, onAlternar }) {
         </div>
       )}
     </aside>
+    </>
   );
 }
 
