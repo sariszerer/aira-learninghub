@@ -4,6 +4,7 @@ import { auth } from "./supabase.js";
 import { T } from "./theme.js";
 import { Btn, Logo } from "./ui/index.js";
 import { avisar } from "./store/avisosStore.js";
+import { mensajeDeLogin } from "./lib/errorLogin.js";
 
 // Pantalla de acceso. Antes traia quince colores del tema anterior escritos a
 // mano y un logotipo SVG propio en el azul viejo; ahora sale todo de los tokens
@@ -26,13 +27,14 @@ export default function Login() {
     setError("");
     try {
       await auth.signIn(email.trim().toLowerCase(), password);
-    } catch {
-      // Mismo mensaje para correo inexistente y contraseña incorrecta: decir
-      // cual de los dos falla le confirma a quien sondea que esa cuenta existe.
-      // Mismo mensaje para correo inexistente y contraseña mala: decir cuál de
-      // los dos falla le confirma a quien sondea que esa cuenta existe.
-      setError("Correo o contraseña incorrectos.");
-      avisar.error("No se pudo entrar", "Correo o contraseña incorrectos.");
+    } catch (err) {
+      // El motivo real, no "contraseña incorrecta" para todo. Credenciales
+      // malas y correo inexistente sí comparten mensaje — distinguirlos le
+      // confirma a quien sondea que la cuenta existe — pero un bloqueo por
+      // intentos o un fallo de red se dicen por su nombre.
+      const { titulo, detalle } = mensajeDeLogin(err);
+      setError(detalle ? `${titulo}. ${detalle}` : titulo);
+      avisar.error(titulo, detalle);
     } finally {
       setLoading(false);
     }
