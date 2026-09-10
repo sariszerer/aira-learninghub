@@ -115,26 +115,27 @@ export function MobileStyles() {
       *, *::before, *::after { box-sizing: border-box; }
       body { margin: 0; }
 
-      @media (max-width: 640px) {
+      /* Lo tactil no baja de 40px. Debajo de eso el dedo falla, y aqui se
+         trabaja de pie y con prisa. */
+      @media (pointer: coarse) {
+        button, [role="button"], a { min-height: 40px; }
+        input, select, textarea { min-height: 40px; }
+      }
+
+      @media (max-width: 720px) {
         /* overflow-x solo en movil: en escritorio convierte a #root en
            contenedor de scroll y eso rompe position:sticky del encabezado,
            que deja de fijarse al hacer scroll. */
         body { overflow-x: hidden; }
         #root { overflow-x: hidden; max-width: 100vw; }
-        /* Child profile padding */
-        .aira-profile { padding: 16px 12px 60px !important; }
-        /* Tabs scroll horizontal */
+
+        /* Las pestanas se desplazan en vez de apretarse. */
         .aira-tabs { overflow-x: auto !important; -webkit-overflow-scrolling: touch !important; white-space: nowrap !important; }
         .aira-tabs button { flex-shrink: 0 !important; }
-        /* Objective columns stack */
-        .aira-obj-grid { grid-template-columns: 1fr !important; }
-        /* Session resumen grid stack */
-        .aira-session-grid { grid-template-columns: 1fr 1fr !important; }
-        /* Modal - slide from bottom */
-        .aira-modal-overlay { align-items: flex-end !important; padding: 0 !important; }
-        .aira-modal-box { border-radius: 20px 20px 0 0 !important; max-height: 90vh !important; width: 100% !important; max-width: 100% !important; }
-        /* Header stack */
-        .aira-header { flex-direction: column !important; gap: 12px !important; }
+
+        /* iOS hace zoom al enfocar un campo de menos de 16px, y despues la
+           pagina se queda escalada. Es el fallo movil mas comun de todos. */
+        input, select, textarea { font-size: 16px !important; }
       }
     `;
     document.head.appendChild(style);

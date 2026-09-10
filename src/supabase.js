@@ -47,6 +47,7 @@ export function dbUserToApp(u) {
     specialty: u.specialty, title: u.title, avatarBg: u.avatar_bg,
     school: u.school, assignedChildId: u.assigned_child_id, authId: u.auth_id,
     licenseNo: u.license_no, firma: u.firma || null,
+    debeCambiarClave: u.debe_cambiar_clave === true,
     activo: u.activo !== false,
   }
 }
@@ -156,6 +157,7 @@ export const db = {
     if ('activo' in updates) m.activo = updates.activo
     if ('licenseNo' in updates) m.license_no = updates.licenseNo
     if ('firma' in updates) m.firma = updates.firma
+    if ('debeCambiarClave' in updates) m.debe_cambiar_clave = updates.debeCambiarClave
     const { error } = await supabase.from('users').update(m).eq('id', id)
     if (error) throw error
   },
@@ -215,8 +217,11 @@ export const db = {
   // navegador solo se puede pedir recuperacion para uno mismo.
   // soloEnlace devuelve el enlace en vez de enviarlo por correo. Es la salida
   // mientras no haya SMTP propio: Supabase limita a dos correos por hora.
-  async enviarInvitacion(id, { soloEnlace = false } = {}) {
-    const { data, error } = await supabase.functions.invoke('enviar-invitacion', { body: { id, soloEnlace } })
+  // Tres modos: correo (por defecto), soloEnlace y claveTemporal.
+  async enviarInvitacion(id, { soloEnlace = false, claveTemporal = null } = {}) {
+    const { data, error } = await supabase.functions.invoke('enviar-invitacion', {
+      body: { id, soloEnlace, claveTemporal },
+    })
     if (error) {
       let detalle = null
       try { detalle = (await error.context?.json())?.error } catch { /* sin cuerpo */ }

@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { T } from "../theme.js";
+import { useEsMovil } from "../lib/pantalla.js";
 
 // Se monta con portal directo a <body>.
 //
@@ -21,6 +22,8 @@ import { T } from "../theme.js";
 // tapando poniendo fontFamily elemento por elemento, que es la razon de que
 // unos si y otros no.
 export default function Modal({ children, onClose, width = 560 }) {
+  const esMovil = useEsMovil();
+
   useEffect(() => {
     const alPulsar = (e) => { if (e.key === "Escape") onClose?.(); };
     window.addEventListener("keydown", alPulsar);
@@ -37,8 +40,11 @@ export default function Modal({ children, onClose, width = 560 }) {
     <div
       style={{
         position: "fixed", inset: 0, background: "rgba(21,47,54,0.45)", zIndex: 100,
-        display: "flex", alignItems: "flex-start", justifyContent: "center",
-        padding: "40px 20px", overflowY: "auto",
+        display: "flex", justifyContent: "center", overflowY: "auto",
+        // En movil sube desde abajo y pega al borde: centrado y con margen deja
+        // el formulario en una tira estrecha en medio de la pantalla.
+        alignItems: esMovil ? "flex-end" : "flex-start",
+        padding: esMovil ? 0 : "40px 20px",
       }}
       // mousedown y no click: si se empieza a arrastrar dentro del modal y se
       // suelta fuera, un click cerraria el modal y se perderia lo escrito.
@@ -47,7 +53,9 @@ export default function Modal({ children, onClose, width = 560 }) {
       <div
         onMouseDown={(e) => e.stopPropagation()}
         style={{
-          background: "#fff", borderRadius: 20, width: "100%", maxWidth: width,
+          background: "#fff", width: "100%", maxWidth: esMovil ? "100%" : width,
+          borderRadius: esMovil ? "20px 20px 0 0" : 20,
+          maxHeight: esMovil ? "92vh" : undefined,
           boxShadow: "0 20px 60px rgba(21,47,54,0.25)", overflow: "hidden",
           fontFamily: T.font, color: T.ink,
         }}

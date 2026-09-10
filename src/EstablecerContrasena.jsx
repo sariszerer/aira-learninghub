@@ -4,6 +4,8 @@ import { T, FONTS, inputStyle } from "./theme.js";
 import { auth, supabase } from "./supabase.js";
 import { Btn, Logo } from "./ui/index.js";
 import { avisar } from "./store/avisosStore.js";
+import { useDataStore } from "./store/dataStore.js";
+import { useAuthStore } from "./store/authStore.js";
 import { MINIMO, problemaConContrasena, fuerzaDeContrasena } from "./lib/contrasena.js";
 
 // Pantalla para establecer la contraseña, al llegar por un enlace de acceso.
@@ -18,16 +20,28 @@ import { MINIMO, problemaConContrasena, fuerzaDeContrasena } from "./lib/contras
 // al probarlo: la administración copió el enlace de una especialista, lo abrió
 // en su propio navegador y su sesión se convirtió en la de ella. Se leyó como
 // "se me cerró la sesión", que es justo lo que no era.
-export default function EstablecerContrasena({ onListo }) {
+// `motivo` decide qué pasa al terminar:
+//
+//   'enlace'    llegó por un enlace de acceso. Se cierra la sesión: el enlace
+//               autentica a quien lo abre, y si lo probó la administración se
+//               quedaría dentro como la especialista.
+//   'temporal'  ya entró con su correo y una contraseña que le dio la
+//               administración. Cerrarle la sesión que acaba de abrir sería
+//               gratuito; se limpia la marca y sigue.
+export default function EstablecerContrasena({ onListo, motivo = "enlace", usuario }) {
   const [clave, setClave] = useState("");
   const [repetida, setRepetida] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [hecho, setHecho] = useState(false);
   const [cuenta, setCuenta] = useState(null);
+  const actualizarUsuario = useDataStore((s) => s.updateUser);
+  const setCurrentUser = useAuthStore((s) => s.setCurrentUser);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setCuenta(data?.user?.email ?? null));
   }, []);
+
+  const esTemporal = motivo === "temporal";
 
   const fuerza = fuerzaDeContrasena(clave);
 
@@ -54,10 +68,23 @@ export default function EstablecerContrasena({ onListo }) {
       setGuardando(false);
       return;
     }
-    // Se cierra la sesión a propósito. El enlace deja dentro a quien lo abre, y
-    // quedarse dentro sin más significa que la administración, si probó el
-    // enlace, seguiría navegando como la especialista. Entrar con la contraseña
-    // recién puesta confirma además que funciona.
+    if (motivo === "temporal") {
+      // La marca se limpia DESPUÉS de que la contraseña esté puesta. Al revés,
+      // un fallo al guardar dejaría a la persona sin la obligación de cambiar
+      // una clave que la administración conoce.
+      try {
+        await actualizarUsuario(usuario.id, { debeCambiarClave: false });
+      } catch {
+        // El store ya avisó. La contraseña quedó cambiada, que es lo que
+        // importa; la marca se reintenta al siguiente inicio de sesión.
+      }
+      // Y en memoria. Sin esto la sesión abierta sigue marcada y esta misma
+      // pantalla se vuelve a pintar: la persona queda encerrada en ella.
+      setCurrentUser({ ...usuario, debeCambiarClave: false });
+      onListo();
+      return;
+    }
+
     await auth.signOut();
     setHecho(true);
     window.history.replaceState(null, "", window.location.pathname);
@@ -88,7 +115,9 @@ export default function EstablecerContrasena({ onListo }) {
         ) : (
           <form onSubmit={guardar}>
             <Icono tono={T.brand} fondo={T.brandTint}><KeyRound size={20} /></Icono>
-            <h1 style={titulo}>Crea tu contraseña</h1>
+            <h1 style={titulo}>
+              {esTemporal ? "Cambia tu contraseña" : "Crea tu contraseña"}
+            </h1>
 
             {/* De quién es la cuenta, antes que nada. */}
             <div style={{
@@ -98,8 +127,9 @@ export default function EstablecerContrasena({ onListo }) {
             }}>
               <AlertTriangle size={17} color={T.proceso} style={{ flexShrink: 0, marginTop: 1 }} />
               <div style={{ fontSize: 13, lineHeight: 1.5, minWidth: 0 }}>
-                Estás creando la contraseña de{" "}
-                <strong style={{ wordBreak: "break-word" }}>{cuenta || "…"}</strong>.
+                {esTemporal
+                  ? "La que usaste la puso la administración del centro y ellos la conocen. Elige una tuya para seguir."
+                  : <>Estás creando la contraseña de <strong style={{ wordBreak: "break-word" }}>{cuenta || "…"}</strong>.</>}
                 <button
                   type="button" onClick={salir}
                   style={{
@@ -108,7 +138,7 @@ export default function EstablecerContrasena({ onListo }) {
                     fontSize: 12.5, fontWeight: 600, color: T.brand, textDecoration: "underline",
                   }}
                 >
-                  Esta no es mi cuenta — salir
+                  {esTemporal ? "Salir" : "Esta no es mi cuenta — salir"}
                 </button>
               </div>
             </div>
