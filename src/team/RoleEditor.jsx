@@ -30,7 +30,6 @@ const COLORES = ["#1E79E2", "#06B6D4", "#818CF8", "#10B981", "#F59E0B", "#EF4444
 // produciria por accidente, asi que el par se presenta como una sola eleccion
 // de tres estados y ese estado deja de ser representable.
 function paresYSueltos() {
-  const esMovil = useEsMovil();
   const pares = new Map();
   const sueltos = [];
   for (const p of PERMISSIONS) {
@@ -50,6 +49,7 @@ const { pares: PARES, sueltos: SUELTOS } = paresYSueltos();
 const GRUPOS = [...new Set(PERMISSIONS.map((p) => p.grupo))];
 
 export default function RoleEditor() {
+  const esMovil = useEsMovil();
   const navigate = useNavigate();
   const { roleId } = useParams();
   const roles = useDataStore((s) => s.rolesDisponibles);
