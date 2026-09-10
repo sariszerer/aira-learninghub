@@ -32,3 +32,13 @@ export function useEsMovil(limite = MOVIL) {
 
   return esMovil;
 }
+
+// Margen de una pantalla completa.
+//
+// En escritorio 28px a cada lado respiran; en un teléfono de 390 son 56 de 390,
+// el 14% del ancho, gastados en aire. Se comparte en vez de repetirse en las
+// diez pantallas: estaba escrito literal en todas y cambiarlo significaba
+// acordarse de las diez.
+export function paddingPagina(esMovil) {
+  return esMovil ? "14px 12px 48px" : "24px 28px 48px";
+}

@@ -7,12 +7,14 @@ import { useAuthStore } from "../store/authStore.js";
 import { fmtDateShort } from "../lib/format.js";
 import { Avatar, Chip, Table } from "../ui/index.js";
 import PageHeader from "../shell/PageHeader.jsx";
+import { useEsMovil, paddingPagina } from "../lib/pantalla.js";
 
 // Listado de pacientes.
 //
 // El alcance lo resuelve visibleChildren y no esta pantalla: un especialista ve
 // los suyos y direccion clinica los ve todos, sin un solo `if` sobre el rol.
 export default function PatientsList({ onOpenChild }) {
+  const esMovil = useEsMovil();
   const children = useDataStore((s) => s.children);
   const users = useDataStore((s) => s.users);
   const sessions = useDataStore((s) => s.sessions);
@@ -125,7 +127,7 @@ export default function PatientsList({ onOpenChild }) {
         onBuscar={setQuery}
       />
 
-      <div style={{ padding: "24px 28px 48px" }}>
+      <div style={{ padding: paddingPagina(esMovil) }}>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
           {especialidades.map((e) => (
             <Chip

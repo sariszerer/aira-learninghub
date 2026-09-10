@@ -13,6 +13,14 @@ import { useEsMovil } from "../lib/pantalla.js";
 // Columnas: { clave, titulo, valor?, celda?, ancho?, alinear?, ordenable? }
 //   valor  — para comparar. Si falta, se usa fila[clave].
 //   celda  — para pintar. Si falta, se pinta el valor tal cual.
+// Una celda se pinta igual en tabla y en ficha; tenerlo dos veces era garantia
+// de que se separaran.
+function celdaDe(c, f) {
+  if (c.celda) return c.celda(f);
+  if (c.valor) return c.valor(f);
+  return f[c.clave];
+}
+
 export default function Table({ columnas, filas, onFila, ordenInicial, vacio = "Sin resultados." }) {
   const esMovil = useEsMovil();
   const [orden, setOrden] = useState(ordenInicial || null);
@@ -45,28 +53,34 @@ export default function Table({ columnas, filas, onFila, ordenInicial, vacio = "
   // En movil se dejan solo las columnas esenciales y la fila se apila.
   //
   // Seis columnas en 390px no son una tabla: son seis tiras de dos caracteres.
-  // `esencial: true` marca lo que sobrevive; el resto se pliega debajo del
-  // nombre, con su titulo delante para que se sepa que es cada cosa.
-  const visibles = esMovil
-    ? columnas.filter((c) => c.esencial || c.clave === columnas[0].clave)
-    : columnas;
-  const plegadas = esMovil ? columnas.filter((c) => !visibles.includes(c)) : [];
+  // Cada fila pasa a ser una ficha en tres alturas:
+  //
+  //   1. la primera columna a todo el ancho — es el nombre, lo que identifica
+  //   2. el resto como pares etiqueta/valor, que caben y se leen
+  //   3. los botones en su propia linea
+  //
+  // Los botones abajo y no arriba porque compartir fila con el nombre le dejaba
+  // 140px de los 390 y el correo se metia por debajo de ellos.
+  const primera = columnas[0];
+  const acciones = columnas.filter((c) => c.accion);
+  const datos = columnas.filter((c) => c !== primera && !c.accion);
 
-  const grid = esMovil
-    ? visibles.map((c) => (c.clave === columnas[0].clave ? "1fr" : "auto")).join(" ")
-    : columnas.map((c) => c.ancho || "1fr").join(" ");
+  const grid = columnas.map((c) => c.ancho || "1fr").join(" ");
 
   return (
     <div style={{
       background: T.surface, border: `1px solid ${T.border}`,
       borderRadius: T.radius, boxShadow: T.shadow, overflow: "hidden",
     }}>
+      {/* En modo ficha no hay columnas que encabezar. Se deja solo el orden
+          por la primera, que es por lo que se busca. */}
       <div style={{
-        display: "grid", gridTemplateColumns: grid, gap: 12,
+        display: "grid",
+        gridTemplateColumns: esMovil ? "1fr" : grid, gap: 12,
         padding: "10px 16px", background: T.surfaceSunk,
         borderBottom: `1px solid ${T.border}`,
       }}>
-        {visibles.map((c) => {
+        {(esMovil ? [primera] : columnas).map((c) => {
           const activa = orden?.clave === c.clave;
           const Icono = !activa ? ChevronsUpDown : orden.dir === "asc" ? ChevronUp : ChevronDown;
           const contenido = (
@@ -116,34 +130,48 @@ export default function Table({ columnas, filas, onFila, ordenInicial, vacio = "
           onMouseEnter={onFila ? (e) => { e.currentTarget.style.background = T.surfaceSunk; } : undefined}
           onMouseLeave={onFila ? (e) => { e.currentTarget.style.background = "transparent"; } : undefined}
         >
-          <div style={{ display: "grid", gridTemplateColumns: grid, gap: 12, alignItems: "center" }}>
-            {visibles.map((c) => (
-              <div
-                key={c.clave}
-                style={{
-                  minWidth: 0,
-                  textAlign: c.alinear === "derecha" ? "right" : "left",
-                }}
-              >
-                {c.celda ? c.celda(f) : (c.valor ? c.valor(f) : f[c.clave])}
+          {esMovil ? (
+            <>
+              <div style={{ minWidth: 0 }}>
+                {celdaDe(primera, f)}
               </div>
-            ))}
-          </div>
 
-          {/* Lo que no cabe en el ancho va debajo, con su título delante: sin
-              él, un "20" suelto no dice si son pacientes o sesiones. */}
-          {plegadas.length > 0 && (
-            <div style={{
-              display: "flex", flexWrap: "wrap", gap: "4px 14px", marginTop: 7,
-              fontSize: 12.5, color: T.inkSoft,
-            }}>
-              {plegadas.map((c) => (
-                <span key={c.clave} style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0 }}>
-                  {c.titulo && (
-                    <span style={{ color: T.inkFaint, fontSize: 11 }}>{c.titulo}</span>
-                  )}
-                  {c.celda ? c.celda(f) : (c.valor ? c.valor(f) : f[c.clave])}
-                </span>
+              {datos.length > 0 && (
+                <div style={{
+                  display: "flex", flexWrap: "wrap", gap: "4px 14px", marginTop: 7,
+                  fontSize: 12.5, color: T.inkSoft,
+                }}>
+                  {datos.map((c) => (
+                    <span key={c.clave} style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0 }}>
+                      {/* Con su etiqueta delante: un "20" suelto no dice si son
+                          pacientes o sesiones. */}
+                      {c.titulo && <span style={{ color: T.inkFaint, fontSize: 11 }}>{c.titulo}</span>}
+                      {celdaDe(c, f)}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {acciones.length > 0 && (
+                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 10 }}>
+                  {acciones.map((c) => (
+                    <div key={c.clave} style={{ minWidth: 0 }}>{celdaDe(c, f)}</div>
+                  ))}
+                </div>
+              )}
+            </>
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: grid, gap: 12, alignItems: "center" }}>
+              {columnas.map((c) => (
+                <div
+                  key={c.clave}
+                  style={{
+                    minWidth: 0,
+                    textAlign: c.alinear === "derecha" ? "right" : "left",
+                  }}
+                >
+                  {celdaDe(c, f)}
+                </div>
               ))}
             </div>
           )}

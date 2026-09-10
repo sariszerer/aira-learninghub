@@ -44,3 +44,29 @@ describe('estilos de móvil', () => {
     expect(clases.filter((c) => !usadas.has(c))).toEqual([])
   })
 })
+
+describe('márgenes de pantalla', () => {
+  it('ninguna pantalla escribe el margen a mano', () => {
+    // Estaba literal en las diez, así que cambiarlo significaba acordarse de
+    // las diez — y en móvil eran 56px de 390, el 14% del ancho en aire.
+    const culpables = fuentes('src')
+      .filter((f) => fs.readFileSync(f, 'utf8').includes('"24px 28px 48px"'))
+      .filter((f) => !f.endsWith('pantalla.js'))
+      .map((f) => f.split(path.sep).join('/'))
+    expect(culpables).toEqual([])
+  })
+})
+
+describe('lo que se adapta lo declara', () => {
+  it('las pantallas de página usan el hook, no un ancho fijo', () => {
+    // Si una pantalla nueva copia el patrón viejo, esto lo dice.
+    const paginas = [
+      'src/home/AdminDashboard.jsx', 'src/home/ClinicalDirectorHome.jsx',
+      'src/home/SpecialistHome.jsx', 'src/patients/PatientsList.jsx',
+      'src/gabinete/GabinetePanel.jsx', 'src/gabinete/EscuelaDetalle.jsx',
+    ]
+    for (const p of paginas) {
+      expect(fs.readFileSync(p, 'utf8'), p).toMatch(/paddingPagina\(esMovil\)/)
+    }
+  })
+})

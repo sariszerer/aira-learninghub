@@ -6,6 +6,7 @@ import { PERMISSIONS } from "../permissions.js";
 import { useDataStore } from "../store/dataStore.js";
 import { Btn, IconBtn, Table } from "../ui/index.js";
 import PageHeader from "../shell/PageHeader.jsx";
+import { useEsMovil, paddingPagina } from "../lib/pantalla.js";
 
 const SCOPE_LABEL = {
   todos: "Todos los pacientes",
@@ -14,6 +15,7 @@ const SCOPE_LABEL = {
 };
 
 export default function RolesList() {
+  const esMovil = useEsMovil();
   const navigate = useNavigate();
   const roles = useDataStore((s) => s.rolesDisponibles);
   const users = useDataStore((s) => s.users);
@@ -88,7 +90,7 @@ export default function RolesList() {
       celda: (r) => <span style={{ fontWeight: 600 }}>{r.personas}</span>,
     },
     {
-      clave: "acciones", titulo: "", ancho: "150px", alinear: "derecha", ordenable: false,
+      clave: "acciones", titulo: "", ancho: "150px", alinear: "derecha", ordenable: false, accion: true,
       celda: (r) => (
         <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
           <Btn variant="secondary" size="sm" onClick={() => navigate(`/roles/${r.id}`)}>
@@ -118,7 +120,7 @@ export default function RolesList() {
         acciones={<Btn icon={Plus} onClick={() => navigate("/roles/nuevo")}>Nuevo rol</Btn>}
       />
 
-      <div style={{ padding: "24px 28px 48px" }}>
+      <div style={{ padding: paddingPagina(esMovil) }}>
         {error && (
           <div style={{
             background: T.apoyoTint, color: T.apoyo, borderRadius: T.radiusSm,
