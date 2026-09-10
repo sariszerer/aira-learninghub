@@ -2,7 +2,8 @@ import React, { useMemo, useState } from "react";
 import { T, inputStyle } from "../theme.js";
 import { useDataStore } from "../store/dataStore.js";
 import { Btn, Chip, Modal, ModalHeader } from "../ui/index.js";
-import { ROLES } from "../permissions.js";
+import { ROLES, can } from "../permissions.js";
+import { useAuthStore } from "../store/authStore.js";
 import { avisar } from "../store/avisosStore.js";
 import { queFalta } from "../lib/validacion.js";
 
@@ -27,6 +28,12 @@ const ESTADOS = [
 export default function EditProfileModal({ child, onClose }) {
   const onUpdateChild = useDataStore((s) => s.updateChild);
   const users = useDataStore((s) => s.users);
+  const currentUser = useAuthStore((s) => s.currentUser);
+
+  // Asignar especialistas es de dirección. La base lo impide con un trigger
+  // aunque esta pantalla mienta; aquí solo se evita ofrecer un control que va a
+  // ser rechazado.
+  const puedeAsignar = can(currentUser, "patient:assign");
 
   // Solo quien atiende. Los roles clinicos los declara la matriz de permisos,
   // no una lista de nombres de rol repetida aqui.
@@ -75,16 +82,21 @@ export default function EditProfileModal({ child, onClose }) {
       dischargeDate: f.status === "alta" ? f.dischargeDate || null : null,
       dischargeReason: f.status === "alta" ? f.dischargeReason.trim() || null : null,
       parentContact: { name: f.parentName, phone: f.parentPhone, email: f.parentEmail },
-      assignedSpecialists: f.assignedSpecialists,
-      // Las especialidades del paciente se derivan de quien lo atiende, igual
-      // que en el alta. Mantenerlas a mano las dejaba desfasadas: habia fichas
-      // con una disciplina declarada y sesiones de tres.
-      specialties: [...new Set(
-        f.assignedSpecialists
-          .map((id) => users.find((u) => u.id === id)?.specialty)
-          .filter(Boolean)
-          .concat(child.specialties || [])
-      )],
+      // Sin permiso, el campo NO viaja. Mandarlo igual — aunque fuera el mismo
+      // valor — deja el guardado a merced de que los arrays coincidan hasta en
+      // el orden, y un cambio ajeno entre medias haría fallar todo el formulario.
+      ...(puedeAsignar ? {
+        assignedSpecialists: f.assignedSpecialists,
+        // Las especialidades del paciente se derivan de quien lo atiende, igual
+        // que en el alta. Mantenerlas a mano las dejaba desfasadas: habia fichas
+        // con una disciplina declarada y sesiones de tres.
+        specialties: [...new Set(
+          f.assignedSpecialists
+            .map((id) => users.find((u) => u.id === id)?.specialty)
+            .filter(Boolean)
+            .concat(child.specialties || [])
+        )],
+      } : {}),
     });
     onClose();
   };
@@ -169,6 +181,7 @@ export default function EditProfileModal({ child, onClose }) {
           </>
         )}
 
+        {puedeAsignar ? (
         <Campo
           etiqueta="Especialistas asignados"
           ayuda="Quien esté marcado podrá ver y editar este expediente."
@@ -195,6 +208,27 @@ export default function EditProfileModal({ child, onClose }) {
             </div>
           )}
         </Campo>
+        ) : (
+          // Se dice quién lo atiende y quién puede cambiarlo. Un hueco donde
+          // antes había una sección se lee como un fallo, no como una regla.
+          <Campo etiqueta="Especialistas asignados">
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginBottom: 6 }}>
+              {clinicos
+                .filter((u) => f.assignedSpecialists.includes(u.id))
+                .map((u) => (
+                  <span key={u.id} style={{
+                    fontSize: 12.5, padding: "5px 11px", borderRadius: 999,
+                    background: T.surfaceSunk, color: T.ink, border: `1px solid ${T.border}`,
+                  }}>
+                    {u.specialty ? `${u.name} · ${u.specialty}` : u.name}
+                  </span>
+                ))}
+            </div>
+            <div style={{ fontSize: 11.5, color: T.inkFaint }}>
+              La asignación la cambia la dirección del centro.
+            </div>
+          </Campo>
+        )}
 
         <div style={{ borderTop: `1px solid ${T.border}`, paddingTop: 16 }}>
           <Campo etiqueta="Nombre del padre / madre / tutor">

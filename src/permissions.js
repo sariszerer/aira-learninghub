@@ -5,6 +5,10 @@ export const PERMISSIONS = [
   { key: 'patient:view',            grupo: 'Pacientes',          descripcion: 'Ver fichas de pacientes' },
   { key: 'patient:create',          grupo: 'Pacientes',          descripcion: 'Dar de alta pacientes' },
   { key: 'patient:edit',            grupo: 'Pacientes',          descripcion: 'Editar datos del paciente' },
+  // Aparte de patient:edit a proposito. La lista de especialistas asignados no
+  // es un dato del paciente: es el control de acceso a su expediente. Quien la
+  // edita decide quien entra, y eso es de direccion.
+  { key: 'patient:assign',          grupo: 'Pacientes',          descripcion: 'Asignar especialistas a un paciente' },
   { key: 'patient:close',           grupo: 'Pacientes',          descripcion: 'Cerrar proceso clínico' },
   // Distinto de patient:close: cerrar conserva la historia, borrar la elimina
   // junto con sesiones, objetivos, documentos y reportes. Es para el expediente
@@ -123,7 +127,7 @@ export const ROLES = {
     permisos: [
       ...TODAS_LAS_LECTURAS,
       'patient:create', 'patient:edit', 'patient:close', 'patient:renew_package',
-      'patient:delete',
+      'patient:delete', 'patient:assign',
       // Admin SI registra sesiones. La exclusion venia de App.jsx:3850 y era un
       // supuesto equivocado sobre esta clinica: la directora ha impartido 19
       // sesiones de Funciones Ejecutivas. Sin este permiso no podia registrar
@@ -150,6 +154,7 @@ export const ROLES = {
       // tutorreport:view: hoy solo ClinicalDirectorHome muestra reportes de tutor
       'tutorreport:view',
       'patient:edit', 'patient:close', 'patient:renew_package', 'patient:delete',
+      'patient:assign',
       'session:create', 'session:edit:any',
       'objective:create', 'objective:edit:any',
       'document:create', 'document:edit:any',
@@ -168,7 +173,9 @@ export const ROLES = {
     scope: 'asignados', home: 'especialista', esClinico: true,
     permisos: [
       ...TODAS_LAS_LECTURAS,
-      'patient:close', 'patient:renew_package',
+      // Edita el expediente del nino que atiende, pero NO quien mas lo ve: eso
+      // es patient:assign y se queda en direccion.
+      'patient:edit', 'patient:close', 'patient:renew_package',
       'session:create', 'session:edit:own',
       'objective:create', 'objective:edit:own',
       'document:create', 'document:edit:own',

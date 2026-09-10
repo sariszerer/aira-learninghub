@@ -6,10 +6,10 @@ const usuario = (perms, extra = {}) => ({
 })
 
 describe('PERMISSIONS', () => {
-  it('tiene 38 claves únicas', () => {
+  it('tiene 39 claves únicas', () => {
     const keys = PERMISSIONS.map(p => p.key)
-    expect(keys).toHaveLength(38)
-    expect(new Set(keys).size).toBe(38)
+    expect(keys).toHaveLength(39)
+    expect(new Set(keys).size).toBe(39)
   })
 
   it('cada permiso declara grupo y descripción no vacíos', () => {
@@ -270,7 +270,7 @@ describe('ROLES — matriz semilla', () => {
       'guidelines:view',
       'meeting:create', 'meeting:view',
       'objective:create', 'objective:edit:any', 'objective:view',
-      'patient:close', 'patient:create', 'patient:delete', 'patient:edit', 'patient:renew_package', 'patient:view',
+      'patient:assign', 'patient:close', 'patient:create', 'patient:delete', 'patient:edit', 'patient:renew_package', 'patient:view',
       'report:evolution:generate', 'report:history:generate', 'report:parent:generate', 'report:view',
       'role:manage',
       'school:create',
@@ -289,7 +289,7 @@ describe('ROLES — matriz semilla', () => {
       'guidelines:view',
       'meeting:create', 'meeting:view',
       'objective:create', 'objective:edit:any', 'objective:view',
-      'patient:close', 'patient:delete', 'patient:edit', 'patient:renew_package', 'patient:view',
+      'patient:assign', 'patient:close', 'patient:delete', 'patient:edit', 'patient:renew_package', 'patient:view',
       'report:evolution:generate', 'report:history:generate', 'report:parent:generate', 'report:view',
       'school:create',
       'session:create', 'session:edit:any', 'session:view',
@@ -305,7 +305,7 @@ describe('ROLES — matriz semilla', () => {
       'document:create', 'document:edit:own', 'document:view',
       'meeting:create', 'meeting:view',
       'objective:create', 'objective:edit:own', 'objective:view',
-      'patient:close', 'patient:renew_package', 'patient:view',
+      'patient:close', 'patient:edit', 'patient:renew_package', 'patient:view',
       'report:evolution:generate', 'report:parent:generate', 'report:view',
       'session:create', 'session:edit:own', 'session:view',
       'workplan:create', 'workplan:view',
@@ -432,5 +432,29 @@ describe('agenda del centro', () => {
     // todos los pacientes del centro. Antes esto no se decidía aquí: lo decidía
     // Google, según quién hubiera autorizado su cuenta.
     expect(can(con('shadow'), 'calendar:view')).toBe(false)
+  })
+})
+
+describe('editar el expediente no es asignar quién lo ve', () => {
+  const con = (rol) => buildUser({ id: 'u', name: 'X', role: rol })
+
+  it('la especialista edita el expediente de su paciente', () => {
+    expect(can(con('specialist'), 'patient:edit')).toBe(true)
+  })
+
+  it('pero no asigna especialistas', () => {
+    // La lista de asignados no es un dato del paciente: es el control de acceso
+    // a su expediente. Quien la edita decide quién entra.
+    expect(can(con('specialist'), 'patient:assign')).toBe(false)
+  })
+
+  it('dirección sí asigna', () => {
+    expect(can(con('admin'), 'patient:assign')).toBe(true)
+    expect(can(con('clinical_director'), 'patient:assign')).toBe(true)
+  })
+
+  it('la tutora no edita ni asigna', () => {
+    expect(can(con('shadow'), 'patient:edit')).toBe(false)
+    expect(can(con('shadow'), 'patient:assign')).toBe(false)
   })
 })
