@@ -86,6 +86,13 @@ export default function PatientsList({ onOpenChild }) {
             }}>
               {c.nombre}
             </div>
+            {/* Se marca porque en la lista mezclada, "Sara Levy" sin más no
+                dice si es una niña o una madre de Pautas de Crianza. */}
+            {c.tipo === "acudiente" && (
+              <div style={{ fontSize: 11.5, color: T.brand, fontWeight: 600 }}>
+                Pautas de Crianza
+              </div>
+            )}
             {c.status === "inactivo" && (
               <div style={{ fontSize: 11.5, color: T.inkFaint }}>Inactivo</div>
             )}
@@ -142,6 +149,7 @@ export default function PatientsList({ onOpenChild }) {
         <AddPatientWizard
           users={users}
           currentUser={currentUser}
+          ninos={alcance.filter((c) => c.tipo !== "acudiente")}
           onClose={() => setDandoDeAlta(false)}
           onCreate={(child, anamnesisDoc) => {
             crearPaciente(child, anamnesisDoc);

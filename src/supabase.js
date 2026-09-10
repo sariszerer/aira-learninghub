@@ -63,6 +63,7 @@ export function dbChildToApp(c) {
   return {
     id: c.id, name: c.name, lastName: c.last_name, birthDate: c.birth_date,
     admissionDate: c.admission_date, specialties: c.specialties || [],
+    tipo: c.tipo || 'nino', acudienteDe: c.acudiente_de || null,
     assignedSpecialists: c.assigned_specialists || [], avatarBg: c.avatar_bg,
     // La columna existe desde siempre y nunca se mapeaba: la app trataba a los
     // 44 pacientes como si no tuvieran estado.
@@ -285,6 +286,7 @@ export const db = {
     if ('referralReason' in updates) m.referral_reason = updates.referralReason
     if ('dischargeDate' in updates) m.discharge_date = fecha(updates.dischargeDate)
     if ('dischargeReason' in updates) m.discharge_reason = updates.dischargeReason
+    if ('acudienteDe' in updates) m.acudiente_de = updates.acudienteDe
     const { error } = await supabase.from('children').update(m).eq('id', id)
     if (error) throw error
   },
@@ -292,6 +294,7 @@ export const db = {
     const { error } = await supabase.from('children').insert({
       id: c.id, name: c.name, last_name: c.lastName, birth_date: fecha(c.birthDate),
       admission_date: fecha(c.admissionDate), specialties: c.specialties,
+      tipo: c.tipo || 'nino', acudiente_de: c.acudienteDe ?? null,
       assigned_specialists: c.assignedSpecialists, avatar_bg: c.avatarBg,
       next_session: fecha(c.nextSession), next_session_time: c.nextSessionTime,
       parent_contact: c.parentContact, package_start: fecha(c.packageStart), package_num: c.packageNum || 1,

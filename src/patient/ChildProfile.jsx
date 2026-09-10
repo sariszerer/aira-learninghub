@@ -16,6 +16,7 @@ import ReportesTab from "./tabs/ReportesTab.jsx";
 import InterdisciplinaryTab from "./tabs/InterdisciplinaryTab.jsx";
 import { useDataStore } from "../store/dataStore.js";
 import { useEsMovil } from "../lib/pantalla.js";
+import { esAcudiente, pestanasDe, textoDeVinculo } from "../lib/expediente.js";
 import { useAuthStore } from "../store/authStore.js";
 
 // Tab ids double as the ?tab= URL slug, so they are module-level: the router needs
@@ -44,6 +45,7 @@ function ChildProfile({ child, onOpenSessionForm, onViewReport, onGenerateFull, 
   const onAddObjective = useDataStore((s) => s.addObjective);
   const onDeleteObjective = useDataStore((s) => s.deleteObjective);
   const onRenewPackage = useDataStore((s) => s.renewPackage);
+  const children = useDataStore((s) => s.children);
   const onUpdateChild = useDataStore((s) => s.updateChild);
   const onCloseProcess = useDataStore((s) => s.closeProcess);
   const onUpdateSession = useDataStore((s) => s.updateSession);
@@ -52,7 +54,10 @@ function ChildProfile({ child, onOpenSessionForm, onViewReport, onGenerateFull, 
   // An unknown or missing slug falls back to Resumen instead of rendering nothing.
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get("tab");
-  const tab = CHILD_TABS.some((t) => t.id === tabParam) ? tabParam : DEFAULT_CHILD_TAB;
+  // La pestaña pedida tiene que existir PARA ESTE expediente: un enlace a
+  // ?tab=anamnesis en la ficha de una madre dejaría la pantalla en blanco.
+  const permitidas = pestanasDe(child);
+  const tab = permitidas.includes(tabParam) ? tabParam : DEFAULT_CHILD_TAB;
   const setTab = (id) => {
     const next = new URLSearchParams(searchParams);
     // Resumen is the default view, so it stays out of the URL.
@@ -72,7 +77,9 @@ function ChildProfile({ child, onOpenSessionForm, onViewReport, onGenerateFull, 
   const specialists = specialistIdsFromSessions.length > 0
     ? specialistIdsFromSessions.map(id => users.find(u => u.id === id)).filter(Boolean)
     : child.assignedSpecialists.map((id) => users.find((u) => u.id === id)).filter(Boolean);
-  const tabs = CHILD_TABS;
+  // Un acudiente no tiene anamnesis del desarrollo, ni reporte para la familia
+  // — la familia es él —, ni reunión interdisciplinaria sobre su caso.
+  const tabs = CHILD_TABS.filter((t) => permitidas.includes(t.id));
 
   return (
     <div>
@@ -98,8 +105,17 @@ function ChildProfile({ child, onOpenSessionForm, onViewReport, onGenerateFull, 
             {child.name} {child.lastName}
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "3px 14px", marginTop: 7, fontSize: 13.5, color: T.inkSoft }}>
-            {child.age != null && <span>{child.age} años</span>}
-            {child.birthDate ? <span>Nació el {fmtDate(child.birthDate)}</span> : <span style={{color:T.muted}}>Fecha nacimiento pendiente</span>}
+            {/* A una madre no se le pide fecha de nacimiento, así que tampoco
+                se le reclama: "Fecha nacimiento pendiente" en su ficha sería
+                una tarea que nadie va a hacer nunca. */}
+            {esAcudiente(child) ? (
+              <span>{textoDeVinculo(child, children)}</span>
+            ) : (
+              <>
+                {child.age != null && <span>{child.age} años</span>}
+                {child.birthDate ? <span>Nació el {fmtDate(child.birthDate)}</span> : <span style={{color:T.muted}}>Fecha nacimiento pendiente</span>}
+              </>
+            )}
             {child.admissionDate ? <span>Ingresó el {fmtDate(child.admissionDate)}</span> : <span style={{color:T.muted}}>Fecha ingreso pendiente</span>}
           </div>
           <div style={{ fontSize: 13, color: T.inkFaint, marginTop: 8 }}>
