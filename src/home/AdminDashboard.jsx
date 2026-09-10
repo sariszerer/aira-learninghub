@@ -19,10 +19,7 @@ function AdminDashboard({ onOpenChild }) {
   const activityLog = useDataStore((s) => s.activityLog);
   const onMarkSeen = useDataStore((s) => s.markActivitySeen);
   const currentUser = useAuthStore((s) => s.currentUser);
-  const onAddChild = useDataStore((s) => s.addChild);
-  const [searchQuery, setSearchQuery] = useState("");
   const [alertsOpen, setAlertsOpen] = useState(true);
-  const [showAddPatient, setShowAddPatient] = useState(false);
   const specialists = users.filter((u) => ROLES[u.role]?.esClinico);
   const today = TODAY;
   const sessionsToday = sessions.filter((s) => s.date === today).length;
@@ -167,18 +164,6 @@ function AdminDashboard({ onOpenChild }) {
           se queda con lo que solo tiene sentido de un vistazo: cifras, agenda y
           lo que requiere atencion. */}
 
-      {showAddPatient && onAddChild && (
-        <AddPatientWizard
-          users={users}
-          currentUser={currentUser}
-          onClose={() => setShowAddPatient(false)}
-          onCreate={(child, anamnesisDoc) => {
-            onAddChild(child, anamnesisDoc);
-            setShowAddPatient(false);
-            onOpenChild(child.id);
-          }}
-        />
-      )}
     </div>
   );
 }
