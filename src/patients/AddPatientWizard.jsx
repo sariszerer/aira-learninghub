@@ -1,13 +1,20 @@
 import React, { useState } from "react";
-import { T, CHILD_AVATAR_COLORS, TODAY } from "../theme.js";
+import { T, CHILD_AVATAR_COLORS, TODAY, inputStyle } from "../theme.js";
 import { slugifyName } from "../lib/format.js";
 import { ROLES } from "../permissions.js";
 import { Btn, Chip, Modal, ModalHeader } from "../ui/index.js";
 import { avisar } from "../store/avisosStore.js";
 import { queFalta } from "../lib/validacion.js";
+import { TIPOS } from "../lib/expediente.js";
 
-function AddPatientWizard({ users, currentUser, onClose, onCreate }) {
+function AddPatientWizard({ users, currentUser, ninos = [], onClose, onCreate }) {
   const [step, setStep] = useState(1);
+
+  // Niño o madre/padre de Pautas de Crianza. Cambia qué se pregunta y qué se
+  // guarda: a una madre no se le hace anamnesis del desarrollo.
+  const [tipo, setTipo] = useState("nino");
+  const [acudienteDe, setAcudienteDe] = useState("");
+  const esAcud = tipo === "acudiente";
 
   // Step 1 — datos básicos
   const [nombre, setNombre] = useState("");
@@ -44,7 +51,8 @@ function AddPatientWizard({ users, currentUser, onClose, onCreate }) {
       [!!apellido.trim(), "el apellido"],
     ]) : null;
     if (falta) { avisar.error(falta); return; }
-    setStep((s) => s + 1);
+    // El acudiente se salta la anamnesis: pasa del paso 1 al 3.
+    setStep((s) => (esAcud && s === 1 ? 3 : s + 1));
   };
 
 
@@ -56,6 +64,7 @@ function AddPatientWizard({ users, currentUser, onClose, onCreate }) {
     ));
     const child = {
       id: newId, name: nombre.trim(), lastName: apellido.trim(),
+      tipo, acudienteDe: esAcud ? (acudienteDe || null) : null,
       birthDate: birthDate || null, admissionDate: admissionDate || TODAY,
       specialties: specialtiesSet, assignedSpecialists,
       avatarBg: CHILD_AVATAR_COLORS[Math.floor(Math.random() * CHILD_AVATAR_COLORS.length)],
@@ -76,27 +85,82 @@ function AddPatientWizard({ users, currentUser, onClose, onCreate }) {
       title: `Anamnesis — ${nombreCompleto}`, date: TODAY, authorId: currentUser.id, notes,
       fields: fullFields,
     };
-    onCreate(child, anamnesisDoc);
+    // A una madre no se le abre anamnesis del desarrollo: no es su expediente
+    // clínico infantil, y un documento vacío con ese título confunde.
+    onCreate(child, esAcud ? null : anamnesisDoc);
   };
 
   return (
     <Modal onClose={onClose} width={640}>
       <ModalHeader
         title="Agregar paciente"
-        subtitle={`Paso ${step} de 3 — ${step === 1 ? "Datos del paciente" : step === 2 ? "Anamnesis" : "Asignar especialistas"}`}
+        subtitle={esAcud
+          ? `${step === 1 ? "Datos" : "Asignar especialistas"} — Pautas de Crianza`
+          : `Paso ${step} de 3 — ${step === 1 ? "Datos del paciente" : step === 2 ? "Anamnesis" : "Asignar especialistas"}`}
         onClose={onClose}
       />
       <div style={{ padding: 24, maxHeight: "60vh", overflowY: "auto" }}>
 
         {step === 1 && (
           <div>
+            <div style={{ marginBottom: 14 }}>
+              <div style={{
+                fontSize: 11.5, fontWeight: 700, color: T.inkFaint, marginBottom: 6,
+                textTransform: "uppercase", letterSpacing: "0.05em",
+              }}>
+                Tipo de expediente
+              </div>
+              <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
+                {Object.entries(TIPOS).map(([clave, t]) => (
+                  <Chip
+                    key={clave} label={t.label} selected={tipo === clave}
+                    onClick={() => setTipo(clave)}
+                  />
+                ))}
+              </div>
+              {esAcud && (
+                <div style={{ fontSize: 12.5, color: T.inkSoft, marginTop: 7, lineHeight: 1.5 }}>
+                  Expediente de Pautas de Crianza: plan de trabajo, sesiones y objetivos.
+                  Sin anamnesis del desarrollo ni reportes para la familia.
+                </div>
+              )}
+            </div>
+
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
               <F label="Nombre" value={nombre} onChange={setNombre} placeholder="Nombre" />
               <F label="Apellido" value={apellido} onChange={setApellido} placeholder="Apellido" />
-              <F label="Fecha de nacimiento" value={birthDate} onChange={setBirthDate} type="date" />
+              {/* A una madre no se le pide fecha de nacimiento: no hay hitos del
+                  desarrollo que fechar y el dato no se usa en ninguna parte. */}
+              {!esAcud && (
+                <F label="Fecha de nacimiento" value={birthDate} onChange={setBirthDate} type="date" />
+              )}
               <F label="Fecha de admisión" value={admissionDate} onChange={setAdmissionDate} type="date" />
             </div>
-            <F label="Persona acompañante (nombre y parentesco)" value={acompanante} onChange={setAcompanante} placeholder="Ej: María Pérez, madre" />
+
+            {esAcud ? (
+              <div style={{ marginBottom: 14 }}>
+                <div style={{
+                  fontSize: 11.5, fontWeight: 700, color: T.inkFaint, marginBottom: 5,
+                  textTransform: "uppercase", letterSpacing: "0.05em",
+                }}>
+                  Hijo o hija en el centro
+                </div>
+                <div style={{ fontSize: 12, color: T.inkFaint, marginBottom: 7 }}>
+                  Opcional: también se atiende a familias cuyo hijo no es paciente aquí.
+                </div>
+                <select
+                  value={acudienteDe} onChange={(e) => setAcudienteDe(e.target.value)}
+                  style={{ ...inputStyle, width: "100%", boxSizing: "border-box" }}
+                >
+                  <option value="">Sin hijo o hija en el centro</option>
+                  {ninos.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name} {c.lastName}</option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <F label="Persona acompañante (nombre y parentesco)" value={acompanante} onChange={setAcompanante} placeholder="Ej: María Pérez, madre" />
+            )}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
               <F label="Teléfono de contacto" value={telefono} onChange={setTelefono} />
               <F label="Correo" value={correo} onChange={setCorreo} />
@@ -159,7 +223,7 @@ function AddPatientWizard({ users, currentUser, onClose, onCreate }) {
       </div>
 
       <div style={{ display: "flex", gap: 10, justifyContent: "space-between", padding: "16px 24px", borderTop: `1px solid ${T.border}` }}>
-        <Btn variant="ghost" onClick={step === 1 ? onClose : () => setStep((s) => s - 1)}>
+        <Btn variant="ghost" onClick={step === 1 ? onClose : () => setStep((s) => (esAcud && s === 3 ? 1 : s - 1))}>
           {step === 1 ? "Cancelar" : "Atrás"}
         </Btn>
         {step < 3 ? (
