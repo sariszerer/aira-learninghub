@@ -7,8 +7,10 @@ import { Avatar, Btn, Card, Eyebrow, List, ListRow, StatStrip } from "../ui/inde
 import CalendarAgenda from "./CalendarAgenda.jsx";
 import { useDataStore } from "../store/dataStore.js";
 import { useAuthStore } from "../store/authStore.js";
+import { useEsMovil, paddingPagina } from "../lib/pantalla.js";
 
 function AdminDashboard({ onOpenChild }) {
+  const esMovil = useEsMovil();
   const children = useDataStore((s) => s.children);
   const users = useDataStore((s) => s.users);
   const sessions = useDataStore((s) => s.sessions);
@@ -56,7 +58,7 @@ function AdminDashboard({ onOpenChild }) {
   });
 
   return (
-    <div style={{ padding: "24px 28px 48px" }}>
+    <div style={{ padding: paddingPagina(esMovil) }}>
       <div style={{ marginBottom: 28 }}>
         <div style={{ fontFamily: T.font, fontSize: 21, fontWeight: 700, color: T.ink, letterSpacing: "-0.01em" }}>
           Panel administrativo

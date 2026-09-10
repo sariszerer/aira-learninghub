@@ -6,8 +6,10 @@ import { useDataStore } from "../store/dataStore.js";
 import { Plus } from "lucide-react";
 import { avisar } from "../store/avisosStore.js";
 import { queFalta } from "../lib/validacion.js";
+import { useEsMovil, paddingPagina } from "../lib/pantalla.js";
 
 function TutorAiraHome({ user, onOpenChild }) {
+  const esMovil = useEsMovil();
   const children = useDataStore((s) => s.children);
   const users = useDataStore((s) => s.users);
   const objectives = useDataStore((s) => s.objectives);
@@ -50,7 +52,7 @@ function TutorAiraHome({ user, onOpenChild }) {
   ];
 
   return (
-    <div style={{ padding: "24px 28px 48px" }}>
+    <div style={{ padding: paddingPagina(esMovil) }}>
       <div style={{ marginBottom: 28 }}>
         <div style={{ fontFamily: T.font, fontSize: 21, fontWeight: 700, color: T.ink }}>
           Hola, {user.name.split(" ")[0]}

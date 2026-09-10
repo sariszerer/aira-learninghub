@@ -8,6 +8,7 @@ import { PERMISSIONS } from "../permissions.js";
 import { useDataStore } from "../store/dataStore.js";
 import { Btn, Card, Chip } from "../ui/index.js";
 import PageHeader from "../shell/PageHeader.jsx";
+import { useEsMovil, paddingPagina } from "../lib/pantalla.js";
 
 const SCOPES = [
   { val: "todos", label: "Todos los pacientes" },
@@ -29,6 +30,7 @@ const COLORES = ["#1E79E2", "#06B6D4", "#818CF8", "#10B981", "#F59E0B", "#EF4444
 // produciria por accidente, asi que el par se presenta como una sola eleccion
 // de tres estados y ese estado deja de ser representable.
 function paresYSueltos() {
+  const esMovil = useEsMovil();
   const pares = new Map();
   const sueltos = [];
   for (const p of PERMISSIONS) {
@@ -186,7 +188,7 @@ export default function RoleEditor() {
         }
       />
 
-      <div style={{ padding: "24px 28px 48px", display: "grid", gap: 16, gridTemplateColumns: "320px 1fr" }}>
+      <div style={{ padding: paddingPagina(esMovil), display: "grid", gap: 16, gridTemplateColumns: esMovil ? "1fr" : "320px 1fr" }}>
         <div>
           <Card>
             {campo("Nombre", "nombre", { placeholder: "Terapeuta suplente" })}

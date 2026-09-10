@@ -10,12 +10,14 @@ import { useAuthStore } from "../store/authStore.js";
 import { avisar } from "../store/avisosStore.js";
 import { queFalta } from "../lib/validacion.js";
 import { terapeutasDeColegio } from "./terapeutas.js";
+import { useEsMovil, paddingPagina } from "../lib/pantalla.js";
 
 // Listado de colegios del gabinete. La ficha de cada uno vive en su propia ruta
 // (/gabinete/:schoolId) y no en una columna al lado: son tres bloques anchos y
 // no cabian en el espacio que dejaba la lista.
 
 function GabinetePanel() {
+  const esMovil = useEsMovil();
   const schools = useDataStore((s) => s.schools);
   const users = useDataStore((s) => s.users);
   const onAddSchool = useDataStore((s) => s.addSchool);
@@ -56,7 +58,7 @@ function GabinetePanel() {
 
 
   return (
-    <div style={{ padding: "24px 28px 48px" }}>
+    <div style={{ padding: paddingPagina(esMovil) }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28, flexWrap: "wrap", gap: 12 }}>
         <div>
           <div style={{ fontFamily: T.font, fontSize: 17, fontWeight: 700, color: T.ink }}>Gabinete Externo</div>

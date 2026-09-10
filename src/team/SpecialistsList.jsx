@@ -9,6 +9,7 @@ import SpecialistModal from "./SpecialistModal.jsx";
 import { Avatar, Btn, Card, IconBtn, List, ListRow, Modal, ModalHeader, Table } from "../ui/index.js";
 import { useNavigate } from "react-router-dom";
 import { generarClaveTemporal, mensajeDeAcceso } from "../lib/claveTemporal.js";
+import { useEsMovil, paddingPagina } from "../lib/pantalla.js";
 
 // Gestion del equipo. El alta pasa por una Edge Function porque crear un
 // usuario que pueda iniciar sesion exige service_role; editar y desactivar si
@@ -17,6 +18,7 @@ import { generarClaveTemporal, mensajeDeAcceso } from "../lib/claveTemporal.js";
 // Nunca se borra a nadie: un especialista figura en sesiones y objetivos
 // historicos, y eliminarlo dejaria huerfano el expediente. Se desactiva.
 export default function SpecialistsList() {
+  const esMovil = useEsMovil();
   const users = useDataStore((s) => s.users);
   const sessions = useDataStore((s) => s.sessions);
   const children = useDataStore((s) => s.children);
@@ -159,7 +161,7 @@ export default function SpecialistsList() {
         )}
       />
 
-      <div style={{ padding: "24px 28px 48px" }}>
+      <div style={{ padding: paddingPagina(esMovil) }}>
         {error && (
           <div style={{
             background: T.apoyoTint, color: T.apoyo, border: `1px solid ${T.apoyo}33`,
@@ -258,7 +260,7 @@ export default function SpecialistsList() {
               celda: (u) => <span style={{ color: T.inkSoft }}>{u.sesiones}</span>,
             },
             {
-              clave: "acciones", titulo: "", ancho: "250px", alinear: "derecha", ordenable: false, esencial: true,
+              clave: "acciones", titulo: "", ancho: "250px", alinear: "derecha", ordenable: false, accion: true,
               celda: (u) => puedeGestionar ? (
                 <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
                   <IconBtn

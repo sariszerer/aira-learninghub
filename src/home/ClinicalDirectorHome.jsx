@@ -8,8 +8,10 @@ import ChildCard from "./ChildCard.jsx";
 import { computeClinicalAlerts } from "./clinicalAlerts.js";
 import ActivityFeed from "./ActivityFeed.jsx";
 import { useDataStore } from "../store/dataStore.js";
+import { useEsMovil, paddingPagina } from "../lib/pantalla.js";
 
 function ClinicalDirectorHome({ user, onOpenChild }) {
+  const esMovil = useEsMovil();
   const children = useDataStore((s) => s.children);
   const users = useDataStore((s) => s.users);
   const sessions = useDataStore((s) => s.sessions);
@@ -51,7 +53,7 @@ function ClinicalDirectorHome({ user, onOpenChild }) {
   );
 
   return (
-    <div style={{ padding: "24px 28px 48px" }}>
+    <div style={{ padding: paddingPagina(esMovil) }}>
 
       {/* Header */}
       <div style={{ marginBottom: 28 }}>

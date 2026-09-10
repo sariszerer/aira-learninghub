@@ -6,6 +6,7 @@ import { fmtDate, contar } from "../lib/format.js";
 import { can, ROLES } from "../permissions.js";
 import { Avatar, Btn, Card, Eyebrow, IconBtn, Tabs } from "../ui/index.js";
 import { useDataStore } from "../store/dataStore.js";
+import { useEsMovil, paddingPagina } from "../lib/pantalla.js";
 import { useAuthStore } from "../store/authStore.js";
 import { avisar } from "../store/avisosStore.js";
 import { queFalta } from "../lib/validacion.js";
@@ -35,6 +36,7 @@ const PESTANAS_TUTORIA = [
 const POR_DEFECTO = "estudiantes";
 
 export default function EscuelaDetalle({ onAddSession }) {
+  const esMovil = useEsMovil();
   const { schoolId } = useParams();
   const navegar = useNavigate();
 
@@ -99,7 +101,7 @@ export default function EscuelaDetalle({ onAddSession }) {
       );
     }
     return (
-      <div style={{ padding: "24px 28px 48px" }}>
+      <div style={{ padding: paddingPagina(esMovil) }}>
         <Volver onClick={() => navegar("/gabinete")} />
         <Card style={{ textAlign: "center", padding: "48px 20px" }}>
           <div style={{ fontSize: 16, fontWeight: 600, color: T.inkSoft, marginBottom: 6 }}>
@@ -121,7 +123,7 @@ export default function EscuelaDetalle({ onAddSession }) {
   const terapeutas = terapeutasDeColegio(tutores, estudiantesGabinete, school.id);
 
   return (
-    <div style={{ padding: "24px 28px 48px" }}>
+    <div style={{ padding: paddingPagina(esMovil) }}>
       <Volver onClick={() => navegar("/gabinete")} />
       {/* Expediente de un estudiante: ocupa el detalle entero. Verlo en un
           modal sobre la escuela escondia justo lo que se va a leer. */}
@@ -170,7 +172,7 @@ export default function EscuelaDetalle({ onAddSession }) {
                 )}
               </div>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 14 }}>
+            <div style={{ display: "grid", gridTemplateColumns: esMovil ? "1fr" : "repeat(3, 1fr)", gap: 12, marginBottom: 14 }}>
               {[
                 { label: "Contrato desde", value: school.contractStart ? fmtDate(school.contractStart) : "—" },
                 { label: "Contrato hasta", value: school.contractEnd ? fmtDate(school.contractEnd) : "—" },

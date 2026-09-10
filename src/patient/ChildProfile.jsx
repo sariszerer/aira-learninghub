@@ -15,6 +15,7 @@ import AnamnesisTab from "./tabs/AnamnesisTab.jsx";
 import ReportesTab from "./tabs/ReportesTab.jsx";
 import InterdisciplinaryTab from "./tabs/InterdisciplinaryTab.jsx";
 import { useDataStore } from "../store/dataStore.js";
+import { useEsMovil } from "../lib/pantalla.js";
 import { useAuthStore } from "../store/authStore.js";
 
 // Tab ids double as the ?tab= URL slug, so they are module-level: the router needs
@@ -60,6 +61,7 @@ function ChildProfile({ child, onOpenSessionForm, onViewReport, onGenerateFull, 
     // replace: Back returns to the patient list rather than walking back through tabs.
     setSearchParams(next, { replace: true });
   };
+  const esMovil = useEsMovil();
   const [editingProfile, setEditingProfile] = useState(false);
   const [borrando, setBorrando] = useState(false);
   const navegar = useNavigate();
@@ -80,11 +82,17 @@ function ChildProfile({ child, onOpenSessionForm, onViewReport, onGenerateFull, 
           perderlo. */}
       <div style={{
         position: "sticky", top: 0, zIndex: 10,
-        background: T.bg, padding: "20px 28px 14px",
+        background: T.bg, padding: esMovil ? "12px 12px 10px" : "20px 28px 14px",
       }}>
       <Card style={{ padding: "18px 20px 0" }}>
-      <div style={{ display: "flex", gap: 18, alignItems: "flex-start", marginBottom: 16 }}>
-        <Avatar name={child.name + " " + child.lastName} bg={child.avatarBg} size={56} />
+      {/* En movil apila: los botones al lado dejaban el nombre en dos lineas y
+          ellos mismos se salian por la derecha. */}
+      <div style={{
+        display: "flex", gap: esMovil ? 12 : 18, marginBottom: 16,
+        alignItems: "flex-start", flexDirection: esMovil ? "column" : "row",
+      }}>
+        <div style={{ display: "flex", gap: 14, alignItems: "flex-start", width: "100%", minWidth: 0 }}>
+        <Avatar name={child.name + " " + child.lastName} bg={child.avatarBg} size={esMovil ? 44 : 56} />
         <div style={{ flex: 1 }}>
           <div style={{ fontFamily: T.font, fontSize: 21, fontWeight: 700, color: T.ink, letterSpacing: "-0.01em" }}>
             {child.name} {child.lastName}
@@ -106,7 +114,13 @@ function ChildProfile({ child, onOpenSessionForm, onViewReport, onGenerateFull, 
             ))}
           </div>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, flexShrink: 0 }}>
+        </div>
+        <div style={{
+          display: "flex", gap: 8, flexShrink: 0,
+          flexDirection: esMovil ? "row" : "column",
+          width: esMovil ? "100%" : undefined,
+          flexWrap: esMovil ? "wrap" : undefined,
+        }}>
           {/* Antes exigia ademas figurar en assignedSpecialists. Eso bloqueaba
               trabajo real: 44 de las 438 sesiones de la clinica, en 9 pacientes,
               las dio alguien que no estaba en esa lista. Y era redundante para
