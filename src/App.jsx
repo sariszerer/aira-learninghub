@@ -22,6 +22,8 @@ import FirmaConsentimientoPublic from "./consent/FirmaConsentimientoPublic.jsx";
 import EstablecerContrasena from "./EstablecerContrasena.jsx";
 import { esEnlaceDeContrasena } from "./lib/contrasena.js";
 import { useEsMovil } from "./lib/pantalla.js";
+import { Menu } from "lucide-react";
+import { Logo } from "./ui/index.js";
 
 // Raiz de la aplicacion: sesion, enrutado y cascaron. Nada mas.
 // Los datos viven en los stores y cada pantalla lee lo que necesita; el estado
@@ -166,6 +168,31 @@ export default function App() {
       <MobileStyles />
 
       <Avisos />
+
+      {/* Barra superior de movil: es el unico modo de abrir el menu cuando el
+          riel no esta en pantalla. Fija, porque en un movil se hace scroll
+          largo y tener que subir del todo para cambiar de seccion cansa. */}
+      {esMovil && (
+        <header style={{
+          position: "fixed", top: 0, left: 0, right: 0, height: 52, zIndex: 18,
+          display: "flex", alignItems: "center", gap: 10, padding: "0 12px",
+          background: T.surface, borderBottom: `1px solid ${T.border}`,
+        }}>
+          <button
+            onClick={() => setMenuAbierto(true)}
+            aria-label="Abrir el menú"
+            style={{
+              width: 40, height: 40, borderRadius: 10, flexShrink: 0,
+              border: `1px solid ${T.border}`, background: T.surface,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              color: T.ink, cursor: "pointer",
+            }}
+          >
+            <Menu size={19} />
+          </button>
+          <Logo width={62} />
+        </header>
+      )}
 
       <Sidebar abierto={menuAbierto} onAlternar={() => setMenuAbierto((a) => !a)} />
 
