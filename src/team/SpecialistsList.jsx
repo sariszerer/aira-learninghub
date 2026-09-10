@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { Plus, Check, X, Link2, Mail } from "lucide-react";
+import { Plus, Check, X, KeyRound, Link2, Mail } from "lucide-react";
 import { T } from "../theme.js";
 import { ROLES } from "../permissions.js";
 import { useDataStore } from "../store/dataStore.js";
@@ -8,6 +8,7 @@ import PageHeader from "../shell/PageHeader.jsx";
 import SpecialistModal from "./SpecialistModal.jsx";
 import { Avatar, Btn, Card, IconBtn, List, ListRow, Modal, ModalHeader, Table } from "../ui/index.js";
 import { useNavigate } from "react-router-dom";
+import { generarClaveTemporal, mensajeDeAcceso } from "../lib/claveTemporal.js";
 
 // Gestion del equipo. El alta pasa por una Edge Function porque crear un
 // usuario que pueda iniciar sesion exige service_role; editar y desactivar si
@@ -80,6 +81,37 @@ export default function SpecialistsList() {
       setError(dePortapapeles
         ? "El navegador no dejó copiar al portapapeles. Prueba con otro navegador o envíalo por correo."
         : e.message || "No se pudo generar el enlace.");
+    } finally {
+      setEnviando(null);
+    }
+  };
+
+  // Contraseña temporal: la vía que no depende de un enlace.
+  //
+  // El enlace ES una autenticación — se gasta al abrirlo y caduca en 24 horas.
+  // Se quemaron cuatro en cinco minutos sin que nadie llegara a fijar una
+  // clave. Esto genera una contraseña de tres palabras, la fija en el servidor
+  // y deja el mensaje entero en el portapapeles, listo para pegar.
+  const darClaveTemporal = async (u) => {
+    setError(null); setAviso(null); setEnviando(u.id);
+    try {
+      const clave = generarClaveTemporal();
+      await enviarInvitacion(u.id, { claveTemporal: clave });
+      await navigator.clipboard.writeText(mensajeDeAcceso({
+        nombre: u.name, email: u.email, clave,
+        url: window.location.origin,
+      }));
+      setCopiado(u.id);
+      setTimeout(() => setCopiado((c) => (c === u.id ? null : c)), 3000);
+      setAviso(
+        `Mensaje para ${u.name} copiado, con su contraseña temporal. Pégalo en ` +
+        `un privado. Al entrar, la aplicación le pedirá que la cambie.`
+      );
+    } catch (e) {
+      const dePortapapeles = /clipboard|denied|not allowed/i.test(e.message || "");
+      setError(dePortapapeles
+        ? "La contraseña se fijó, pero el navegador no dejó copiar el mensaje. Vuelve a intentarlo."
+        : e.message || "No se pudo generar la contraseña temporal.");
     } finally {
       setEnviando(null);
     }
@@ -226,9 +258,18 @@ export default function SpecialistsList() {
               celda: (u) => <span style={{ color: T.inkSoft }}>{u.sesiones}</span>,
             },
             {
-              clave: "acciones", titulo: "", ancho: "210px", alinear: "derecha", ordenable: false,
+              clave: "acciones", titulo: "", ancho: "250px", alinear: "derecha", ordenable: false, esencial: true,
               celda: (u) => puedeGestionar ? (
                 <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+                  <IconBtn
+                    icon={KeyRound}
+                    title={u.email
+                      ? `Generar contraseña temporal para ${u.name} y copiar el mensaje`
+                      : "Sin correo registrado"}
+                    size="sm"
+                    disabled={!u.email || u.activo === false || enviando === u.id}
+                    onClick={() => darClaveTemporal(u)}
+                  />
                   <IconBtn
                     icon={copiado === u.id ? Check : Link2}
                     tone={copiado === u.id ? "marca" : "neutro"}

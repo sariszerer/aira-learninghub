@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
     return json({ error: "No tienes permiso para enviar accesos" }, 403);
   }
 
-  let cuerpo: { id?: string; soloEnlace?: boolean };
+  let cuerpo: { id?: string; soloEnlace?: boolean; claveTemporal?: string };
   try {
     cuerpo = await req.json();
   } catch {
@@ -77,6 +77,48 @@ Deno.serve(async (req) => {
     // Mandar un acceso a alguien desactivado es contradictorio: entraria y no
     // podria hacer nada, o peor, si se reactiva despues nadie lo recuerda.
     return json({ error: `${destino.name} está desactivada. Actívala antes de enviarle el acceso.` }, 400);
+  }
+
+  // Contraseña temporal fijada por la administracion.
+  //
+  // Es la via que funciona cuando el enlace no. El enlace ES una autenticacion:
+  // se gasta al abrirlo, caduca en 24 horas y si lo abre quien lo copio deja
+  // gastado el de otra persona — paso cuatro veces en cinco minutos. Una clave
+  // temporal no se gasta, no caduca y se puede dictar por telefono.
+  //
+  // La genera el CLIENTE y se manda aqui: asi la administracion la tiene para
+  // pasarsela. Se comprueba su forma igualmente — este endpoint no se fia de
+  // que quien llama sea la pantalla que escribimos.
+  if (cuerpo.claveTemporal) {
+    const clave = cuerpo.claveTemporal;
+    if (typeof clave !== "string" || clave.length < 8 || clave.length > 72) {
+      return json({ error: "La contraseña temporal no tiene un largo válido." }, 400);
+    }
+
+    const { data: fila } = await admin
+      .from("users").select("auth_id").eq("id", id).single();
+    if (!fila?.auth_id) {
+      return json({ error: `${destino.name} no tiene cuenta de acceso todavía.` }, 400);
+    }
+
+    const { error: errClave } = await admin.auth.admin.updateUserById(
+      fila.auth_id, { password: clave },
+    );
+    if (errClave) {
+      return json({ error: `No se pudo fijar la contraseña: ${errClave.message}` }, 500);
+    }
+
+    // La marca es lo que obliga a cambiarla al entrar. Si fallara, la clave
+    // temporal se quedaria puesta indefinidamente, asi que se avisa.
+    const { error: errMarca } = await admin
+      .from("users").update({ debe_cambiar_clave: true }).eq("id", id);
+    if (errMarca) {
+      return json({
+        error: "La contraseña se fijó, pero no se pudo marcar que debe cambiarla. Avisa a soporte.",
+      }, 500);
+    }
+
+    return json({ ok: true, email: destino.email, nombre: destino.name });
   }
 
   // Sin SMTP propio, Supabase limita a dos correos por hora: con nueve personas

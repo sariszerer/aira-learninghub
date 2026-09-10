@@ -305,7 +305,13 @@ export const useDataStore = create((set, get) => ({
     }
   },
 
-  enviarInvitacion: async (id, opciones) => db.enviarInvitacion(id, opciones),
+  enviarInvitacion: async (id, opciones) => {
+    const res = await db.enviarInvitacion(id, opciones)
+    // La marca de "debe cambiarla" cambia en la base; sin recargar, la lista
+    // seguiria diciendo lo de antes hasta el proximo refresco.
+    if (opciones?.claveTemporal) await get().recargarUsuarios()
+    return res
+  },
 
   cambiarCorreo: async (id, email) => {
     const res = await db.cambiarCorreo(id, email)

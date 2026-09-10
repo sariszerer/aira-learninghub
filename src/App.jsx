@@ -21,6 +21,7 @@ import EscuelaDetalle from "./gabinete/EscuelaDetalle.jsx";
 import FirmaConsentimientoPublic from "./consent/FirmaConsentimientoPublic.jsx";
 import EstablecerContrasena from "./EstablecerContrasena.jsx";
 import { esEnlaceDeContrasena } from "./lib/contrasena.js";
+import { useEsMovil } from "./lib/pantalla.js";
 
 // Raiz de la aplicacion: sesion, enrutado y cascaron. Nada mas.
 // Los datos viven en los stores y cada pantalla lee lo que necesita; el estado
@@ -100,7 +101,9 @@ export default function App() {
 
   // El plegado del menu vive aqui porque el area de trabajo necesita el ancho
   // para su margen: si viviera dentro del Sidebar, App no podria seguirlo.
-  const [menuAbierto, setMenuAbierto] = useState(true);
+  const esMovil = useEsMovil();
+  // En movil arranca plegado: abierto tapa la pantalla entera.
+  const [menuAbierto, setMenuAbierto] = useState(() => !esMovil);
 
   // Se mira la URL ademas del evento: si la sesion ya estaba abierta, Supabase
   // procesa el fragmento antes de que este componente se suscriba y el evento
@@ -109,11 +112,18 @@ export default function App() {
     () => esEnlaceDeContrasena(window.location.href)
   );
 
-  if (estableciendoClave) {
+  // Quien entra con una contraseña puesta por la administración pasa por aquí
+  // antes que por nada. Sin esto la clave temporal se queda puesta para
+  // siempre, y la administración conoce la contraseña de esa persona.
+  if (estableciendoClave || currentUser?.debeCambiarClave) {
     return (
       <>
         <Avisos />
-        <EstablecerContrasena onListo={() => setEstableciendoClave(false)} />
+        <EstablecerContrasena
+          motivo={estableciendoClave ? "enlace" : "temporal"}
+          usuario={currentUser}
+          onListo={() => setEstableciendoClave(false)}
+        />
       </>
     );
   }
@@ -159,8 +169,11 @@ export default function App() {
 
       <Sidebar abierto={menuAbierto} onAlternar={() => setMenuAbierto((a) => !a)} />
 
+      {/* En movil el menu se superpone y el contenido no se aparta: apartarlo
+          dejaria 300px de los 390 de un telefono para la aplicacion. */}
       <main style={{
-        marginLeft: menuAbierto ? RIEL + PANEL : RIEL,
+        marginLeft: esMovil ? 0 : (menuAbierto ? RIEL + PANEL : RIEL),
+        paddingTop: esMovil ? 52 : 0,
         minHeight: "100vh",
         transition: "margin-left .18s ease",
       }}>
