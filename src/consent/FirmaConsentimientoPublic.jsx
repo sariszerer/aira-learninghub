@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { T, FONTS } from "../theme.js";
 import { db } from "../supabase.js";
-import { Btn } from "../ui/index.js";
+import { Btn, Logo } from "../ui/index.js";
+import { textoConsentimiento, partesConsentimiento } from "../lib/expediente.js";
 import SignaturePad from "./SignaturePad.jsx";
 import { avisar } from "../store/avisosStore.js";
 
@@ -45,14 +46,19 @@ function FirmaConsentimientoPublic({ token }) {
   // el paciente ni su tipo, así que no puede decidirlos. Los links generados
   // antes de que se guardaran no los traen, y para esos vale el de siempre —
   // eran todos de un niño, porque una madre no tenía anamnesis todavía.
-  const titulo = doc?.fields?.consentTitulo || "Consentimiento informado";
-  const texto = doc?.fields?.consentTexto || null;
+  const titulo = doc?.fields?.consentTitulo || textoConsentimiento(null).titulo;
+  const texto = doc?.fields?.consentTexto || textoConsentimiento(null).texto;
 
   return (
     <div style={{ minHeight: "100vh", background: "#FFFBF2", fontFamily: T.font, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
       <style>{FONTS}</style>
       <div style={{ background: "#fff", borderRadius: 20, maxWidth: 560, width: "100%", padding: "28px 26px", boxShadow: "0 20px 60px rgba(21,47,54,0.15)", boxSizing: "border-box" }}>
-        <div style={{ fontFamily: T.font, fontSize: 24, fontWeight: 500, color: "#175FAF", marginBottom: 4 }}>AIRA Learning Hub</div>
+        {/* El logotipo, no el nombre escrito: es lo que la madre reconoce al
+            abrir un link que le llegó por WhatsApp, y lo que dice que la
+            página es de quien dice ser. */}
+        <div style={{ marginBottom: 10 }}>
+          <Logo width={112} alt="Aira Learning Hub" />
+        </div>
         <div style={{ fontSize: 13.5, color: T.inkSoft, marginBottom: 20 }}>{titulo}</div>
 
         {status === "loading" && <div style={{ fontSize: 14, color: T.inkSoft }}>Cargando…</div>}
@@ -76,9 +82,8 @@ function FirmaConsentimientoPublic({ token }) {
         {(status === "ready" || status === "saving") && doc && (
           <div>
             <div style={{ fontSize: 13.5, color: T.inkSoft, lineHeight: 1.6, marginBottom: 18 }}>
-              {texto || (<>
-                Yo, en calidad de representante legal de <b>{childName}</b>, autorizo la evaluación y acompañamiento psicopedagógico/psicosocial en AIRA Learning Hub.
-              </>)}
+              {partesConsentimiento(texto, childName)
+                .map((p, i) => p.negrita ? <b key={i}>{p.t}</b> : <React.Fragment key={i}>{p.t}</React.Fragment>)}
             </div>
             {/* "Tu firma" y no "Firma del acudiente": quien abre este link es
                 siempre quien va a firmar, sea la madre de un paciente o una

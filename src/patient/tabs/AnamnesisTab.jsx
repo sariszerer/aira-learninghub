@@ -4,7 +4,7 @@ import { T, TODAY } from "../../theme.js";
 import { fmtDateShort } from "../../lib/format.js";
 import { can } from "../../permissions.js";
 import { Btn, Card } from "../../ui/index.js";
-import { esAcudiente, ANAMNESIS_ACUDIENTE, resumenAnamnesisAcudiente, textoConsentimiento } from "../../lib/expediente.js";
+import { esAcudiente, ANAMNESIS_ACUDIENTE, resumenAnamnesisAcudiente, textoConsentimiento, partesConsentimiento } from "../../lib/expediente.js";
 
 function AnamnesisTab({ child, documents, users, currentUser, onAddDocument, onUpdateDocument }) {
   const [showForm, setShowForm] = useState(false);
@@ -201,9 +201,8 @@ function AnamnesisTab({ child, documents, users, currentUser, onAddDocument, onU
 
           <SeccionAnamnesis title={consentimiento.titulo}>
             <div style={{ fontSize: 13.5, color: T.inkSoft, lineHeight: 1.6, marginBottom: 12 }}>
-              {consentimiento.texto || (<>
-                Yo, en calidad de representante legal de <b>{child.name} {child.lastName}</b>, autorizo la evaluación y acompañamiento psicopedagógico/psicosocial.
-              </>)}
+              {partesConsentimiento(consentimiento.texto, `${child.name} ${child.lastName}`)
+                .map((p, i) => p.negrita ? <b key={i}>{p.t}</b> : <React.Fragment key={i}>{p.t}</React.Fragment>)}
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
               <F form={form} setForm={setForm} label={esAcud ? "Su firma (si firma en persona)" : "Firma acudiente (si firma en persona)"} name="firmaAcudiente" />

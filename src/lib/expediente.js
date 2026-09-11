@@ -134,15 +134,34 @@ export function pideDatosDeNino(persona) {
 // autoriza la evaluación de un niño: acepta participar, y acota hasta dónde
 // llega la confidencialidad.
 //
-// `texto` en null quiere decir "lo arma quien lo pinta": el del niño lleva su
-// nombre en negrita en medio de la frase, y eso no cabe en una cadena.
+// El del niño lleva su nombre en medio de la frase y en negrita. Va como
+// {nombre} dentro del texto, y partesConsentimiento lo reparte: así el texto
+// sigue siendo una sola cadena que se puede leer, cambiar y comparar de un
+// vistazo, en vez de tres trozos de JSX.
 export function textoConsentimiento(persona) {
   return esAcudiente(persona)
     ? {
         titulo: "Consentimiento informado Pautas de Crianza",
         texto: "Acepto participar voluntariamente en un espacio confidencial de orientación, dirigido a fortalecer las prácticas de crianza y el bienestar familiar. Comprendo que la confidencialidad podrá limitarse únicamente ante situaciones de riesgo o por requerimiento legal.",
       }
-    : { titulo: "Consentimiento informado", texto: null };
+    : {
+        titulo: "Consentimiento informado",
+        texto: "Yo, en calidad de representante legal de {nombre}, autorizo su evaluación y/o acompañamiento terapéutico en Aira Learning Hub. Comprendo el alcance del servicio y que la información compartida será confidencial, salvo ante una situación de riesgo o requerimiento legal.",
+      };
+}
+
+// Parte el texto del consentimiento en trozos para pintarlo, marcando en
+// negrita el nombre que va donde está {nombre}.
+//
+// Se hace aquí y no en cada pantalla porque son dos —la ficha y la página de
+// firma a distancia— y ya se vio lo que pasa cuando el consentimiento se
+// escribe por duplicado.
+export function partesConsentimiento(texto, nombre) {
+  if (!texto) return [];
+  const trozos = texto.split("{nombre}");
+  return trozos.flatMap((t, i) => (
+    i === 0 ? [{ t }] : [{ t: nombre || "", negrita: true }, { t }]
+  )).filter((p) => p.t !== "");
 }
 
 // Cómo se rotula el campo de recomendaciones de una sesión.
