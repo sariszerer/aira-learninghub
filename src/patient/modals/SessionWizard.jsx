@@ -9,6 +9,7 @@ import { T } from "../../theme.js";
 import { Check, ChevronDown } from "lucide-react";
 import { avisar } from "../../store/avisosStore.js";
 import { queFalta } from "../../lib/validacion.js";
+import { textoRecomendaciones } from "../../lib/expediente.js";
 
 function SessionWizard({ child, objectives, onClose, onSave }) {
   const currentUser = useAuthStore((s) => s.currentUser);
@@ -38,6 +39,7 @@ function SessionWizard({ child, objectives, onClose, onSave }) {
   const [activities, setActivities] = useState("");
   const [observation, setObservation] = useState("");
   const [nextSteps, setNextSteps] = useState("");
+  const recomendaciones = textoRecomendaciones(child);
 
   // Only show this specialist's objectives for this child
   const myObjectives = objectives.filter(o =>
@@ -210,9 +212,9 @@ function SessionWizard({ child, objectives, onClose, onSave }) {
 
         {/* Recomendaciones */}
         <div>
-          <div style={{ fontSize: 12, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>Recomendaciones para casa / escuela</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>{recomendaciones.titulo}</div>
           <textarea value={nextSteps} onChange={e => setNextSteps(e.target.value)} rows={3}
-            placeholder="Indicaciones para los padres o el equipo escolar..."
+            placeholder={recomendaciones.placeholder}
             style={{ ...inputStyle, width: "100%", boxSizing: "border-box", resize: "vertical", lineHeight: 1.6 }} />
         </div>
 

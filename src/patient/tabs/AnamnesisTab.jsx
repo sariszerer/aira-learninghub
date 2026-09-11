@@ -4,6 +4,7 @@ import { T, TODAY } from "../../theme.js";
 import { fmtDateShort } from "../../lib/format.js";
 import { can } from "../../permissions.js";
 import { Btn, Card } from "../../ui/index.js";
+import { esAcudiente, ANAMNESIS_ACUDIENTE, resumenAnamnesisAcudiente } from "../../lib/expediente.js";
 
 function AnamnesisTab({ child, documents, users, currentUser, onAddDocument, onUpdateDocument }) {
   const [showForm, setShowForm] = useState(false);
@@ -39,6 +40,9 @@ function AnamnesisTab({ child, documents, users, currentUser, onAddDocument, onU
 
   const anamnesisDoc = documents.find(d => d.childId === child.id && d.type === "anamnesis" && d.fields?.isForm);
   const canEdit = can(currentUser, "anamnesis:edit");
+  // La anamnesis de una madre no es la del desarrollo: otros campos, y un
+  // consentimiento en primera persona. Qué campos, lo dice ANAMNESIS_ACUDIENTE.
+  const esAcud = esAcudiente(child);
   const [signLink, setSignLink] = useState(null);
   const [linkCopied, setLinkCopied] = useState(false);
 
@@ -115,69 +119,91 @@ function AnamnesisTab({ child, documents, users, currentUser, onAddDocument, onU
       {showForm ? (
         <Card style={{ padding: "20px 24px" }}>
           <div style={{ fontFamily: T.font, fontSize: 20, fontWeight: 500, color: T.ink, marginBottom: 24 }}>
-            Anamnesis Breve — {child.name} {child.lastName}
+            {esAcud ? "Anamnesis" : "Anamnesis Breve"} — {child.name} {child.lastName}
           </div>
 
-          <SeccionAnamnesis title="Datos generales">
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-              <F form={form} setForm={setForm} label="Nombre completo" name="nombre" />
-              <F form={form} setForm={setForm} label="Fecha de nacimiento" name="fechaNacimiento" />
-              <F form={form} setForm={setForm} label="Edad" name="edad" />
-              <F form={form} setForm={setForm} label="Grado escolar / Colegio" name="gradoColegio" />
-            </div>
-            <F form={form} setForm={setForm} label="Persona acompañante (nombre y parentesco)" name="acompanante" />
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-              <F form={form} setForm={setForm} label="Teléfono de contacto" name="telefono" />
-              <F form={form} setForm={setForm} label="Correo" name="correo" />
-            </div>
-          </SeccionAnamnesis>
+          {esAcud ? ANAMNESIS_ACUDIENTE.map((seccion) => (
+            <SeccionAnamnesis key={seccion.titulo} title={seccion.titulo}>
+              {seccion.filas.map((fila, n) => (
+                <div key={n} style={fila.length > 1
+                  ? { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }
+                  : undefined}>
+                  {fila.map((campo) => (
+                    <F
+                      key={campo.name} form={form} setForm={setForm}
+                      label={campo.label} name={campo.name}
+                      multiline={campo.multiline} rows={campo.rows}
+                    />
+                  ))}
+                </div>
+              ))}
+            </SeccionAnamnesis>
+          )) : (<>
+            <SeccionAnamnesis title="Datos generales">
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <F form={form} setForm={setForm} label="Nombre completo" name="nombre" />
+                <F form={form} setForm={setForm} label="Fecha de nacimiento" name="fechaNacimiento" />
+                <F form={form} setForm={setForm} label="Edad" name="edad" />
+                <F form={form} setForm={setForm} label="Grado escolar / Colegio" name="gradoColegio" />
+              </div>
+              <F form={form} setForm={setForm} label="Persona acompañante (nombre y parentesco)" name="acompanante" />
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <F form={form} setForm={setForm} label="Teléfono de contacto" name="telefono" />
+                <F form={form} setForm={setForm} label="Correo" name="correo" />
+              </div>
+            </SeccionAnamnesis>
 
-          <SeccionAnamnesis title="Motivo de consulta">
-            <F form={form} setForm={setForm} label="" name="motivoConsulta" multiline rows={3} />
-          </SeccionAnamnesis>
+            <SeccionAnamnesis title="Motivo de consulta">
+              <F form={form} setForm={setForm} label="" name="motivoConsulta" multiline rows={3} />
+            </SeccionAnamnesis>
 
-          <SeccionAnamnesis title="Antecedentes relevantes">
-            <F form={form} setForm={setForm} label="Embarazo, parto y desarrollo temprano (complicaciones, retrasos)" name="antecedentes" multiline rows={3} />
-            <F form={form} setForm={setForm} label="Salud actual (enfermedades, alergias, medicamentos)" name="saludActual" multiline rows={2} />
-            <F form={form} setForm={setForm} label="Evaluaciones o terapias previas" name="terapiasPrevias" multiline rows={2} />
-          </SeccionAnamnesis>
+            <SeccionAnamnesis title="Antecedentes relevantes">
+              <F form={form} setForm={setForm} label="Embarazo, parto y desarrollo temprano (complicaciones, retrasos)" name="antecedentes" multiline rows={3} />
+              <F form={form} setForm={setForm} label="Salud actual (enfermedades, alergias, medicamentos)" name="saludActual" multiline rows={2} />
+              <F form={form} setForm={setForm} label="Evaluaciones o terapias previas" name="terapiasPrevias" multiline rows={2} />
+            </SeccionAnamnesis>
 
-          <SeccionAnamnesis title="Información familiar">
-            <F form={form} setForm={setForm} label="Composición familiar (con quién vive)" name="composicionFamiliar" multiline rows={2} />
-            <F form={form} setForm={setForm} label="Hermanos (nombres y edades)" name="hermanos" />
-            <F form={form} setForm={setForm} label="Situación de los padres" name="situacionPadres" />
-            <F form={form} setForm={setForm} label="Dinámica familiar relevante" name="dinamicaFamiliar" multiline rows={2} />
-          </SeccionAnamnesis>
+            <SeccionAnamnesis title="Información familiar">
+              <F form={form} setForm={setForm} label="Composición familiar (con quién vive)" name="composicionFamiliar" multiline rows={2} />
+              <F form={form} setForm={setForm} label="Hermanos (nombres y edades)" name="hermanos" />
+              <F form={form} setForm={setForm} label="Situación de los padres" name="situacionPadres" />
+              <F form={form} setForm={setForm} label="Dinámica familiar relevante" name="dinamicaFamiliar" multiline rows={2} />
+            </SeccionAnamnesis>
 
-          <SeccionAnamnesis title="Desarrollo y funcionamiento actual">
-            <F form={form} setForm={setForm} label="Fortalezas" name="fortalezas" multiline rows={2} />
-            <F form={form} setForm={setForm} label="Dificultades observadas (aprendizaje, conducta, social, emocional)" name="dificultades" multiline rows={3} />
-            <F form={form} setForm={setForm} label="Relación con pares y adultos" name="relacionPares" multiline rows={2} />
-            <F form={form} setForm={setForm} label="Estado emocional (miedos, ánimo, conducta)" name="estadoEmocional" multiline rows={2} />
-          </SeccionAnamnesis>
+            <SeccionAnamnesis title="Desarrollo y funcionamiento actual">
+              <F form={form} setForm={setForm} label="Fortalezas" name="fortalezas" multiline rows={2} />
+              <F form={form} setForm={setForm} label="Dificultades observadas (aprendizaje, conducta, social, emocional)" name="dificultades" multiline rows={3} />
+              <F form={form} setForm={setForm} label="Relación con pares y adultos" name="relacionPares" multiline rows={2} />
+              <F form={form} setForm={setForm} label="Estado emocional (miedos, ánimo, conducta)" name="estadoEmocional" multiline rows={2} />
+            </SeccionAnamnesis>
 
-          <SeccionAnamnesis title="Escolaridad">
-            <F form={form} setForm={setForm} label="Rendimiento académico general" name="rendimientoAcademico" multiline rows={2} />
-            <F form={form} setForm={setForm} label="Áreas con mayor dificultad" name="areasDificultad" />
-            <F form={form} setForm={setForm} label="Relación con maestros y compañeros" name="relacionMaestros" multiline rows={2} />
-          </SeccionAnamnesis>
+            <SeccionAnamnesis title="Escolaridad">
+              <F form={form} setForm={setForm} label="Rendimiento académico general" name="rendimientoAcademico" multiline rows={2} />
+              <F form={form} setForm={setForm} label="Áreas con mayor dificultad" name="areasDificultad" />
+              <F form={form} setForm={setForm} label="Relación con maestros y compañeros" name="relacionMaestros" multiline rows={2} />
+            </SeccionAnamnesis>
 
-          <SeccionAnamnesis title="Observaciones adicionales">
-            <F form={form} setForm={setForm} label="" name="observaciones" multiline rows={3} />
-          </SeccionAnamnesis>
+            <SeccionAnamnesis title="Observaciones adicionales">
+              <F form={form} setForm={setForm} label="" name="observaciones" multiline rows={3} />
+            </SeccionAnamnesis>
+          </>)}
 
           <SeccionAnamnesis title="Consentimiento informado">
             <div style={{ fontSize: 13.5, color: T.inkSoft, lineHeight: 1.6, marginBottom: 12 }}>
-              Yo, en calidad de representante legal de <b>{child.name} {child.lastName}</b>, autorizo la evaluación y acompañamiento psicopedagógico/psicosocial.
+              {esAcud ? (<>
+                Yo, <b>{child.name} {child.lastName}</b>, autorizo mi participación en el acompañamiento de Pautas de Crianza.
+              </>) : (<>
+                Yo, en calidad de representante legal de <b>{child.name} {child.lastName}</b>, autorizo la evaluación y acompañamiento psicopedagógico/psicosocial.
+              </>)}
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
-              <F form={form} setForm={setForm} label="Firma acudiente (si firma en persona)" name="firmaAcudiente" />
+              <F form={form} setForm={setForm} label={esAcud ? "Su firma (si firma en persona)" : "Firma acudiente (si firma en persona)"} name="firmaAcudiente" />
               <F form={form} setForm={setForm} label="Firma profesional" name="firmaProfesional" />
               <F form={form} setForm={setForm} label="Fecha" name="fechaFirma" />
             </div>
             <div style={{ marginTop: 6, padding: 14, background: T.surfaceSunk, borderRadius: 10 }}>
               <div style={{ fontSize: 12.5, color: T.inkSoft, marginBottom: 10, lineHeight: 1.5 }}>
-                ¿El acudiente no está presente? Genera un link para que firme a distancia desde su celular — la firma queda registrada aquí automáticamente.
+                {esAcud ? "¿No está presente?" : "¿El acudiente no está presente?"} Genera un link para que firme a distancia desde su celular — la firma queda registrada aquí automáticamente.
               </div>
               <Btn variant="ghost" size="sm" onClick={generateSignLink}>Generar link para firma</Btn>
               {signLink && (
@@ -203,7 +229,12 @@ function AnamnesisTab({ child, documents, users, currentUser, onAddDocument, onU
               <div style={{ fontFamily: T.font, fontSize: 18, fontWeight: 500, color: T.ink, marginBottom: 16 }}>
                 Anamnesis — {child.name} {child.lastName}
               </div>
-              {[
+              {/* La lectura del acudiente se arma de ANAMNESIS_ACUDIENTE, y no de
+                  una lista aparte, para que no se desincronicen: un campo nuevo
+                  en el formulario aparece aquí sin tocar nada. La del niño
+                  sigue siendo un resumen escogido — su anamnesis tiene veinte
+                  campos y volcarlos todos no se lee. */}
+              {(esAcud ? resumenAnamnesisAcudiente(anamnesisDoc.fields) : [
                 ["Motivo de consulta", anamnesisDoc.fields.motivoConsulta],
                 ["Antecedentes", anamnesisDoc.fields.antecedentes],
                 ["Salud actual", anamnesisDoc.fields.saludActual],
@@ -213,7 +244,7 @@ function AnamnesisTab({ child, documents, users, currentUser, onAddDocument, onU
                 ["Estado emocional", anamnesisDoc.fields.estadoEmocional],
                 ["Escolaridad", anamnesisDoc.fields.rendimientoAcademico],
                 ["Observaciones", anamnesisDoc.fields.observaciones],
-              ].filter(([,v]) => v).map(([label, value]) => (
+              ].filter(([,v]) => v)).map(([label, value]) => (
                 <div key={label} style={{ marginBottom: 14 }}>
                   <div style={{ fontSize: 11, fontWeight: 700, color: T.inkFaint, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>{label}</div>
                   <div style={{ fontSize: 13.5, color: T.ink, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{value}</div>
@@ -224,7 +255,7 @@ function AnamnesisTab({ child, documents, users, currentUser, onAddDocument, onU
                 <div style={{ fontSize: 11, fontWeight: 700, color: T.inkFaint, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>Consentimiento informado</div>
                 {anamnesisDoc.fields.firmaAcudienteImg ? (
                   <div>
-                    <img src={anamnesisDoc.fields.firmaAcudienteImg} alt="Firma del acudiente" style={{ maxWidth: 300, height: "auto", border: `1px solid ${T.border}`, borderRadius: 8, background: "#fff" }} />
+                    <img src={anamnesisDoc.fields.firmaAcudienteImg} alt={esAcud ? "Su firma" : "Firma del acudiente"} style={{ maxWidth: 300, height: "auto", border: `1px solid ${T.border}`, borderRadius: 8, background: "#fff" }} />
                     <div style={{ fontSize: 12, color: T.inkSoft, marginTop: 6 }}>
                       Firmado a distancia {anamnesisDoc.fields.fechaFirmaAcudiente ? `el ${fmtDateShort(anamnesisDoc.fields.fechaFirmaAcudiente.slice(0,10))}` : ""}
                     </div>
@@ -232,7 +263,7 @@ function AnamnesisTab({ child, documents, users, currentUser, onAddDocument, onU
                 ) : anamnesisDoc.fields.firmaAcudiente ? (
                   <div style={{ fontSize: 13.5, color: T.ink }}>Firmado en persona por: <b>{anamnesisDoc.fields.firmaAcudiente}</b> ({anamnesisDoc.fields.fechaFirma})</div>
                 ) : (
-                  <div style={{ fontSize: 13.5, color: T.inkFaint }}>Aún no se ha registrado la firma del acudiente.</div>
+                  <div style={{ fontSize: 13.5, color: T.inkFaint }}>Aún no se ha registrado {esAcud ? "su firma" : "la firma del acudiente"}.</div>
                 )}
                 {canEdit && !anamnesisDoc.fields.firmaAcudienteImg && (
                   <div style={{ marginTop: 10 }}>

@@ -77,8 +77,9 @@ function ChildProfile({ child, onOpenSessionForm, onViewReport, onGenerateFull, 
   const specialists = specialistIdsFromSessions.length > 0
     ? specialistIdsFromSessions.map(id => users.find(u => u.id === id)).filter(Boolean)
     : child.assignedSpecialists.map((id) => users.find((u) => u.id === id)).filter(Boolean);
-  // Un acudiente no tiene anamnesis del desarrollo, ni reporte para la familia
-  // — la familia es él —, ni reunión interdisciplinaria sobre su caso.
+  // Un acudiente no tiene reporte para la familia — la familia es él — ni
+  // reunión interdisciplinaria sobre su caso. Su anamnesis sí existe, con los
+  // campos de ANAMNESIS_ACUDIENTE en vez de los del desarrollo.
   const tabs = CHILD_TABS.filter((t) => permitidas.includes(t.id));
 
   return (
@@ -184,6 +185,7 @@ function ChildProfile({ child, onOpenSessionForm, onViewReport, onGenerateFull, 
         <AnamnesisTab
           child={child} documents={documents} users={users} currentUser={currentUser}
           onAddDocument={onAddDocument}
+          onUpdateDocument={onUpdateDocument}
         />
       )}
       {tab === "reportes" && (
