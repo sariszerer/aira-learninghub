@@ -188,30 +188,28 @@ export default function PatientsList({ onOpenChild }) {
       )}
 
       <div style={{ padding: paddingPagina(esMovil) }}>
-        {/* Las dos filas van rotuladas. Sin rótulo eran dos hileras de chips
-            pegadas que se leían como una sola, y no se veía que filtraban por
-            cosas distintas. */}
-        <FilaDeChips titulo="Especialidad">
-          {especialidades.map((e) => (
-            <Chip
-              key={e}
-              label={e}
-              selected={especialidad === e}
-              onClick={() => setEspecialidad(e)}
-            />
-          ))}
-        </FilaDeChips>
+        {/* El orden va en un select y a la derecha, no en una segunda hilera de
+            chips: cuatro chips más su rótulo empujaban la tabla casi media
+            pantalla hacia abajo, y a la tabla se viene a mirar filas.
+            Las especialidades siguen como chips porque son el filtro que se
+            alterna a cada rato y se quieren ver todas de un vistazo. */}
+        <div style={{
+          display: "flex", gap: 16, alignItems: "flex-end",
+          justifyContent: "space-between", flexWrap: "wrap", marginBottom: 14,
+        }}>
+          <FilaDeChips titulo="Especialidad">
+            {especialidades.map((e) => (
+              <Chip
+                key={e}
+                label={e}
+                selected={especialidad === e}
+                onClick={() => setEspecialidad(e)}
+              />
+            ))}
+          </FilaDeChips>
 
-        <FilaDeChips titulo="Ordenar por">
-          {ORDENES.map((o) => (
-            <Chip
-              key={o.label}
-              label={o.label}
-              selected={orden?.clave === o.clave && orden?.dir === o.dir}
-              onClick={() => setOrden(o)}
-            />
-          ))}
-        </FilaDeChips>
+          <SelectorDeOrden orden={orden} onOrden={setOrden} />
+        </div>
 
         <Table
           columnas={columnas}
@@ -230,7 +228,7 @@ export default function PatientsList({ onOpenChild }) {
 
 function FilaDeChips({ titulo, children }) {
   return (
-    <div style={{ marginBottom: 14 }}>
+    <div>
       <div style={{
         fontSize: 11.5, fontWeight: 700, color: T.inkFaint, marginBottom: 6,
         textTransform: "uppercase", letterSpacing: "0.05em",
@@ -238,6 +236,41 @@ function FilaDeChips({ titulo, children }) {
         {titulo}
       </div>
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>{children}</div>
+    </div>
+  );
+}
+
+// Ordenar por, como select.
+//
+// Pulsar un encabezado de la tabla también ordena, y puede dejar un orden que
+// no es ninguno de los atajos — "Edad, ascendente". El select lo dice en vez
+// de mostrar el primero de la lista, que sería mentir sobre cómo está
+// ordenada la tabla que se tiene delante.
+function SelectorDeOrden({ orden, onOrden }) {
+  const i = ORDENES.findIndex((o) => o.clave === orden?.clave && o.dir === orden?.dir);
+  return (
+    <div>
+      <div style={{
+        fontSize: 11.5, fontWeight: 700, color: T.inkFaint, marginBottom: 6,
+        textTransform: "uppercase", letterSpacing: "0.05em",
+      }}>
+        Ordenar por
+      </div>
+      <select
+        value={i}
+        onChange={(e) => {
+          const n = Number(e.target.value);
+          if (ORDENES[n]) onOrden(ORDENES[n]);
+        }}
+        style={{
+          padding: "9px 12px", borderRadius: 8, border: `1px solid ${T.border}`,
+          fontSize: 13.5, fontFamily: T.font, background: "#fff",
+          color: T.ink, outline: "none", cursor: "pointer",
+        }}
+      >
+        {ORDENES.map((o, n) => <option key={o.label} value={n}>{o.label}</option>)}
+        {i === -1 && <option value={-1}>Otro orden (columna)</option>}
+      </select>
     </div>
   );
 }
