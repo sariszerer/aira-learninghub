@@ -27,10 +27,29 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <!-- Como se ve el enlace al compartirlo por WhatsApp, que es como le llega
+         a una madre el link para firmar. Sin esto salia el nombre a secas y el
+         dominio de vercel, que no dice de que va ni tranquiliza a nadie.
+         Son estaticas: la pagina no se genera en servidor, asi que la vista
+         previa es la misma para cualquier enlace del sitio. Por eso la
+         descripcion sirve tanto a quien entra al sistema como a quien abre un
+         link de firma.
+         og:image absoluta a proposito: WhatsApp no resuelve las relativas. -->
+    <meta name="description" content="Acompañamiento terapéutico y de aprendizaje para niños y familias. Si recibiste este enlace del centro, ábrelo para firmar tu consentimiento informado." />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="AIRA Learning Hub" />
+    <meta property="og:title" content="AIRA Learning Hub" />
+    <meta property="og:description" content="Acompañamiento terapéutico y de aprendizaje para niños y familias. Si recibiste este enlace del centro, ábrelo para firmar tu consentimiento informado." />
+    <meta property="og:image" content="https://aira-learninghub.vercel.app/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Aira Learning Hub" />
+    <meta property="og:locale" content="es_ES" />
+    <meta name="twitter:card" content="summary_large_image" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <script type="module" crossorigin src="/assets/aira-app.js?v=1789088700"></script>
+    <script type="module" crossorigin src="/assets/aira-app.js?v=1789089432"></script>
   </head>
   <body>
     <div id="root"></div>

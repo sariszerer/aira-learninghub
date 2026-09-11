@@ -164,6 +164,21 @@ export function partesConsentimiento(texto, nombre) {
   )).filter((p) => p.t !== "");
 }
 
+// Los campos del documento con la firma del acudiente quitada.
+//
+// Hace falta porque firmar es un camino de una sola dirección: el token se
+// consume al usarlo, y sin esto una firma equivocada —o una de prueba— se
+// queda ahí para siempre sin forma de rehacerla desde la aplicación.
+//
+// Se van las dos maneras de firmar, la remota y la escrita en persona, y sus
+// fechas. La del profesional no: es otra persona la que firma, y quitar la del
+// acudiente no deshace que el profesional firmara. El texto congelado tampoco,
+// que es la constancia de qué se presentó.
+export function sinFirmaDelAcudiente(fields = {}) {
+  const { firmaAcudienteImg, fechaFirmaAcudiente, ...resto } = fields;
+  return { ...resto, firmaAcudiente: "", fechaFirma: "" };
+}
+
 // Cómo se rotula el campo de recomendaciones de una sesión.
 //
 // "Para casa / escuela" es el reparto de un niño: una parte va a los padres y

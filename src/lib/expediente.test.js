@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import fs from 'node:fs'
-import { esAcudiente, pestanasDe, tienePestana, pideDatosDeNino, textoDeVinculo, TIPOS, ANAMNESIS_ACUDIENTE, resumenAnamnesisAcudiente, textoRecomendaciones, textoConsentimiento, partesConsentimiento } from './expediente.js'
+import { esAcudiente, pestanasDe, tienePestana, pideDatosDeNino, textoDeVinculo, TIPOS, ANAMNESIS_ACUDIENTE, resumenAnamnesisAcudiente, textoRecomendaciones, textoConsentimiento, partesConsentimiento, sinFirmaDelAcudiente } from './expediente.js'
 
 const nino = { id: 'c1', name: 'Asher', lastName: 'Btesh', tipo: 'nino' }
 const madre = { id: 'a1', name: 'Sara', lastName: 'Levy', tipo: 'acudiente', acudienteDe: 'c1' }
@@ -261,5 +261,49 @@ describe('el consentimiento se escribe en un solo sitio', () => {
     const p = fs.readFileSync('src/consent/FirmaConsentimientoPublic.jsx', 'utf8')
     expect(p).toMatch(/doc\?\.fields\?\.consentTexto/)
     expect(p).toMatch(/doc\?\.fields\?\.consentTitulo/)
+  })
+})
+
+describe('sinFirmaDelAcudiente', () => {
+  const firmado = {
+    consentTitulo: 'Consentimiento informado Pautas de Crianza',
+    consentTexto: 'Acepto participar…',
+    consentToken: null,
+    firmaAcudienteImg: 'data:image/png;base64,AAAA',
+    fechaFirmaAcudiente: '2026-09-11 01:11:39+00',
+    firmaAcudiente: 'Sara Levy',
+    fechaFirma: '2026-09-11',
+    firmaProfesional: 'Sarita Szerer',
+    motivoConsulta: 'Límites en casa',
+  }
+
+  it('se lleva las dos formas de firmar y sus fechas', () => {
+    // La remota y la escrita en persona: si solo se fuera una, la ficha
+    // seguiría diciendo "firmado" por el otro camino.
+    const r = sinFirmaDelAcudiente(firmado)
+    expect(r.firmaAcudienteImg).toBeUndefined()
+    expect(r.fechaFirmaAcudiente).toBeUndefined()
+    expect(r.firmaAcudiente).toBe('')
+    expect(r.fechaFirma).toBe('')
+  })
+
+  it('no toca la firma del profesional', () => {
+    // Es otra persona la que firma. Quitar la del acudiente no deshace que el
+    // profesional firmara.
+    expect(sinFirmaDelAcudiente(firmado).firmaProfesional).toBe('Sarita Szerer')
+  })
+
+  it('conserva el texto congelado y el resto de la anamnesis', () => {
+    // El texto es la constancia de qué se presentó, y la anamnesis no tiene
+    // nada que ver con la firma.
+    const r = sinFirmaDelAcudiente(firmado)
+    expect(r.consentTitulo).toBe('Consentimiento informado Pautas de Crianza')
+    expect(r.consentTexto).toBe('Acepto participar…')
+    expect(r.motivoConsulta).toBe('Límites en casa')
+  })
+
+  it('sobre un documento sin firma no rompe nada', () => {
+    expect(sinFirmaDelAcudiente({})).toEqual({ firmaAcudiente: '', fechaFirma: '' })
+    expect(sinFirmaDelAcudiente()).toEqual({ firmaAcudiente: '', fechaFirma: '' })
   })
 })
