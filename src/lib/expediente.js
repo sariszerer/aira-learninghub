@@ -122,6 +122,29 @@ export function pideDatosDeNino(persona) {
   return !esAcudiente(persona);
 }
 
+// El consentimiento informado: cómo se titula y qué dice.
+//
+// Vive aquí porque se muestra en dos sitios —el formulario de la ficha y la
+// página de firma a distancia, que es otra pantalla y hasta otra sesión— y
+// tenerlo escrito dos veces ya se notó: la página de firma seguía pidiéndole a
+// una madre de Pautas de Crianza que autorizara "en calidad de representante
+// legal" a su propio expediente.
+//
+// El de Pautas de Crianza es el texto que dio la dirección, literal. No
+// autoriza la evaluación de un niño: acepta participar, y acota hasta dónde
+// llega la confidencialidad.
+//
+// `texto` en null quiere decir "lo arma quien lo pinta": el del niño lleva su
+// nombre en negrita en medio de la frase, y eso no cabe en una cadena.
+export function textoConsentimiento(persona) {
+  return esAcudiente(persona)
+    ? {
+        titulo: "Consentimiento informado Pautas de Crianza",
+        texto: "Acepto participar voluntariamente en un espacio confidencial de orientación, dirigido a fortalecer las prácticas de crianza y el bienestar familiar. Comprendo que la confidencialidad podrá limitarse únicamente ante situaciones de riesgo o por requerimiento legal.",
+      }
+    : { titulo: "Consentimiento informado", texto: null };
+}
+
 // Cómo se rotula el campo de recomendaciones de una sesión.
 //
 // "Para casa / escuela" es el reparto de un niño: una parte va a los padres y

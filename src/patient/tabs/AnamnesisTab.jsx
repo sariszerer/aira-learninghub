@@ -4,7 +4,7 @@ import { T, TODAY } from "../../theme.js";
 import { fmtDateShort } from "../../lib/format.js";
 import { can } from "../../permissions.js";
 import { Btn, Card } from "../../ui/index.js";
-import { esAcudiente, ANAMNESIS_ACUDIENTE, resumenAnamnesisAcudiente } from "../../lib/expediente.js";
+import { esAcudiente, ANAMNESIS_ACUDIENTE, resumenAnamnesisAcudiente, textoConsentimiento } from "../../lib/expediente.js";
 
 function AnamnesisTab({ child, documents, users, currentUser, onAddDocument, onUpdateDocument }) {
   const [showForm, setShowForm] = useState(false);
@@ -43,6 +43,7 @@ function AnamnesisTab({ child, documents, users, currentUser, onAddDocument, onU
   // La anamnesis de una madre no es la del desarrollo: otros campos, y un
   // consentimiento en primera persona. Qué campos, lo dice ANAMNESIS_ACUDIENTE.
   const esAcud = esAcudiente(child);
+  const consentimiento = textoConsentimiento(child);
   const [signLink, setSignLink] = useState(null);
   const [linkCopied, setLinkCopied] = useState(false);
 
@@ -59,7 +60,17 @@ function AnamnesisTab({ child, documents, users, currentUser, onAddDocument, onU
       date: anamnesisDoc?.date || TODAY,
       authorId: anamnesisDoc?.authorId || currentUser.id,
       notes: anamnesisDoc?.notes || "",
-      fields: { ...baseFields, isForm: true, consentToken: token, consentChildName: `${child.name} ${child.lastName}` },
+      // El titulo y el texto viajan con el documento, no los rehace la pagina
+      // de firma: esa pantalla solo tiene el documento —ni el paciente ni su
+      // tipo— y adivinarlos ahi fue lo que le hizo pedirle a una madre que
+      // autorizara como representante legal. Congelarlos ademas deja constancia
+      // de que se acepto exactamente, aunque el texto cambie despues.
+      fields: {
+        ...baseFields, isForm: true, consentToken: token,
+        consentChildName: `${child.name} ${child.lastName}`,
+        consentTitulo: consentimiento.titulo,
+        consentTexto: consentimiento.texto,
+      },
     };
     if (anamnesisDoc && onUpdateDocument) onUpdateDocument(doc);
     else if (onAddDocument) onAddDocument(doc);
@@ -188,11 +199,9 @@ function AnamnesisTab({ child, documents, users, currentUser, onAddDocument, onU
             </SeccionAnamnesis>
           </>)}
 
-          <SeccionAnamnesis title="Consentimiento informado">
+          <SeccionAnamnesis title={consentimiento.titulo}>
             <div style={{ fontSize: 13.5, color: T.inkSoft, lineHeight: 1.6, marginBottom: 12 }}>
-              {esAcud ? (<>
-                Yo, <b>{child.name} {child.lastName}</b>, autorizo mi participación en el acompañamiento de Pautas de Crianza.
-              </>) : (<>
+              {consentimiento.texto || (<>
                 Yo, en calidad de representante legal de <b>{child.name} {child.lastName}</b>, autorizo la evaluación y acompañamiento psicopedagógico/psicosocial.
               </>)}
             </div>
@@ -252,7 +261,7 @@ function AnamnesisTab({ child, documents, users, currentUser, onAddDocument, onU
               ))}
 
               <div style={{ marginTop: 10, paddingTop: 16, borderTop: `1px solid ${T.border}` }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: T.inkFaint, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>Consentimiento informado</div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: T.inkFaint, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>{consentimiento.titulo}</div>
                 {anamnesisDoc.fields.firmaAcudienteImg ? (
                   <div>
                     <img src={anamnesisDoc.fields.firmaAcudienteImg} alt={esAcud ? "Su firma" : "Firma del acudiente"} style={{ maxWidth: 300, height: "auto", border: `1px solid ${T.border}`, borderRadius: 8, background: "#fff" }} />

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { esAcudiente, pestanasDe, tienePestana, pideDatosDeNino, textoDeVinculo, TIPOS, ANAMNESIS_ACUDIENTE, resumenAnamnesisAcudiente, textoRecomendaciones } from './expediente.js'
+import fs from 'node:fs'
+import { esAcudiente, pestanasDe, tienePestana, pideDatosDeNino, textoDeVinculo, TIPOS, ANAMNESIS_ACUDIENTE, resumenAnamnesisAcudiente, textoRecomendaciones, textoConsentimiento } from './expediente.js'
 
 const nino = { id: 'c1', name: 'Asher', lastName: 'Btesh', tipo: 'nino' }
 const madre = { id: 'a1', name: 'Sara', lastName: 'Levy', tipo: 'acudiente', acudienteDe: 'c1' }
@@ -182,5 +183,48 @@ describe('textoRecomendaciones', () => {
 
   it('el niño conserva el reparto casa / escuela', () => {
     expect(textoRecomendaciones(nino).titulo).toBe('Recomendaciones para casa / escuela')
+  })
+})
+
+describe('textoConsentimiento', () => {
+  it('la madre acepta participar, no autoriza a un tercero', () => {
+    const c = textoConsentimiento(madre)
+    expect(c.titulo).toBe('Consentimiento informado Pautas de Crianza')
+    expect(c.texto).toContain('Acepto participar voluntariamente')
+    expect(c.texto).toContain('la confidencialidad podrá limitarse')
+  })
+
+  it('en el de la madre no aparece la fórmula de representante legal', () => {
+    // Era el fallo que se vio en la página de firma: a una madre de Pautas de
+    // Crianza se le pedía autorizar su propio expediente como si fuera de otro.
+    expect(textoConsentimiento(madre).texto).not.toContain('representante legal')
+  })
+
+  it('el del niño lo arma quien lo pinta, porque lleva su nombre en negrita', () => {
+    const c = textoConsentimiento(nino)
+    expect(c.titulo).toBe('Consentimiento informado')
+    expect(c.texto).toBe(null)
+  })
+})
+
+describe('el consentimiento se escribe en un solo sitio', () => {
+  it('ninguna pantalla repite el texto de Pautas de Crianza', () => {
+    // Tenerlo dos veces fue justo el fallo: la ficha decía una cosa y la
+    // página de firma a distancia otra. Si hace falta cambiarlo, se cambia en
+    // expediente.js y las dos pantallas lo siguen.
+    for (const f of [
+      'src/patient/tabs/AnamnesisTab.jsx',
+      'src/consent/FirmaConsentimientoPublic.jsx',
+    ]) {
+      expect(fs.readFileSync(f, 'utf8'), f).not.toContain('Acepto participar voluntariamente')
+    }
+  })
+
+  it('la página de firma toma el texto del documento, no lo inventa', () => {
+    // Solo tiene el documento: ni el paciente ni su tipo. Si lo decidiera
+    // ella, volvería a equivocarse con las madres.
+    const p = fs.readFileSync('src/consent/FirmaConsentimientoPublic.jsx', 'utf8')
+    expect(p).toMatch(/doc\?\.fields\?\.consentTexto/)
+    expect(p).toMatch(/doc\?\.fields\?\.consentTitulo/)
   })
 })
