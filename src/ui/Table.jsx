@@ -21,9 +21,29 @@ function celdaDe(c, f) {
   return f[c.clave];
 }
 
-export default function Table({ columnas, filas, onFila, ordenInicial, vacio = "Sin resultados." }) {
+// El orden puede llevarlo la tabla o la pantalla. Si llega `orden`, manda la
+// pantalla: hay listados que ofrecen atajos de orden fuera de la tabla — "los
+// creados mas recientes" — y con dos estados se desincronizan, de modo que el
+// atajo marcado y la flecha del encabezado acaban diciendo cosas distintas.
+// Que orden sigue al pulsar el encabezado `clave`.
+//
+// Tres clics sobre la misma columna: ascendente, descendente, y de vuelta al
+// orden original. Pulsar otra columna empieza su ciclo de cero.
+export function siguienteOrden(orden, clave) {
+  if (!orden || orden.clave !== clave) return { clave, dir: "asc" };
+  if (orden.dir === "asc") return { clave, dir: "desc" };
+  return null;
+}
+
+export default function Table({ columnas, filas, onFila, ordenInicial, orden: ordenDeFuera, onOrden, vacio = "Sin resultados." }) {
   const esMovil = useEsMovil();
-  const [orden, setOrden] = useState(ordenInicial || null);
+  const [ordenPropio, setOrdenPropio] = useState(ordenInicial || null);
+  const controlada = ordenDeFuera !== undefined;
+  const orden = controlada ? ordenDeFuera : ordenPropio;
+  const aplicarOrden = (o) => {
+    if (!controlada) setOrdenPropio(o);
+    if (onOrden) onOrden(o);
+  };
 
   const ordenadas = useMemo(() => {
     if (!orden) return filas;
@@ -42,13 +62,7 @@ export default function Table({ columnas, filas, onFila, ordenInicial, vacio = "
     });
   }, [filas, orden, columnas]);
 
-  const alternar = (clave) => {
-    setOrden((o) => {
-      if (!o || o.clave !== clave) return { clave, dir: "asc" };
-      if (o.dir === "asc") return { clave, dir: "desc" };
-      return null;                   // tercer clic: vuelve al orden original
-    });
-  };
+  const alternar = (clave) => aplicarOrden(siguienteOrden(orden, clave));
 
   // En movil se dejan solo las columnas esenciales y la fila se apila.
   //

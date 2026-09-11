@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import fs from 'node:fs'
+import { siguienteOrden } from './Table.jsx'
 
 // La tabla en pantalla estrecha.
 //
@@ -45,5 +46,49 @@ describe('columnas de acción declaradas', () => {
     for (const f of ['src/team/SpecialistsList.jsx', 'src/team/RolesList.jsx']) {
       expect(fs.readFileSync(f, 'utf8'), f).toMatch(/accion: true/)
     }
+  })
+})
+
+describe('siguienteOrden', () => {
+  it('tres clics en la misma columna: asc, desc, y sin orden', () => {
+    const uno = siguienteOrden(null, 'nombre')
+    expect(uno).toEqual({ clave: 'nombre', dir: 'asc' })
+    const dos = siguienteOrden(uno, 'nombre')
+    expect(dos).toEqual({ clave: 'nombre', dir: 'desc' })
+    expect(siguienteOrden(dos, 'nombre')).toBe(null)
+  })
+
+  it('pulsar otra columna empieza su ciclo de cero', () => {
+    // Y no hereda el sentido de la anterior: venir de "desc" en Nombre no
+    // puede dejar Sesiones ordenada al revés de lo que muestra su flecha.
+    const enNombre = { clave: 'nombre', dir: 'desc' }
+    expect(siguienteOrden(enNombre, 'sesiones')).toEqual({ clave: 'sesiones', dir: 'asc' })
+  })
+})
+
+describe('orden controlado desde la pantalla', () => {
+  it('si llega `orden`, la tabla no guarda uno propio', () => {
+    // Con dos estados, el atajo marcado y la flecha del encabezado acaban
+    // diciendo cosas distintas.
+    expect(src).toMatch(/const controlada = ordenDeFuera !== undefined/)
+    expect(src).toMatch(/const orden = controlada \? ordenDeFuera : ordenPropio/)
+    expect(src).toMatch(/if \(!controlada\) setOrdenPropio\(o\)/)
+  })
+})
+
+describe('atajos de orden de la lista de pacientes', () => {
+  const fuente = fs.readFileSync('src/patients/PatientsList.jsx', 'utf8')
+
+  it('cada atajo ordena por una columna que existe en la tabla', () => {
+    // Un atajo que apunta a una clave inexistente no ordena nada y falla en
+    // silencio: la tabla devuelve las filas tal cual.
+    const claves = [...fuente.matchAll(/clave: "(\w+)", dir:/g)].map((m) => m[1])
+    const columnas = [...fuente.matchAll(/clave: "(\w+)", titulo:/g)].map((m) => m[1])
+    expect(claves.length).toBeGreaterThan(0)
+    for (const c of claves) expect(columnas, c).toContain(c)
+  })
+
+  it('ofrece el orden por fecha de alta, que es el que no había', () => {
+    expect(fuente).toMatch(/label: "Creados más recientes", clave: "admissionDate", dir: "desc"/)
   })
 })
