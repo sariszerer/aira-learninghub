@@ -91,4 +91,12 @@ describe('atajos de orden de la lista de pacientes', () => {
   it('ofrece el orden por fecha de alta, que es el que no había', () => {
     expect(fuente).toMatch(/label: "Creados más recientes", clave: "admissionDate", dir: "desc"/)
   })
+
+  it('el select no miente cuando se ordena pulsando un encabezado', () => {
+    // Pulsar "Edad" deja un orden que no es ninguno de los atajos. Sin este
+    // caso, el select mostraría el primero de la lista y diría que la tabla
+    // está ordenada por nombre teniéndola delante ordenada por edad.
+    expect(fuente).toMatch(/const i = ORDENES\.findIndex/)
+    expect(fuente).toMatch(/i === -1 && <option/)
+  })
 })
