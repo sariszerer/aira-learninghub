@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { T, CHILD_AVATAR_COLORS, TODAY, inputStyle } from "../theme.js";
 import { slugifyName } from "../lib/format.js";
-import { ROLES } from "../permissions.js";
+import { atiendePacientes } from "../permissions.js";
 import { Btn, Chip, Modal, ModalHeader } from "../ui/index.js";
 import { avisar } from "../store/avisosStore.js";
 import { queFalta } from "../lib/validacion.js";
@@ -36,7 +36,7 @@ function AddPatientWizard({ users, currentUser, ninos = [], onClose, onCreate })
 
   // Step 3 — especialistas
   const [assignedSpecialists, setAssignedSpecialists] = useState([]);
-  const specialists = users.filter((u) => ROLES[u.role]?.esClinico);
+  const specialists = users.filter((u) => atiendePacientes(u));
   const toggleSpecialist = (id) => {
     setAssignedSpecialists((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
   };

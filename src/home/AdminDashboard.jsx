@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { ChevronRight, Plus, Clock, AlertTriangle, TrendingUp, Users, User, Calendar } from "lucide-react";
 import { T, TODAY } from "../theme.js";
 import { sessionsSinceLastParentReport } from "../lib/reports.js";
-import { ROLES } from "../permissions.js";
+import { atiendePacientes } from "../permissions.js";
 import { Avatar, Btn, Card, Eyebrow, List, ListRow, StatStrip } from "../ui/index.js";
 import CalendarAgenda from "./CalendarAgenda.jsx";
 import { useDataStore } from "../store/dataStore.js";
@@ -20,7 +20,7 @@ function AdminDashboard({ onOpenChild }) {
   const onMarkSeen = useDataStore((s) => s.markActivitySeen);
   const currentUser = useAuthStore((s) => s.currentUser);
   const [alertsOpen, setAlertsOpen] = useState(true);
-  const specialists = users.filter((u) => ROLES[u.role]?.esClinico);
+  const specialists = users.filter((u) => atiendePacientes(u));
   const today = TODAY;
   const sessionsToday = sessions.filter((s) => s.date === today).length;
   const childrenNoRecentSession = children.filter((c) => {

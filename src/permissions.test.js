@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { PERMISSIONS, can, visibleChildren, canSeeChild, ROLES, buildUser } from './permissions.js'
+import { PERMISSIONS, can, visibleChildren, canSeeChild, ROLES, buildUser, atiendePacientes } from './permissions.js'
 
 const usuario = (perms, extra = {}) => ({
   id: 'u-1', permissions: new Set(perms), scope: 'asignados', assignedChildId: null, ...extra,
@@ -237,7 +237,7 @@ describe('ROLES — matriz semilla', () => {
     expect(ROLES.shadow.scope).toBe('un_nino')
   })
 
-  it('solo especialista y dirección clínica son clínicos (aparecen en selectores de terapeuta)', () => {
+  it('solo especialista y dirección clínica son roles clínicos — quién aparece en los selectores lo decide atiendePacientes', () => {
     expect(ROLES.specialist.esClinico).toBe(true)
     expect(ROLES.clinical_director.esClinico).toBe(true)
     expect(ROLES.admin.esClinico).toBe(false)
@@ -456,5 +456,33 @@ describe('editar el expediente no es asignar quién lo ve', () => {
   it('la tutora no edita ni asigna', () => {
     expect(can(con('shadow'), 'patient:edit')).toBe(false)
     expect(can(con('shadow'), 'patient:assign')).toBe(false)
+  })
+})
+
+describe('atiendePacientes — quién puede asignarse a un expediente', () => {
+  const persona = (role, specialty = null) => ({ id: `u-${role}`, role, specialty })
+
+  it('los roles clínicos atienden', () => {
+    expect(atiendePacientes(persona('specialist', 'Fonoaudiología'))).toBe(true)
+    expect(atiendePacientes(persona('clinical_director', 'Psicopedagogía'))).toBe(true)
+  })
+
+  it('la directora atiende: es admin, pero tiene especialidad', () => {
+    expect(atiendePacientes(persona('admin', 'Pautas de Crianza'))).toBe(true)
+  })
+
+  it('un admin sin especialidad no atiende a nadie', () => {
+    expect(atiendePacientes(persona('admin'))).toBe(false)
+    expect(atiendePacientes(persona('admin', '   '))).toBe(false)
+  })
+
+  it('la tutora no atiende, ni con especialidad', () => {
+    expect(atiendePacientes(persona('shadow', 'Tutoría'))).toBe(false)
+  })
+
+  it('un rol desconocido o un usuario ausente falla cerrado', () => {
+    expect(atiendePacientes(persona('inventado', 'Algo'))).toBe(false)
+    expect(atiendePacientes(null)).toBe(false)
+    expect(atiendePacientes(undefined)).toBe(false)
   })
 })
