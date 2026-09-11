@@ -4,7 +4,7 @@ import { T, TODAY } from "../../theme.js";
 import { fmtDateShort } from "../../lib/format.js";
 import { can } from "../../permissions.js";
 import { Btn, Card } from "../../ui/index.js";
-import { esAcudiente, ANAMNESIS_ACUDIENTE, resumenAnamnesisAcudiente, textoConsentimiento, partesConsentimiento } from "../../lib/expediente.js";
+import { esAcudiente, ANAMNESIS_ACUDIENTE, resumenAnamnesisAcudiente, textoConsentimiento, partesConsentimiento, sinFirmaDelAcudiente } from "../../lib/expediente.js";
 
 function AnamnesisTab({ child, documents, users, currentUser, onAddDocument, onUpdateDocument }) {
   const [showForm, setShowForm] = useState(false);
@@ -46,6 +46,19 @@ function AnamnesisTab({ child, documents, users, currentUser, onAddDocument, onU
   const consentimiento = textoConsentimiento(child);
   const [signLink, setSignLink] = useState(null);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [quitandoFirma, setQuitandoFirma] = useState(false);
+
+  const hayFirma = !!(anamnesisDoc?.fields?.firmaAcudienteImg || anamnesisDoc?.fields?.firmaAcudiente);
+
+  // Al quedar sin firma vuelve a aparecer "Generar link para firma", que es lo
+  // que se necesita para volver a pedirla. Qué campos se van, lo decide
+  // sinFirmaDelAcudiente.
+  const quitarFirma = () => {
+    if (!anamnesisDoc || !onUpdateDocument) return;
+    onUpdateDocument({ ...anamnesisDoc, fields: sinFirmaDelAcudiente(anamnesisDoc.fields) });
+    setQuitandoFirma(false);
+    setSignLink(null);
+  };
 
   const generateSignLink = () => {
     const token = (typeof crypto !== "undefined" && crypto.randomUUID)
@@ -273,6 +286,28 @@ function AnamnesisTab({ child, documents, users, currentUser, onAddDocument, onU
                 ) : (
                   <div style={{ fontSize: 13.5, color: T.inkFaint }}>Aún no se ha registrado {esAcud ? "su firma" : "la firma del acudiente"}.</div>
                 )}
+                {canEdit && hayFirma && (
+                  <div style={{ marginTop: 12 }}>
+                    {quitandoFirma ? (
+                      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                        <span style={{ fontSize: 12.5, color: T.inkSoft }}>
+                          Se borra la firma registrada y habrá que volver a pedirla.
+                        </span>
+                        <Btn variant="ghost" size="sm" onClick={() => setQuitandoFirma(false)}>Cancelar</Btn>
+                        <Btn variant="danger" size="sm" onClick={quitarFirma}>Sí, quitar</Btn>
+                      </div>
+                    ) : (
+                      // Con confirmación, aunque sea un clic más: borra un
+                      // consentimiento firmado, y no hay papelera donde
+                      // buscarlo después.
+                      <Btn variant="ghost" size="sm" onClick={() => setQuitandoFirma(true)}>Quitar firma</Btn>
+                    )}
+                  </div>
+                )}
+                {/* Se ofrece mientras no haya firma remota, no mientras no haya
+                    ninguna: con una firma escrita en persona todavía puede
+                    hacer falta el link, y así era antes de que existiera
+                    "Quitar firma". */}
                 {canEdit && !anamnesisDoc.fields.firmaAcudienteImg && (
                   <div style={{ marginTop: 10 }}>
                     <Btn variant="ghost" size="sm" onClick={generateSignLink}>Generar link para firma</Btn>
