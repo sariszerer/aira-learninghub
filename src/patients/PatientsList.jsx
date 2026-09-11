@@ -11,6 +11,22 @@ import AddPatientWizard from "./AddPatientWizard.jsx";
 import PageHeader from "../shell/PageHeader.jsx";
 import { useEsMovil, paddingPagina } from "../lib/pantalla.js";
 
+// Los atajos de orden que se ofrecen sobre la lista.
+//
+// La tabla ya ordenaba al pulsar un encabezado, pero eso no basta: alfabetico
+// es lo unico que se ve al entrar, y el paciente que acabas de dar de alta cae
+// en la M sin nada que lo distinga. Cada atajo dice con que columna y en que
+// sentido, asi que la flecha del encabezado y el atajo marcado coinciden
+// siempre — la tabla recibe el orden, no lo inventa.
+export const ORDENES = [
+  { label: "Nombre", clave: "nombre", dir: "asc" },
+  { label: "Creados más recientes", clave: "admissionDate", dir: "desc" },
+  { label: "Más sesiones", clave: "sesiones", dir: "desc" },
+  { label: "Última sesión", clave: "ultima", dir: "desc" },
+];
+
+const ORDEN_INICIAL = ORDENES[0];
+
 // Listado de pacientes.
 //
 // El alcance lo resuelve visibleChildren y no esta pantalla: un especialista ve
@@ -29,6 +45,7 @@ export default function PatientsList({ onOpenChild }) {
 
   const [query, setQuery] = useState("");
   const [especialidad, setEspecialidad] = useState("Todas");
+  const [orden, setOrden] = useState(ORDEN_INICIAL);
 
   // Dar de alta se hace desde aqui, que es donde se viene a buscar un paciente
   // y donde se descubre que no esta. Estaba montado en el panel de inicio y sin
@@ -127,6 +144,17 @@ export default function PatientsList({ onOpenChild }) {
         </span>
       ),
     },
+    // Se muestra porque si no, "Creados más recientes" ordena por un dato que
+    // no está en pantalla y no hay forma de comprobar que el orden es el que
+    // dice ser.
+    {
+      clave: "admissionDate", titulo: "Ingreso", ancho: "120px", alinear: "derecha",
+      celda: (c) => (
+        <span style={{ color: c.admissionDate ? T.inkSoft : T.inkFaint, fontSize: 12.5 }}>
+          {c.admissionDate ? fmtDateShort(c.admissionDate) : "—"}
+        </span>
+      ),
+    },
   ];
 
   const titulo = estado === "activo" ? "Pacientes activos"
@@ -160,7 +188,10 @@ export default function PatientsList({ onOpenChild }) {
       )}
 
       <div style={{ padding: paddingPagina(esMovil) }}>
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
+        {/* Las dos filas van rotuladas. Sin rótulo eran dos hileras de chips
+            pegadas que se leían como una sola, y no se veía que filtraban por
+            cosas distintas. */}
+        <FilaDeChips titulo="Especialidad">
           {especialidades.map((e) => (
             <Chip
               key={e}
@@ -169,18 +200,44 @@ export default function PatientsList({ onOpenChild }) {
               onClick={() => setEspecialidad(e)}
             />
           ))}
-        </div>
+        </FilaDeChips>
+
+        <FilaDeChips titulo="Ordenar por">
+          {ORDENES.map((o) => (
+            <Chip
+              key={o.label}
+              label={o.label}
+              selected={orden?.clave === o.clave && orden?.dir === o.dir}
+              onClick={() => setOrden(o)}
+            />
+          ))}
+        </FilaDeChips>
 
         <Table
           columnas={columnas}
           filas={filtradas}
           onFila={(c) => onOpenChild(c.id)}
-          ordenInicial={{ clave: "nombre", dir: "asc" }}
+          orden={orden}
+          onOrden={setOrden}
           vacio={alcance.length === 0
             ? "No tienes pacientes asignados."
             : "Ningún paciente coincide con la búsqueda."}
         />
       </div>
     </>
+  );
+}
+
+function FilaDeChips({ titulo, children }) {
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <div style={{
+        fontSize: 11.5, fontWeight: 700, color: T.inkFaint, marginBottom: 6,
+        textTransform: "uppercase", letterSpacing: "0.05em",
+      }}>
+        {titulo}
+      </div>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>{children}</div>
+    </div>
   );
 }
