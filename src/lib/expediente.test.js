@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import fs from 'node:fs'
-import { esAcudiente, pestanasDe, tienePestana, pideDatosDeNino, textoDeVinculo, TIPOS, ANAMNESIS_ACUDIENTE, resumenAnamnesisAcudiente, textoRecomendaciones, textoConsentimiento } from './expediente.js'
+import { esAcudiente, pestanasDe, tienePestana, pideDatosDeNino, textoDeVinculo, TIPOS, ANAMNESIS_ACUDIENTE, resumenAnamnesisAcudiente, textoRecomendaciones, textoConsentimiento, partesConsentimiento } from './expediente.js'
 
 const nino = { id: 'c1', name: 'Asher', lastName: 'Btesh', tipo: 'nino' }
 const madre = { id: 'a1', name: 'Sara', lastName: 'Levy', tipo: 'acudiente', acudienteDe: 'c1' }
@@ -200,10 +200,43 @@ describe('textoConsentimiento', () => {
     expect(textoConsentimiento(madre).texto).not.toContain('representante legal')
   })
 
-  it('el del niño lo arma quien lo pinta, porque lleva su nombre en negrita', () => {
+  it('el del niño autoriza evaluación y/o acompañamiento, no ambos por fuerza', () => {
+    // "y/o" es deliberado: no todos los pacientes reciben los dos servicios.
     const c = textoConsentimiento(nino)
     expect(c.titulo).toBe('Consentimiento informado')
-    expect(c.texto).toBe(null)
+    expect(c.texto).toContain('evaluación y/o acompañamiento terapéutico')
+    expect(c.texto).toContain('{nombre}')
+  })
+
+  it('los dos textos acotan la confidencialidad', () => {
+    // Riesgo o requerimiento legal: es el límite que la dirección quiso
+    // dejar dicho en ambos, y es lo que hace que el consentimiento sea
+    // informado y no una firma en blanco.
+    for (const p of [nino, madre]) {
+      expect(textoConsentimiento(p).texto, p.tipo).toMatch(/riesgo/)
+      expect(textoConsentimiento(p).texto, p.tipo).toMatch(/requerimiento legal/)
+    }
+  })
+})
+
+describe('partesConsentimiento', () => {
+  it('pone el nombre en negrita donde va {nombre}', () => {
+    const partes = partesConsentimiento(textoConsentimiento(nino).texto, 'Asher Btesh')
+    expect(partes).toHaveLength(3)
+    expect(partes[0].t).toBe('Yo, en calidad de representante legal de ')
+    expect(partes[1]).toEqual({ t: 'Asher Btesh', negrita: true })
+    expect(partes[2].t).toMatch(/^, autorizo su evaluación/)
+  })
+
+  it('el de la madre no lleva hueco, y sale de una pieza', () => {
+    const partes = partesConsentimiento(textoConsentimiento(madre).texto, 'Sara Levy')
+    expect(partes).toHaveLength(1)
+    expect(partes[0].negrita).toBeUndefined()
+  })
+
+  it('sin texto no pinta nada, y sin nombre no deja un hueco raro', () => {
+    expect(partesConsentimiento(null, 'Sara')).toEqual([])
+    expect(partesConsentimiento('Hola {nombre}', '')).toEqual([{ t: 'Hola ' }])
   })
 })
 
@@ -216,7 +249,9 @@ describe('el consentimiento se escribe en un solo sitio', () => {
       'src/patient/tabs/AnamnesisTab.jsx',
       'src/consent/FirmaConsentimientoPublic.jsx',
     ]) {
-      expect(fs.readFileSync(f, 'utf8'), f).not.toContain('Acepto participar voluntariamente')
+      const src = fs.readFileSync(f, 'utf8')
+      expect(src, f).not.toContain('Acepto participar voluntariamente')
+      expect(src, f).not.toContain('en calidad de representante legal')
     }
   })
 
