@@ -41,13 +41,19 @@ function FirmaConsentimientoPublic({ token }) {
   };
 
   const childName = doc?.fields?.consentChildName || doc?.fields?.nombre || "";
+  // El título y el texto vienen dentro del documento: esta pantalla no tiene
+  // el paciente ni su tipo, así que no puede decidirlos. Los links generados
+  // antes de que se guardaran no los traen, y para esos vale el de siempre —
+  // eran todos de un niño, porque una madre no tenía anamnesis todavía.
+  const titulo = doc?.fields?.consentTitulo || "Consentimiento informado";
+  const texto = doc?.fields?.consentTexto || null;
 
   return (
     <div style={{ minHeight: "100vh", background: "#FFFBF2", fontFamily: T.font, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
       <style>{FONTS}</style>
       <div style={{ background: "#fff", borderRadius: 20, maxWidth: 560, width: "100%", padding: "28px 26px", boxShadow: "0 20px 60px rgba(21,47,54,0.15)", boxSizing: "border-box" }}>
         <div style={{ fontFamily: T.font, fontSize: 24, fontWeight: 500, color: "#175FAF", marginBottom: 4 }}>AIRA Learning Hub</div>
-        <div style={{ fontSize: 13.5, color: T.inkSoft, marginBottom: 20 }}>Consentimiento informado</div>
+        <div style={{ fontSize: 13.5, color: T.inkSoft, marginBottom: 20 }}>{titulo}</div>
 
         {status === "loading" && <div style={{ fontSize: 14, color: T.inkSoft }}>Cargando…</div>}
 
@@ -70,10 +76,15 @@ function FirmaConsentimientoPublic({ token }) {
         {(status === "ready" || status === "saving") && doc && (
           <div>
             <div style={{ fontSize: 13.5, color: T.inkSoft, lineHeight: 1.6, marginBottom: 18 }}>
-              Yo, en calidad de representante legal de <b>{childName}</b>, autorizo la evaluación y acompañamiento psicopedagógico/psicosocial en AIRA Learning Hub.
+              {texto || (<>
+                Yo, en calidad de representante legal de <b>{childName}</b>, autorizo la evaluación y acompañamiento psicopedagógico/psicosocial en AIRA Learning Hub.
+              </>)}
             </div>
+            {/* "Tu firma" y no "Firma del acudiente": quien abre este link es
+                siempre quien va a firmar, sea la madre de un paciente o una
+                madre que es la paciente. */}
             <div style={{ fontSize: 12, fontWeight: 700, color: T.inkFaint, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 8 }}>
-              Firma del acudiente (dibuja con el dedo o el mouse)
+              Tu firma (dibuja con el dedo o el mouse)
             </div>
             <SignaturePad onChange={setSignatureData} />
             <div style={{ marginTop: 18, display: "flex", justifyContent: "flex-end" }}>
