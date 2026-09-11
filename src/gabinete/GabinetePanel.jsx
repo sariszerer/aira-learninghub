@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { GraduationCap, HeartHandshake, Plus, School, Users } from "lucide-react";
 import { T } from "../theme.js";
 import { fmtDate, contar } from "../lib/format.js";
-import { can, ROLES } from "../permissions.js";
+import { can, atiendePacientes } from "../permissions.js";
 import { Btn, Card, Chip } from "../ui/index.js";
 import { useDataStore } from "../store/dataStore.js";
 import { useAuthStore } from "../store/authStore.js";
@@ -33,7 +33,7 @@ function GabinetePanel() {
   };
   const [newSchool, setNewSchool] = useState(VACIA);
 
-  const allSpecialists = users.filter((u) => ROLES[u.role]?.esClinico);
+  const allSpecialists = users.filter((u) => atiendePacientes(u));
   const handleSaveSchool = async () => {
     const falta = queFalta([[!!newSchool.name.trim(), "el nombre del colegio"]]);
     if (falta) { avisar.error(falta); return; }

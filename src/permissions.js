@@ -249,3 +249,22 @@ export function buildUser(dbUser, filaRol) {
     color: rol ? rol.color : null,
   }
 }
+
+// ¿Esta persona atiende pacientes? Es decir: ¿tiene sentido ofrecerla para
+// asignar a un expediente, y contarle carga en los paneles?
+//
+// No es lo mismo que "su rol es clinico". El rol admin es Administracion y
+// es_clinico: false a proposito — pero la directora SI atiende: tiene
+// especialidad (Pautas de Crianza) y 19 sesiones impartidas. Con el filtro
+// es_clinico a secas nunca aparecia en la lista de asignacion, asi que no se
+// podia asignar a si misma los expedientes que ella misma lleva, y su carga
+// era invisible en el panel.
+//
+// La regla vive aqui, en una sola funcion, y no como `u.role === 'admin'`
+// repetido en cada pantalla. Un admin sin especialidad (la cuenta de prueba)
+// no atiende a nadie y se queda fuera.
+export function atiendePacientes(u) {
+  if (!u) return false
+  if (ROLES[u.role]?.esClinico) return true
+  return u.role === 'admin' && !!(u.specialty || '').trim()
+}

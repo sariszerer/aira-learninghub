@@ -3,7 +3,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft, FileText, GraduationCap, Plus, Trash2, Users } from "lucide-react";
 import { T, TODAY } from "../theme.js";
 import { fmtDate, contar } from "../lib/format.js";
-import { can, ROLES } from "../permissions.js";
+import { can, atiendePacientes } from "../permissions.js";
 import { Avatar, Btn, Card, Eyebrow, IconBtn, Tabs } from "../ui/index.js";
 import { useDataStore } from "../store/dataStore.js";
 import { useEsMovil, paddingPagina } from "../lib/pantalla.js";
@@ -73,7 +73,7 @@ export default function EscuelaDetalle({ onAddSession }) {
 
   const school = schools.find((s) => s.id === schoolId) || null;
 
-  const allSpecialists = users.filter((u) => ROLES[u.role]?.esClinico);
+  const allSpecialists = users.filter((u) => atiendePacientes(u));
   const emptySession = () => ({ specialistId: "", specialty: "", date: TODAY, participants: "", duration: 60, area: "", notes: "" });
 
   const handleSaveSession = () => {

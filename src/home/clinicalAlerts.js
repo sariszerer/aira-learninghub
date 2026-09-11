@@ -3,11 +3,11 @@
 // mal, no dibujarlo — y porque asi se puede probar sin montar React.
 
 import { TODAY } from "../theme.js";
-import { ROLES } from "../permissions.js";
+import { atiendePacientes } from "../permissions.js";
 import { sessionsSinceLastParentReport } from "../lib/reports.js";
 
 export function computeClinicalAlerts({ children, users, sessions, objectives, tutors, tutorReports, parentReports }) {
-  const allSpecialistsAndDir = users.filter((u) => ROLES[u.role]?.esClinico);
+  const allSpecialistsAndDir = users.filter((u) => atiendePacientes(u));
 
   // ── Alert calculations ─────────────────────────────────────────────────────
 
