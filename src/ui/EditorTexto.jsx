@@ -111,7 +111,11 @@ export default function EditorTexto({ valor, onChange, placeholder, filas = 4, i
           style={{
             minHeight: filas * 23, padding: "9px 11px", outline: "none",
             fontFamily: T.font, fontSize: 14, lineHeight: 1.6, color: T.ink,
-            overflowY: "auto", maxHeight: 320, wordBreak: "break-word",
+            // El tope sigue al tamano pedido. Con un 320 fijo, un campo de
+            // catorce filas se quedaba en seis y abria su propia barra de
+            // desplazamiento dentro de la del formulario.
+            overflowY: "auto", maxHeight: Math.max(320, filas * 23 + 60),
+            wordBreak: "break-word",
           }}
         />
       </div>
