@@ -79,6 +79,19 @@ describe('editar una minuta ya registrada', () => {
     expect([...c.querySelectorAll('[contenteditable="true"]')][0].textContent).toBe('')
   })
 
+  it('se reparte en dos columnas y deja sitio al texto', () => {
+    // A una sola columna de 560px, el resumen de una reunión de colegio
+    // quedaba en una ventanilla de seis líneas con su propia barra de
+    // desplazamiento, dentro de la del formulario.
+    const c = pintar(<AddMeetingModal minuta={MINUTA} onClose={() => {}} onSave={() => {}} />)
+    const rejilla = [...c.querySelectorAll('div')]
+      .find((d) => d.style.display === 'grid' && d.style.gridTemplateColumns.includes('minmax'))
+    expect(rejilla).toBeTruthy()
+    expect(rejilla.style.gridTemplateColumns.match(/minmax/g)).toHaveLength(2)
+    // Y los participantes caben: ocho es lo normal en una reunión de colegio.
+    expect(Number(c.querySelector('textarea').getAttribute('rows'))).toBeGreaterThanOrEqual(8)
+  })
+
   it('el resumen y los acuerdos traen negrita, cursiva y subrayado', () => {
     const c = pintar(<AddMeetingModal onClose={() => {}} onSave={() => {}} />)
     for (const titulo of ['Negrita (Ctrl+B)', 'Cursiva (Ctrl+I)', 'Subrayado (Ctrl+U)']) {
