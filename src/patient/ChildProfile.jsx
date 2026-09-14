@@ -40,6 +40,7 @@ function ChildProfile({ child, onOpenSessionForm, onViewReport, onGenerateFull, 
   const documents = useDataStore((s) => s.documents);
   const meetings = useDataStore((s) => s.meetings);
   const parentReports = useDataStore((s) => s.parentReports);
+  const evolutionReports = useDataStore((s) => s.evolutionReports);
   const currentUser = useAuthStore((s) => s.currentUser);
   const onUpdateObjective = useDataStore((s) => s.updateObjective);
   const onAddObjective = useDataStore((s) => s.addObjective);
@@ -195,6 +196,7 @@ function ChildProfile({ child, onOpenSessionForm, onViewReport, onGenerateFull, 
       {tab === "reportes" && (
         <ReportesTab
           child={child} documents={documents} users={users} sessions={sessions} parentReports={parentReports}
+          evolutionReports={evolutionReports}
           currentUser={currentUser} onUpdateDocument={onUpdateDocument}
           onAddDocument={onAddDocument} onGenerateFull={onGenerateFull} onGenerateEvolution={onGenerateEvolution}
           onGenerateParentReport={onGenerateParentReport}

@@ -5,19 +5,26 @@ import { DOC_TYPES } from "../../constants.js";
 import { sessionsSinceLastParentReport } from "../../lib/reports.js";
 import { Eyebrow, ReportCard, Tabs } from "../../ui/index.js";
 import DocumentsSection from "../DocumentsSection.jsx";
+import { EvolucionesGuardadas, FamiliaGuardados } from "../ReportesGenerados.jsx";
+import ReporteEvolucionGuardado from "../../reports/ReporteEvolucionGuardado.jsx";
 import AddDocumentModal from "../modals/AddDocumentModal.jsx";
 import { can } from "../../permissions.js";
 
-function ReportesTab({ child, documents, users, sessions, parentReports, currentUser, onAddDocument, onUpdateDocument, onGenerateFull, onGenerateEvolution, onGenerateParentReport }) {
+function ReportesTab({ child, documents, users, sessions, parentReports, evolutionReports = [], currentUser, onAddDocument, onUpdateDocument, onGenerateFull, onGenerateEvolution, onGenerateParentReport }) {
   const TIPOS = Object.keys(DOC_TYPES).filter((t) => t !== "anamnesis");
   const [tipoActivo, setTipoActivo] = useState(TIPOS[0]);
   const cuenta = (t) => childDocuments.filter((d) => d.type === t).length;
 
   const [addingType, setAddingType] = useState(null);
+  // El reporte de evolucion guardado que se esta consultando.
+  const [evolucionAbierta, setEvolucionAbierta] = useState(null);
   const sinceLast = sessionsSinceLastParentReport(child.id, sessions, parentReports);
   const readyForParentReport = sinceLast.length >= 8;
   // Only this child's documents — otherwise every patient's Reportes tab shows every other patient's evaluations/reports too.
   const childDocuments = documents.filter((d) => d.childId === child.id);
+  const porFecha = (a, b) => String(b.generatedDate || "").localeCompare(String(a.generatedDate || ""));
+  const misEvoluciones = evolutionReports.filter((r) => r.childId === child.id).sort(porFecha);
+  const misFamilia = (parentReports || []).filter((r) => r.childId === child.id).sort(porFecha);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
@@ -57,25 +64,50 @@ function ReportesTab({ child, documents, users, sessions, parentReports, current
         )}
       </div>
 
-      {/* Los documentos guardados van en sub-pestañas y no apilados: eran cinco
-          secciones, casi siempre vacias, que hacian que generar un reporte y
-          consultar los ya hechos se leyeran como una sola cosa. */}
+      {/* Lo guardado va en sub-pestañas y no apilado: eran cinco secciones,
+          casi siempre vacias, que hacian que generar un reporte y consultar
+          los ya hechos se leyeran como una sola cosa.
+          Los reportes generados entran aqui con los documentos. Se guardaban
+          y no se veian en ninguna parte: el de evolucion solo aparecia DENTRO
+          del historial clinico completo — que hay que generar para verlo — y
+          el de la familia en ningun sitio. Desde esta pestaña se veian tres
+          botones de generar y nada de lo generado, asi que no habia forma de
+          saber si a la familia ya se le habia mandado algo el mes pasado. */}
       <div style={{ marginTop: 28 }}>
-        <Eyebrow>Documentos guardados</Eyebrow>
+        <Eyebrow>Guardado en el expediente</Eyebrow>
         <Tabs
-          tabs={TIPOS.map((t) => ({
-            id: t,
-            label: `${DOC_TYPES[t].plural}${cuenta(t) ? ` (${cuenta(t)})` : ""}`,
-          }))}
+          tabs={[
+            ...TIPOS.map((t) => ({
+              id: t,
+              label: `${DOC_TYPES[t].plural}${cuenta(t) ? ` (${cuenta(t)})` : ""}`,
+            })),
+            { id: "_evolucion", label: `Evolución${misEvoluciones.length ? ` (${misEvoluciones.length})` : ""}` },
+            { id: "_familia", label: `A la familia${misFamilia.length ? ` (${misFamilia.length})` : ""}` },
+          ]}
           activo={tipoActivo}
           onCambiar={setTipoActivo}
         />
-        <DocumentsSection
-          type={tipoActivo} documents={childDocuments} users={users}
-          onAdd={() => setAddingType(tipoActivo)} onUpdateDocument={onUpdateDocument}
-          currentUser={currentUser} canAdd={can(currentUser, "document:create")}
-        />
+        {tipoActivo === "_evolucion" ? (
+          <EvolucionesGuardadas
+            reportes={misEvoluciones} users={users} onVer={setEvolucionAbierta}
+          />
+        ) : tipoActivo === "_familia" ? (
+          <FamiliaGuardados reportes={misFamilia} />
+        ) : (
+          <DocumentsSection
+            type={tipoActivo} documents={childDocuments} users={users}
+            onAdd={() => setAddingType(tipoActivo)} onUpdateDocument={onUpdateDocument}
+            currentUser={currentUser} canAdd={can(currentUser, "document:create")}
+          />
+        )}
       </div>
+
+      {evolucionAbierta && (
+        <ReporteEvolucionGuardado
+          reporte={evolucionAbierta} child={child} users={users}
+          onClose={() => setEvolucionAbierta(null)}
+        />
+      )}
 
       {addingType && (
         <AddDocumentModal
