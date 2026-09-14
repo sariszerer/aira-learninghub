@@ -5,9 +5,11 @@ import { useDataStore } from "../../store/dataStore.js";
 import { useAuthStore } from "../../store/authStore.js";
 import { can } from "../../permissions.js";
 import { Btn } from "../../ui/index.js";
-import { ChevronDown, Pencil, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, ListPlus, Pencil, Plus, Trash2 } from "lucide-react";
 import ObjetivoModal from "../modals/ObjetivoModal.jsx";
 import { EscalaGas } from "../../reports/piezas.jsx";
+import ObjetivosEnLoteModal from "../modals/ObjetivosEnLoteModal.jsx";
+import { avisar } from "../../store/avisosStore.js";
 
 // De quien se ofrece una columna para definir sus primeros objetivos.
 //
@@ -40,6 +42,7 @@ function ObjectivesList({ objectives, compact, onUpdate, onAdd, onDelete, defaul
   // lleva escala GAS y metodologia — que la especificacion de reportes pide en
   // tres secciones — no cabe en una fila, y se edita en un modal.
   const [editando, setEditando] = useState(null);
+  const [enLote, setEnLote] = useState(false);
 
   const STATUS_OPTS = [
     { val: "logrado", label: "Logrado" },
@@ -110,9 +113,26 @@ function ObjectivesList({ objectives, compact, onUpdate, onAdd, onDelete, defaul
       )}
 
       {onAdd && !compact && (
-        <div style={{ marginTop: 14 }}>
+        <div style={{ marginTop: 14, display: "flex", gap: 8, flexWrap: "wrap" }}>
           <Btn icon={Plus} onClick={() => setEditando({ area: defaultArea || "" })}>Agregar objetivo</Btn>
+          {/* El plan de trabajo llega con ocho o diez objetivos ya redactados.
+              De uno en uno son diez veces el mismo modal. */}
+          <Btn variant="secondary" icon={ListPlus} onClick={() => setEnLote(true)}>
+            Pegar varios
+          </Btn>
         </div>
+      )}
+
+      {enLote && (
+        <ObjetivosEnLoteModal
+          area={defaultArea}
+          onClose={() => setEnLote(false)}
+          onCrear={(nombres) => {
+            for (const name of nombres) onAdd({ name, area: defaultArea || "" });
+            setEnLote(false);
+            avisar.exito(`${nombres.length} objetivos creados`);
+          }}
+        />
       )}
     </div>
   );

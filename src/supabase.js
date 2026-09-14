@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { buildUser } from './permissions.js'
 import { fecha } from './lib/fechas.js'
+import { tiposDe } from './lib/minuta.js'
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://wxsxtevvxepgjfxphdxt.supabase.co'
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4c3h0ZXZ2eGVwZ2pmeHBoZHh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4MzQ5NDcsImV4cCI6MjEwMjQxMDk0N30.AlyZM8R9wMCYBaTvYV6QfDSJC5Y5l2m46OZ43P2Im0Y'
@@ -119,7 +120,7 @@ export function dbDocumentToApp(d) {
     schoolId: d.school_id, studentId: d.student_id }
 }
 export function dbMeetingToApp(m) {
-  return { id: m.id, childId: m.child_id, date: m.date, type: m.type,
+  return { id: m.id, childId: m.child_id, date: m.date, type: tiposDe(m.type),
     participants: m.participants, summary: m.summary, agreements: m.agreements, createdBy: m.created_by }
 }
 export function dbSchoolToApp(s) {
@@ -219,6 +220,13 @@ export const db = {
   // soloEnlace devuelve el enlace en vez de enviarlo por correo. Es la salida
   // mientras no haya SMTP propio: Supabase limita a dos correos por hora.
   // Tres modos: correo (por defecto), soloEnlace y claveTemporal.
+  // last_sign_in_at vive en auth.users, un esquema al que el cliente no llega.
+  // La funcion expone solo esa columna y solo a quien gestiona usuarios.
+  async getUltimosAccesos() {
+    const { data, error } = await supabase.rpc('ultimos_accesos')
+    if (error) throw error
+    return Object.fromEntries((data || []).map((f) => [f.user_id, f.ultimo_acceso]))
+  },
   async enviarInvitacion(id, { soloEnlace = false, claveTemporal = null } = {}) {
     const { data, error } = await supabase.functions.invoke('enviar-invitacion', {
       body: { id, soloEnlace, claveTemporal },
@@ -397,7 +405,7 @@ export const db = {
   },
   async insertMeeting(m) {
     const { error } = await supabase.from('meetings').insert({
-      id: m.id, child_id: m.childId, date: fecha(m.date), type: m.type,
+      id: m.id, child_id: m.childId, date: fecha(m.date), type: tiposDe(m.type),
       participants: m.participants, summary: m.summary,
       agreements: m.agreements, created_by: m.createdBy,
     })

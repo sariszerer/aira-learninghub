@@ -6,8 +6,11 @@ import { can } from "../../permissions.js";
 import { Btn, Card, EmptyNote, Eyebrow } from "../../ui/index.js";
 import MeetingCard from "../MeetingCard.jsx";
 import AddMeetingModal from "../modals/AddMeetingModal.jsx";
+import MinutaDocumento from "../../reports/MinutaDocumento.jsx";
 
 function InterdisciplinaryTab({ child, meetings, users, onAddMeeting, currentUser, documents, onAddDocument }) {
+  // La minuta se abre como documento imprimible para mandarla fuera.
+  const [minutaAbierta, setMinutaAbierta] = useState(null);
   const [adding, setAdding] = useState(false);
   const [addingPautas, setAddingPautas] = useState(false);
   const [pautasNote, setPautasNote] = useState("");
@@ -91,11 +94,20 @@ function InterdisciplinaryTab({ child, meetings, users, onAddMeeting, currentUse
           <EmptyNote text="Aún no hay minutas registradas." />
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {childMeetings.map((m) => <MeetingCard key={m.id} meeting={m} users={users} />)}
+            {childMeetings.map((m) => (
+              <MeetingCard key={m.id} meeting={m} users={users} onAbrirPdf={setMinutaAbierta} />
+            ))}
           </div>
         )}
         {adding && (
           <AddMeetingModal onClose={() => setAdding(false)} onSave={(m) => { onAddMeeting(m); setAdding(false); }} />
+        )}
+
+        {minutaAbierta && (
+          <MinutaDocumento
+            minuta={minutaAbierta} child={child} users={users}
+            onClose={() => setMinutaAbierta(null)}
+          />
         )}
       </div>
     </div>

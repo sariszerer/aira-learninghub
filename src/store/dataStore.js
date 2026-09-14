@@ -302,6 +302,14 @@ export const useDataStore = create((set, get) => ({
 
   // Los especialistas son filas de la misma tabla `users` que ya se carga al
   // inicio, asi que la pantalla de gestion recarga esa lista tras cada cambio.
+  // Accesos, aparte de los usuarios: solo la administracion puede leerlos y
+  // no debe fallar la carga entera de la pantalla si no tiene permiso.
+  ultimosAccesos: {},
+  cargarUltimosAccesos: async () => {
+    try { set({ ultimosAccesos: await db.getUltimosAccesos() }) }
+    catch { /* sin permiso: la columna simplemente no se muestra */ }
+  },
+
   recargarUsuarios: async () => {
     try { set({ users: await db.getUsers() }) } catch (e) { get().avisarFallo('Reload users', e) }
   },
