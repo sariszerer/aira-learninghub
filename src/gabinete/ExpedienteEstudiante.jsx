@@ -11,6 +11,8 @@ import { RESULTADOS, RUTAS, faltaExpediente, tonoDe } from "./preescolar.js";
 import TamizajeModal from "./TamizajeModal.jsx";
 import { AlertTriangle, Stethoscope } from "lucide-react";
 import FormatoTutorModal from "./FormatoTutorModal.jsx";
+import { abrirPdf, tienePdf, nombreDelPdf } from "../lib/adjuntos.js";
+import { avisar } from "../store/avisosStore.js";
 
 // Expediente de un estudiante dentro del gabinete externo.
 //
@@ -246,21 +248,38 @@ export default function ExpedienteEstudiante({ estudiante, onVolver, programa = 
 
               {suyosDelTipo.length > 0 && (
                 <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 6 }}>
-                  {suyosDelTipo.map((d) => (
+                  {suyosDelTipo.map((d) => {
+                    // El PDF adjunto se puede abrir. Antes la fila solo decía
+                    // su nombre y no había forma de volver a verlo.
+                    const conPdf = tienePdf(d.fields);
+                    return (
                     <div key={d.id} style={{
                       display: "flex", alignItems: "center", justifyContent: "space-between",
                       gap: 12, padding: "7px 10px", background: T.surfaceSunk, borderRadius: 7,
                       fontSize: 12.5,
                     }}>
                       <span style={{ display: "flex", alignItems: "center", gap: 7, minWidth: 0 }}>
-                        {d.fields?.modo === "pdf" && <Paperclip size={12} color={T.inkFaint} />}
+                        {conPdf && <Paperclip size={12} color={T.inkFaint} />}
                         <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          {d.fields?.modo === "pdf" ? (d.fields.pdfNombre || "PDF adjunto") : "Formato llenado"}
+                          {conPdf ? nombreDelPdf(d.fields) : "Formato llenado"}
                         </span>
                       </span>
-                      <span style={{ color: T.inkFaint, whiteSpace: "nowrap" }}>{fmtDate(d.date)}</span>
+                      <span style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+                        {conPdf && (
+                          <button
+                            onClick={() => abrirPdf(d.fields, { alFallar: (m) => avisar.error("No se pudo abrir el PDF", m) })}
+                            style={{
+                              background: "none", border: "none", cursor: "pointer", padding: 0,
+                              fontFamily: T.font, fontSize: 12, fontWeight: 600, color: T.brand,
+                            }}>
+                            Ver PDF
+                          </button>
+                        )}
+                        <span style={{ color: T.inkFaint, whiteSpace: "nowrap" }}>{fmtDate(d.date)}</span>
+                      </span>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </Card>

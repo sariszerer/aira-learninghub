@@ -8,6 +8,7 @@ import {
 } from "../lib/reportes.js";
 import { Btn } from "../ui/index.js";
 import DocumentoAira, { CONTACTO_AIRA } from "./DocumentoAira.jsx";
+import BloqueFirma from "./BloqueFirma.jsx";
 import VisorReporte from "./VisorReporte.jsx";
 import FiltrosReporte from "./FiltrosReporte.jsx";
 import { SeccionDoc, SinDato, IndicadorFamilia, ListaDoc } from "./piezas.jsx";
