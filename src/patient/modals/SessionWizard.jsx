@@ -5,14 +5,18 @@ import { contar } from "../../lib/format.js";
 import { repartirObjetivosDeSesion } from "../../lib/reportes.js";
 import { Btn, Chip, EmptyNote, Modal, ModalHeader, SelectorAsistencia } from "../../ui/index.js";
 import { useAuthStore } from "../../store/authStore.js";
+import { useDataStore } from "../../store/dataStore.js";
+import { atiendePacientes } from "../../permissions.js";
 import { T } from "../../theme.js";
 import { Check, ChevronDown } from "lucide-react";
 import { avisar } from "../../store/avisosStore.js";
 import { queFalta } from "../../lib/validacion.js";
+import { MODALIDADES, esAcompanada, faltaEnModalidad } from "../../lib/modalidad.js";
 import { textoRecomendaciones } from "../../lib/expediente.js";
 
 function SessionWizard({ child, objectives, onClose, onSave }) {
   const currentUser = useAuthStore((s) => s.currentUser);
+  const equipo = useDataStore((s) => s.users);
   const [date, setDate] = useState(TODAY);
   const [duration, setDuration] = useState(45);
   const [attendance, setAttendance] = useState("asistio");
@@ -34,6 +38,22 @@ function SessionWizard({ child, objectives, onClose, onSave }) {
     return [...set];
   }, [currentUser.specialty, child, objectives]);
   const [specialty, setSpecialty] = useState(disciplinas[0] || "");
+  // Con quien se dio. Vacio = la dio una sola persona, que es lo normal.
+  const [modalidad, setModalidad] = useState("");
+  const [conEspecialista, setConEspecialista] = useState("");
+  // Las asignadas a este niño primero: en la practica se acompaña a la
+  // terapeuta del expediente, no a cualquiera del equipo.
+  const companeras = useMemo(() => {
+    const asignadas = new Set(child.assignedSpecialists || []);
+    return equipo
+      .filter((u) => u.id !== currentUser.id && u.activo !== false && atiendePacientes(u))
+      .sort((a, b) => {
+        const pa = asignadas.has(a.id) ? 0 : 1;
+        const pb = asignadas.has(b.id) ? 0 : 1;
+        return pa - pb || a.name.localeCompare(b.name);
+      });
+  }, [equipo, currentUser.id, child.assignedSpecialists]);
+
   const [selectedObjIds, setSelectedObjIds] = useState([]);
   const [customObjText, setCustomObjText] = useState("");
   const [activities, setActivities] = useState("");
@@ -64,6 +84,9 @@ function SessionWizard({ child, objectives, onClose, onSave }) {
     const falta = queFalta([
       [!!date, "la fecha"],
       [!!specialty.trim(), "la especialidad"],
+      // Una suplencia sin decir a quien se suple no sirve: el dato por el que
+      // se mira una suplencia es justamente de quien era la sesion.
+      ...faltaEnModalidad({ modalidad, conEspecialista }).map((q) => [false, q]),
     ]);
     if (falta) { avisar.error(falta); return; }
     // El objetivo puntual se recogia en customObjText y no se enviaba a ninguna
@@ -78,6 +101,8 @@ function SessionWizard({ child, objectives, onClose, onSave }) {
       date,
       duration,
       attendance,
+      modalidad: modalidad.trim(),
+      conEspecialista: esAcompanada(modalidad) ? conEspecialista || null : null,
       _newObjectiveNames: objetivoPuntual ? [objetivoPuntual] : [],
       objectivesWorked: [
         ...selectedObjIds.map(id => ({ objectiveId: id, status: "proceso" })),
@@ -133,6 +158,63 @@ function SessionWizard({ child, objectives, onClose, onSave }) {
               placeholder="Ej: Terapia Ocupacional"
               style={{ ...inputStyle, width: "100%", boxSizing: "border-box" }}
             />
+          )}
+        </div>
+
+        {/* Con quien se dio.
+            Va pegado a la disciplina porque son la misma pregunta partida en
+            dos: antes "Kids Club" contestaba a la vez "que terapia fue" y
+            "quien la dio", asi que cuando Maria Virginia acompanaba a la
+            terapeuta de Terapia Ocupacional la sesion se archivaba como Kids
+            Club — y esa area acababa en el expediente de un nino que no la
+            recibe. Arriba va la terapia; aqui, quien estuvo. */}
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>
+            Cómo se dio
+          </div>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            <Chip label="Yo sola" selected={!esAcompanada(modalidad)}
+              onClick={() => { setModalidad(""); setConEspecialista(""); }} />
+            {MODALIDADES.map((m) => (
+              <Chip key={m} label={m} selected={modalidad === m} onClick={() => setModalidad(m)} />
+            ))}
+            {/* Otra figura: el centro nombra las suyas y anadir una no deberia
+                pedir un cambio de codigo. */}
+            <Chip
+              label={esAcompanada(modalidad) && !MODALIDADES.includes(modalidad) ? modalidad : "Otra…"}
+              selected={esAcompanada(modalidad) && !MODALIDADES.includes(modalidad)}
+              onClick={() => setModalidad(MODALIDADES.includes(modalidad) ? " " : modalidad)}
+            />
+          </div>
+
+          {esAcompanada(modalidad) && (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 10 }}>
+              {!MODALIDADES.includes(modalidad.trim()) && (
+                <input
+                  value={modalidad.trim()} onChange={(e) => setModalidad(e.target.value || " ")}
+                  placeholder="¿Cómo lo llaman? Ej: Entrenamiento"
+                  style={{ ...inputStyle, width: "100%", boxSizing: "border-box" }}
+                />
+              )}
+              <select
+                value={conEspecialista} onChange={(e) => setConEspecialista(e.target.value)}
+                style={{ ...inputStyle, width: "100%", boxSizing: "border-box" }}
+              >
+                <option value="">¿Con qué especialista?</option>
+                {companeras.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.name}{u.specialty ? ` — ${u.specialty}` : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {esAcompanada(modalidad) && (
+            <div style={{ fontSize: 11.5, color: T.inkFaint, marginTop: 7, lineHeight: 1.5 }}>
+              Se registra <strong>una sola sesión</strong>, en la disciplina de
+              arriba. Que no la registre también la otra especialista o contará doble.
+            </div>
           )}
         </div>
 

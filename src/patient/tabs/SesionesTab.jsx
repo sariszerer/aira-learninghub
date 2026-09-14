@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { textoDeModalidad } from "../../lib/modalidad.js";
 import { T, SPECIALIST_COLORS } from "../../theme.js";
 import { fmtDateShort } from "../../lib/format.js";
 import { can } from "../../permissions.js";
@@ -57,6 +58,17 @@ function SesionesTab({ child, sessions, objectives, users, currentUser, onUpdate
                     <span style={{ fontSize: 12, color, opacity: 0.8 }}>{specialist?.name?.split(" ")[0]}</span>
                     {s.duration && <span style={{ fontSize: 11, color: T.inkFaint }}>{s.duration} min</span>}
                   </div>
+                  {/* Quien mas estuvo. Sin esto, una sesion en suplencia se
+                      lee como si la hubiera dado su terapeuta de siempre. */}
+                  {textoDeModalidad(s.modalidad, users.find((u) => u.id === s.conEspecialista)?.name) && (
+                    <div style={{
+                      display: "inline-block", fontSize: 11, fontWeight: 600,
+                      color: T.brand, background: T.brandTint,
+                      padding: "2px 8px", borderRadius: 999, marginBottom: 5,
+                    }}>
+                      {textoDeModalidad(s.modalidad, users.find((u) => u.id === s.conEspecialista)?.name)}
+                    </div>
+                  )}
                   {objs.length > 0 && <div style={{ fontSize: 12.5, color: T.inkSoft, marginBottom: 3 }}><b>Objetivos:</b> {objs.join(" · ")}</div>}
                   {acts.length > 0 && <div style={{ fontSize: 12.5, color: T.inkSoft, marginBottom: 3 }}><b>Actividades:</b> {acts.join(" · ")}</div>}
                   {s.observation && <div style={{ fontSize: 13, color: T.ink, lineHeight: 1.5, marginTop: 5, whiteSpace: "pre-wrap" }}>{s.observation}</div>}

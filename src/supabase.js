@@ -119,7 +119,8 @@ export function dbSessionToApp(s) {
     specialty: s.specialty, date: s.date, duration: s.duration,
     objectivesWorked: s.objectives_worked || [], activities: s.activities || [],
     observation: s.observation, nextSteps: s.next_steps, createdAt: s.created_at,
-    attendance: s.attendance || 'asistio' }
+    attendance: s.attendance || 'asistio',
+    modalidad: s.modalidad || '', conEspecialista: s.con_especialista || null }
 }
 export function dbDocumentToApp(d) {
   return { id: d.id, childId: d.child_id, type: d.type, title: d.title,
@@ -402,6 +403,11 @@ export const db = {
       objectives_worked: s.objectivesWorked, activities: s.activities,
       observation: s.observation, next_steps: s.nextSteps,
       attendance: s.attendance || 'asistio',
+      // Vacio se guarda como null: '' y null significan lo mismo aqui — la dio
+      // una sola persona — y dos formas de decir lo mismo en una columna
+      // obligan a comprobar las dos en cada consulta.
+      modalidad: s.modalidad?.trim() || null,
+      con_especialista: s.conEspecialista || null,
     })
     if (error) throw error
   },
@@ -412,6 +418,8 @@ export const db = {
       objectives_worked: s.objectivesWorked, activities: s.activities,
       observation: s.observation, next_steps: s.nextSteps,
       attendance: s.attendance || 'asistio',
+      modalidad: s.modalidad?.trim() || null,
+      con_especialista: s.conEspecialista || null,
     }).eq('id', s.id).select('id')
     exigirQueTocaraAlgo(data, error, 'la sesión')
   },

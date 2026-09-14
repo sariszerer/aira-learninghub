@@ -81,11 +81,29 @@ export default function Table({ columnas, filas, onFila, ordenInicial, orden: or
 
   const grid = columnas.map((c) => c.ancho || "1fr").join(" ");
 
+  // Suelo de la tabla, para que se desplace en vez de aplastarse.
+  //
+  // Con anchos en fr y sin ancho minimo, una ventana estrecha —pero no tanto
+  // como para el modo ficha— reparte lo que no hay: las columnas flexibles se
+  // encogen hasta cero y el nombre del especialista quedaba en "C...". Un
+  // nombre recortado a una letra no es informacion, es un hueco.
+  //
+  // Se suma el primer valor en px de cada columna (de "150px" y tambien de
+  // "minmax(220px, 2fr)") y se usa como minimo: por debajo de eso la tabla se
+  // desplaza a lo ancho y las columnas conservan su tamano.
+  const anchoMinimo = columnas.reduce((total, c) => {
+    const px = String(c.ancho || "").match(/(\d+)px/);
+    return total + (px ? Number(px[1]) : 120) + 12;
+  }, 0);
+
   return (
     <div style={{
       background: T.surface, border: `1px solid ${T.border}`,
-      borderRadius: T.radius, boxShadow: T.shadow, overflow: "hidden",
+      borderRadius: T.radius, boxShadow: T.shadow,
+      // En movil no hay rejilla que desbordar: son fichas apiladas.
+      overflow: esMovil ? "hidden" : "auto",
     }}>
+    <div style={{ minWidth: esMovil ? undefined : anchoMinimo }}>
       {/* En modo ficha no hay columnas que encabezar. Se deja solo el orden
           por la primera, que es por lo que se busca. */}
       <div style={{
@@ -191,6 +209,7 @@ export default function Table({ columnas, filas, onFila, ordenInicial, orden: or
           )}
         </div>
       ))}
+    </div>
     </div>
   );
 }
