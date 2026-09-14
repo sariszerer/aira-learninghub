@@ -4,7 +4,9 @@ import { T, STATUS, inputStyle } from "../../theme.js";
 import { fmtDate, contar } from "../../lib/format.js";
 import { repartirObjetivosDeSesion } from "../../lib/reportes.js";
 import { textoRecomendaciones } from "../../lib/expediente.js";
-import { Btn, EmptyNote, Field, Modal, ModalHeader, SelectorAsistencia, StatusIcon } from "../../ui/index.js";
+import { Btn, Chip, EmptyNote, Field, Modal, ModalHeader, SelectorAsistencia, StatusIcon } from "../../ui/index.js";
+import { MODALIDADES, esAcompanada } from "../../lib/modalidad.js";
+import { atiendePacientes } from "../../permissions.js";
 
 // Una fila del selector de objetivos, con su casilla y sus tres estados.
 //
@@ -109,6 +111,8 @@ function EditSessionModal({ session, child, objectives, users, onClose, onSave }
   const [observation, setObservation] = useState(session.observation || "");
   const [nextSteps, setNextSteps] = useState(session.nextSteps || "");
 
+  const [modalidad, setModalidad] = useState(session.modalidad || "");
+  const [conEspecialista, setConEspecialista] = useState(session.conEspecialista || "");
   const [verLogrados, setVerLogrados] = useState(false);
 
   // Los ya logrados van plegados aparte, igual que al registrar una sesión.
@@ -144,7 +148,10 @@ function EditSessionModal({ session, child, objectives, users, onClose, onSave }
   }, [pendientes]);
 
   const guardar = () => {
-    onSave(componerSesion(session, { trabajados, huerfanas, actividades, observation, nextSteps, attendance }));
+    onSave(componerSesion(session, {
+      trabajados, huerfanas, actividades, observation, nextSteps, attendance,
+      modalidad, conEspecialista,
+    }));
     onClose();
   };
 
@@ -165,6 +172,34 @@ function EditSessionModal({ session, child, objectives, users, onClose, onSave }
 
         <Seccion titulo="Asistencia">
           <SelectorAsistencia valor={attendance} onChange={setAttendance} />
+        </Seccion>
+
+        {/* Se puede corregir: las sesiones registradas antes de que existiera
+            este campo quedaron todas como si las hubiera dado una sola
+            persona. */}
+        <Seccion titulo="Cómo se dio">
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            <Chip label="Una sola especialista" selected={!esAcompanada(modalidad)}
+              onClick={() => { setModalidad(""); setConEspecialista(""); }} />
+            {MODALIDADES.map((m) => (
+              <Chip key={m} label={m} selected={modalidad === m} onClick={() => setModalidad(m)} />
+            ))}
+          </div>
+          {esAcompanada(modalidad) && (
+            <select
+              value={conEspecialista} onChange={(e) => setConEspecialista(e.target.value)}
+              style={{ ...inputStyle, width: "100%", boxSizing: "border-box", marginTop: 10 }}
+            >
+              <option value="">¿Con qué especialista?</option>
+              {users
+                .filter((u) => u.id !== session.specialistId && u.activo !== false && atiendePacientes(u))
+                .map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.name}{u.specialty ? ` — ${u.specialty}` : ""}
+                  </option>
+                ))}
+            </select>
+          )}
         </Seccion>
 
         <Seccion titulo="Objetivos de la sesión">
@@ -311,10 +346,15 @@ export function repartirObjetivos(objectivesWorked, idsExistentes) {
   return { editables, huerfanas };
 }
 
-export function componerSesion(session, { trabajados, huerfanas, actividades, observation, nextSteps, attendance }) {
+export function componerSesion(session, { trabajados, huerfanas, actividades, observation, nextSteps, attendance, modalidad, conEspecialista }) {
+  const figura = String(modalidad ?? session.modalidad ?? "").trim();
   return {
     ...session,
     attendance: attendance || session.attendance || "asistio",
+    modalidad: figura,
+    // Sin figura no hay con quien: dejar el especialista colgando haria que
+    // volver a marcar "Acompanamiento" resucitara a alguien que ya se quito.
+    conEspecialista: figura ? (conEspecialista ?? session.conEspecialista ?? null) || null : null,
     objectivesWorked: [
       ...Object.entries(trabajados).map(([objectiveId, status]) => ({ objectiveId, status })),
       ...huerfanas,

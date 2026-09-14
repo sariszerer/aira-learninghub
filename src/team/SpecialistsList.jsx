@@ -258,18 +258,23 @@ export default function SpecialistsList() {
         <Table
           columnas={[
             {
-              clave: "name", titulo: "Especialista", ancho: "1.8fr",
+              clave: "name", titulo: "Especialista", ancho: "minmax(230px, 2.2fr)",
               celda: (u) => (
                 <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
                   <Avatar name={u.name} bg={u.avatarBg || T.brand} size={30} />
                   <div style={{ minWidth: 0 }}>
-                    <div style={{
-                      fontWeight: 600, overflow: "hidden",
-                      textOverflow: "ellipsis", whiteSpace: "nowrap",
-                    }}>
+                    {/* El nombre se parte en dos lineas antes que recortarse:
+                        "Maria Virginia Sierralta" en una sola linea estrecha
+                        salia como "M..." y dejaba de identificar a nadie. El
+                        correo si se recorta — es largo y se reconoce por el
+                        principio. */}
+                    <div style={{ fontWeight: 600, lineHeight: 1.3, wordBreak: "break-word" }}>
                       {u.name}
                     </div>
-                    <div style={{ fontSize: 11.5, color: T.inkFaint }}>
+                    <div style={{
+                      fontSize: 11.5, color: T.inkFaint, overflow: "hidden",
+                      textOverflow: "ellipsis", whiteSpace: "nowrap",
+                    }} title={u.email || ""}>
                       {u.email || "sin correo"}
                     </div>
                   </div>
@@ -289,7 +294,7 @@ export default function SpecialistsList() {
               ),
             },
             {
-              clave: "specialty", titulo: "Especialidad", ancho: "1.4fr",
+              clave: "specialty", titulo: "Especialidad", ancho: "minmax(130px, 1.2fr)",
               celda: (u) => (
                 <span style={{ color: T.inkSoft, fontSize: 12.5 }}>
                   {u.specialty || u.title || "—"}
@@ -340,7 +345,7 @@ export default function SpecialistsList() {
               },
             },
             {
-              clave: "acciones", titulo: "", ancho: "250px", alinear: "derecha", ordenable: false, accion: true,
+              clave: "acciones", titulo: "", ancho: "220px", alinear: "derecha", ordenable: false, accion: true,
               celda: (u) => puedeGestionar ? (
                 <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
                   <IconBtn
