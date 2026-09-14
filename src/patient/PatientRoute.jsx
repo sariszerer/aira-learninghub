@@ -10,6 +10,7 @@ import HistorialClinico from "../reports/HistorialClinico.jsx";
 import ReporteEvolucion from "../reports/ReporteEvolucion.jsx";
 import ReporteFamilia from "../reports/ReporteFamilia.jsx";
 import { useAuthStore } from "../store/authStore.js";
+import LimiteDeError from "../ui/LimiteDeError.jsx";
 
 // Contenedor de la ruta /paciente/:childId.
 //
@@ -87,30 +88,36 @@ export default function PatientRoute() {
       )}
 
       {fullHistoryOpen && (
+        <LimiteDeError donde="el historial clínico" onCerrar={() => setFullHistoryOpen(false)}>
         <HistorialClinico
           child={child} sessions={sessions} objectives={objectives} users={users}
           documents={documents} meetings={meetings} parentReports={parentReports}
           evolutionReports={evolutionReports} currentUser={currentUser}
           onClose={() => setFullHistoryOpen(false)}
         />
+        </LimiteDeError>
       )}
 
       {evolutionOpen && (
+        <LimiteDeError donde="el reporte de evolución" onCerrar={() => setEvolutionOpen(false)}>
         <ReporteEvolucion
           child={child} sessions={sessions} objectives={objectives} users={users}
           currentUser={currentUser}
           onClose={() => setEvolutionOpen(false)}
           onGuardar={guardarReporteEvolucion}
         />
+        </LimiteDeError>
       )}
 
       {parentReportOpen && (
+        <LimiteDeError donde="el reporte para la familia" onCerrar={() => setParentReportOpen(false)}>
         <ReporteFamilia
           child={child} sessions={sessions} objectives={objectives} users={users}
           parentReports={parentReports} currentUser={currentUser}
           onClose={() => setParentReportOpen(false)}
           onGenerated={addParentReport}
         />
+        </LimiteDeError>
       )}
 
       {toast && <SavedToast />}
