@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Plus, Check, X, KeyRound, Link2, Mail } from "lucide-react";
 import { T } from "../theme.js";
 import { ROLES } from "../permissions.js";
@@ -10,6 +10,7 @@ import { Avatar, Btn, Card, IconBtn, List, ListRow, Modal, ModalHeader, Table } 
 import { useNavigate } from "react-router-dom";
 import { generarClaveTemporal, mensajeDeAcceso } from "../lib/claveTemporal.js";
 import { useEsMovil, paddingPagina } from "../lib/pantalla.js";
+import { textoDeConexion } from "../lib/conexion.js";
 
 // Gestion del equipo. El alta pasa por una Edge Function porque crear un
 // usuario que pueda iniciar sesion exige service_role; editar y desactivar si
@@ -105,6 +106,10 @@ export default function SpecialistsList() {
   // Y cada pulsación SUSTITUYE a la anterior, así que la de antes deja de
   // servir. Eso también hay que decirlo.
   const [claveReciente, setClaveReciente] = useState(null);
+
+  const ultimosAccesos = useDataStore((s) => s.ultimosAccesos);
+  const cargarUltimosAccesos = useDataStore((s) => s.cargarUltimosAccesos);
+  useEffect(() => { cargarUltimosAccesos(); }, [cargarUltimosAccesos]);
 
   const darClaveTemporal = async (u) => {
     setError(null); setAviso(null); setClaveReciente(null); setEnviando(u.id);
@@ -315,6 +320,24 @@ export default function SpecialistsList() {
             {
               clave: "sesiones", titulo: "Sesiones", ancho: "100px", alinear: "derecha",
               celda: (u) => <span style={{ color: T.inkSoft }}>{u.sesiones}</span>,
+            },
+            {
+              clave: "acceso", titulo: "Última conexión", ancho: "150px",
+              valor: (u) => ultimosAccesos[u.id] || "",
+              celda: (u) => {
+                const { texto, tono } = textoDeConexion(ultimosAccesos[u.id]);
+                return (
+                  <span style={{
+                    fontSize: 12.5,
+                    // Quien nunca entró se marca: es trabajo pendiente de la
+                    // administración, no un dato más.
+                    color: tono === "pendiente" ? T.apoyo : tono === "lejano" ? T.inkFaint : T.inkSoft,
+                    fontWeight: tono === "pendiente" ? 600 : 400,
+                  }}>
+                    {texto}
+                  </span>
+                );
+              },
             },
             {
               clave: "acciones", titulo: "", ancho: "250px", alinear: "derecha", ordenable: false, accion: true,

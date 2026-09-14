@@ -113,3 +113,40 @@ describe('y con datos reales del expediente', () => {
     expect(texto).toContain('Asher')
   })
 })
+
+describe('la minuta como documento', () => {
+  const MINUTA = {
+    id: 'm1', childId: 'c-asher', date: '2026-09-14',
+    type: ['Escuela', 'Familia'],
+    participants: 'María López, Terapeuta Ocupacional\nMaestra guía\nMadre',
+    summary: 'Se habló de la adaptación al aula.',
+    agreements: 'Reforzar pautas en casa\nRevisar en un mes',
+    createdBy: 'u-idaira',
+  }
+
+  it('se pinta con sus participantes en lista', async () => {
+    const { default: Minuta } = await import('./MinutaDocumento.jsx')
+    const texto = montar(
+      <Minuta minuta={MINUTA} child={NINO} users={USUARIOS} onClose={() => {}} />
+    )
+    expect(texto).toContain('Asher')
+    expect(texto).toContain('María López, Terapeuta Ocupacional')
+    expect(texto).toContain('Maestra guía')
+  })
+
+  it('los dos tipos salen juntos, no solo el primero', async () => {
+    const { default: Minuta } = await import('./MinutaDocumento.jsx')
+    const texto = montar(
+      <Minuta minuta={MINUTA} child={NINO} users={USUARIOS} onClose={() => {}} />
+    )
+    expect(texto).toContain('Escuela y Familia')
+  })
+
+  it('una minuta sin acuerdos no revienta', async () => {
+    const { default: Minuta } = await import('./MinutaDocumento.jsx')
+    const texto = montar(
+      <Minuta minuta={{ ...MINUTA, agreements: '' }} child={NINO} users={USUARIOS} onClose={() => {}} />
+    )
+    expect(texto).toContain('Asher')
+  })
+})
