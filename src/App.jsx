@@ -22,6 +22,7 @@ import FirmaConsentimientoPublic from "./consent/FirmaConsentimientoPublic.jsx";
 import EstablecerContrasena from "./EstablecerContrasena.jsx";
 import { esEnlaceDeContrasena } from "./lib/contrasena.js";
 import { useEsMovil } from "./lib/pantalla.js";
+import LimiteDeError from "./ui/LimiteDeError.jsx";
 import { Menu } from "lucide-react";
 import { Logo } from "./ui/index.js";
 
@@ -204,6 +205,7 @@ export default function App() {
         minHeight: "100vh",
         transition: "margin-left .18s ease",
       }}>
+      <LimiteDeError donde="esta pantalla">
       <Routes>
         <Route path="/" element={
           currentUser.home === "tutor" ? (
@@ -250,6 +252,7 @@ export default function App() {
 
         <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+      </LimiteDeError>
       </main>
     </div>
   );
