@@ -21,6 +21,7 @@ function HistorialTab({ child, sessions, objectives, users, onViewReport, onUpda
       {editingSession && (
         <EditSessionModal
           session={editingSession}
+          child={child}
           objectives={objectives}
           users={users}
           onClose={() => setEditingSession(null)}

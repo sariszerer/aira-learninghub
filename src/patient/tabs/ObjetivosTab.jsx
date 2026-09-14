@@ -9,6 +9,32 @@ import { ChevronDown, Pencil, Plus, Trash2 } from "lucide-react";
 import ObjetivoModal from "../modals/ObjetivoModal.jsx";
 import { EscalaGas } from "../../reports/piezas.jsx";
 
+// De quien se ofrece una columna para definir sus primeros objetivos.
+//
+// Antes solo entraban los especialistas que YA tenian una sesion con el
+// paciente, y eso dejaba la pestana en blanco justo cuando mas se necesita: en
+// un expediente recien creado no hay sesiones ni objetivos, asi que no habia
+// ni una columna ni un boton para agregar el primero. Obligaba a registrar una
+// sesion antes de poder fijar el objetivo que esa sesion iba a trabajar, que es
+// al reves de como se trabaja.
+//
+// Por eso cuentan tambien los asignados: a alguien se le asigna un paciente
+// para que le ponga objetivos, no despues de haberselos puesto. El encabezado
+// de ChildProfile ya hacia esta misma union — aqui faltaba.
+//
+// Vive fuera del componente por lo mismo que clinicalAlerts: es otra
+// responsabilidad — decidir de quien hay columna, no dibujarla — y asi se
+// prueba sin montar React.
+export function especialistasSinObjetivos({ child, sessions = [], grupos = {} }) {
+  const conSesion = sessions
+    .filter((s) => s.childId === child.id)
+    .map((s) => s.specialistId)
+    .filter(Boolean);
+  const candidatos = [...new Set([...conSesion, ...(child.assignedSpecialists || [])])];
+  const claves = Object.keys(grupos);
+  return candidatos.filter((sid) => !claves.some((k) => k.startsWith(sid)));
+}
+
 function ObjectivesList({ objectives, compact, onUpdate, onAdd, onDelete, defaultArea }) {
   // La edicion en linea solo alcanzaba para el nombre. Desde que el objetivo
   // lleva escala GAS y metodologia — que la especificacion de reportes pide en
@@ -146,11 +172,7 @@ function ObjetivosTab({ child }) {
         "General": T.surfaceSunk,
       };
 
-      // Show specialists who have sessions with this child but no objectives
-      const specsFromSessions = [...new Set(
-        sessions.filter(s => s.childId === child.id).map(s => s.specialistId).filter(Boolean)
-      )];
-      const specsWithNoObjs = specsFromSessions.filter(sid => !Object.keys(groups).some(k => k.startsWith(sid)));
+      const specsWithNoObjs = especialistasSinObjetivos({ child, sessions, grupos: groups });
 
       return (
         <div>

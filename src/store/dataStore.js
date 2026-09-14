@@ -261,9 +261,21 @@ export const useDataStore = create((set, get) => ({
 
   // childId llega explicito: antes se leia de `selectedChildId` en el scope de
   // App(), que ya no existe una vez repartidos los componentes.
-  addDocument: (childId, doc) => {
+  // Documento del expediente de un paciente: anamnesis, plan de trabajo, lo que
+  // se suba a Documentos.
+  //
+  // Solo escribia en memoria. Era la unica alta de documento que no llamaba a
+  // la base — sus tres hermanas de gabinete si lo hacian — asi que todo lo que
+  // se llenaba desde la ficha se veia guardado y desaparecia en la siguiente
+  // carga. Los ocho documentos de anamnesis que hay en la base entraron por
+  // addChild, que persiste por su cuenta; nada de lo escrito despues sobrevivia.
+  addDocument: async (childId, doc) => {
     const currentUser = useAuthStore.getState().currentUser
-    set((s) => ({ documents: [...s.documents, { id: `doc-${Date.now()}`, childId, authorId: currentUser.id, ...doc }] }))
+    const fila = { id: `doc-${Date.now()}`, childId, authorId: currentUser.id, ...doc }
+    set((s) => ({ documents: [...s.documents, fila] }))
+    try { await db.insertDocument(fila) }
+    catch (e) { get().avisarFallo('Guardar documento', e) }
+    return fila
   },
 
   addMeeting: (childId, meeting) => {

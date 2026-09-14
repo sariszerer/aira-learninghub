@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import { T, inputStyle } from "../theme.js";
 import { useDataStore } from "../store/dataStore.js";
 import { Btn, Chip, Modal, ModalHeader } from "../ui/index.js";
-import { ROLES, can } from "../permissions.js";
+import { atiendePacientes, can } from "../permissions.js";
 import { useAuthStore } from "../store/authStore.js";
 import { avisar } from "../store/avisosStore.js";
 import { queFalta } from "../lib/validacion.js";
@@ -39,7 +39,7 @@ export default function EditProfileModal({ child, onClose }) {
   // no una lista de nombres de rol repetida aqui.
   const clinicos = useMemo(
     () => users
-      .filter((u) => u.activo !== false && ROLES[u.role]?.esClinico)
+      .filter((u) => u.activo !== false && atiendePacientes(u))
       .sort((a, b) => a.name.localeCompare(b.name)),
     [users]
   );

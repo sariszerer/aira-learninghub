@@ -3,7 +3,18 @@
 // Aparte de la pantalla porque la regla es de la clínica, no del formulario, y
 // porque así se puede probar sin montar nada.
 
-export const MINIMO = 8;
+// DIEZ, no ocho, porque diez es lo que exige Supabase al guardar.
+//
+// Estaba en 8 y el servidor rechazaba con 422 "Password should be at least 10
+// characters": la pantalla dejaba escribir una de ocho, la daba por buena, y
+// el fallo llegaba después y en inglés. Quien no lo leyera se quedaba con la
+// contraseña vieja creyendo que la había cambiado — y con la nueva, que nunca
+// llegó a existir, no podía entrar.
+//
+// Si alguien cambia el mínimo en el panel de Supabase, tiene que cambiarlo
+// aquí también. Mientras tanto mensajeDeGuardarContrasena traduce el rechazo
+// por si vuelven a separarse.
+export const MINIMO = 10;
 
 // Se pide longitud y nada más — ni mayúscula obligatoria, ni símbolo, ni dígito.
 //
@@ -49,4 +60,56 @@ export function esEnlaceDeContrasena(url = "") {
   return /(^|&)type=recovery(&|$)/.test(hash)
       || /(^|&)type=recovery(&|$)/.test(query)
       || /(^|&)type=invite(&|$)/.test(hash);
+}
+
+// Traduce el fallo de Supabase al GUARDAR la contraseña, igual que
+// mensajeDeLogin hace con el de entrar.
+//
+// El mensaje del servidor viene en inglés y llega tal cual a una pantalla que
+// está entera en español. "Password should be at least 10 characters" no le
+// dice nada a quien no lee inglés, y es justo el momento en que la persona
+// necesita entender qué corregir.
+export function mensajeDeGuardarContrasena(error) {
+  const texto = `${error?.message || ""}`.toLowerCase();
+
+  if (/at least (\d+) characters|password.*short/.test(texto)) {
+    const n = (texto.match(/at least (\d+) characters/) || [])[1] || MINIMO;
+    return {
+      titulo: "La contraseña es muy corta",
+      detalle: `Necesita al menos ${n} caracteres. Una frase que recuerdes funciona mejor que algo corto y retorcido.`,
+    };
+  }
+
+  if (/expired|invalid|not found/.test(texto)) {
+    return {
+      titulo: "El enlace ya caducó",
+      detalle: "Pide uno nuevo a la administración del centro.",
+    };
+  }
+
+  if (/should be different|same as the old/.test(texto)) {
+    return {
+      titulo: "Esa es la contraseña que ya tenías",
+      detalle: "Elige una distinta de la anterior.",
+    };
+  }
+
+  if (/weak|pwned|compromised/.test(texto)) {
+    return {
+      titulo: "Esa contraseña es fácil de adivinar",
+      detalle: "Aparece en listas de contraseñas filtradas. Elige otra.",
+    };
+  }
+
+  if (/failed to fetch|networkerror|network request failed/.test(texto)) {
+    return {
+      titulo: "Sin conexión con el servidor",
+      detalle: "Revisa tu conexión e inténtalo otra vez.",
+    };
+  }
+
+  return {
+    titulo: "No se pudo guardar la contraseña",
+    detalle: error?.message || "Vuelve a intentarlo en un momento.",
+  };
 }

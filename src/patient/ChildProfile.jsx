@@ -77,8 +77,9 @@ function ChildProfile({ child, onOpenSessionForm, onViewReport, onGenerateFull, 
   const specialists = specialistIdsFromSessions.length > 0
     ? specialistIdsFromSessions.map(id => users.find(u => u.id === id)).filter(Boolean)
     : child.assignedSpecialists.map((id) => users.find((u) => u.id === id)).filter(Boolean);
-  // Un acudiente no tiene anamnesis del desarrollo, ni reporte para la familia
-  // — la familia es él —, ni reunión interdisciplinaria sobre su caso.
+  // Un acudiente no tiene reporte para la familia — la familia es él — ni
+  // reunión interdisciplinaria sobre su caso. Su anamnesis sí existe, con los
+  // campos de ANAMNESIS_ACUDIENTE en vez de los del desarrollo.
   const tabs = CHILD_TABS.filter((t) => permitidas.includes(t.id));
 
   return (
@@ -131,11 +132,15 @@ function ChildProfile({ child, onOpenSessionForm, onViewReport, onGenerateFull, 
           </div>
         </div>
         </div>
+        {/* Los tres en fila, y los tres del mismo tamano. Apilados, un lg
+            encima de dos sm se leia como un boton con dos notas al pie; en
+            fila esa diferencia de altura queda desparejo. La jerarquia la
+            llevan los colores — primario, secundario, ghost — que es donde se
+            nota sin descolocar la linea. */}
         <div style={{
           display: "flex", gap: 8, flexShrink: 0,
-          flexDirection: esMovil ? "row" : "column",
+          alignItems: "center", flexWrap: "wrap",
           width: esMovil ? "100%" : undefined,
-          flexWrap: esMovil ? "wrap" : undefined,
         }}>
           {/* Antes exigia ademas figurar en assignedSpecialists. Eso bloqueaba
               trabajo real: 44 de las 438 sesiones de la clinica, en 9 pacientes,
@@ -144,16 +149,16 @@ function ChildProfile({ child, onOpenSessionForm, onViewReport, onGenerateFull, 
               llega siquiera a ver la ficha, porque RLS se lo impide en la base.
               El permiso mas el alcance ya son la puerta correcta. */}
           {can(currentUser, "session:create") && (
-            <Btn size="lg" icon={Plus} onClick={onOpenSessionForm}>Registrar sesión</Btn>
+            <Btn icon={Plus} onClick={onOpenSessionForm}>Registrar sesión</Btn>
           )}
           {can(currentUser, "patient:edit") && (
-            <Btn variant="secondary" size="sm" icon={Pencil} onClick={() => setEditingProfile(true)}>Editar perfil</Btn>
+            <Btn variant="secondary" icon={Pencil} onClick={() => setEditingProfile(true)}>Editar perfil</Btn>
           )}
           {/* Discreto a proposito: borra el expediente entero en cascada y no
               es la accion que nadie viene a hacer a esta pantalla. La ficha que
               se cierra al terminar el tratamiento se cierra desde Resumen. */}
           {can(currentUser, "patient:delete") && (
-            <Btn variant="ghost" size="sm" icon={Trash2} onClick={() => setBorrando(true)}>Borrar paciente</Btn>
+            <Btn variant="ghost" icon={Trash2} onClick={() => setBorrando(true)}>Borrar paciente</Btn>
           )}
         </div>
       </div>
@@ -184,6 +189,7 @@ function ChildProfile({ child, onOpenSessionForm, onViewReport, onGenerateFull, 
         <AnamnesisTab
           child={child} documents={documents} users={users} currentUser={currentUser}
           onAddDocument={onAddDocument}
+          onUpdateDocument={onUpdateDocument}
         />
       )}
       {tab === "reportes" && (

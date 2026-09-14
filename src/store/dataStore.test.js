@@ -253,3 +253,30 @@ describe('un guardado que falla no puede parecer exitoso', () => {
     expect(useAvisosStore.getState().avisos).toEqual([])
   })
 })
+
+describe('addDocument', () => {
+  it('persiste el documento, no solo lo pone en pantalla', () => {
+    // La anamnesis y el plan de trabajo se llenan desde la ficha y pasan por
+    // aqui. Cuando esto solo hacia set(), lo escrito se veia guardado y
+    // desaparecia en la siguiente carga.
+    return useDataStore.getState().addDocument('c-1', {
+      id: 'd-anamnesis-c-1', type: 'anamnesis', title: 'Anamnesis', notes: 'x',
+    }).then(() => {
+      expect(db.insertDocument).toHaveBeenCalledTimes(1)
+      const [fila] = db.insertDocument.mock.calls[0]
+      expect(fila.id).toBe('d-anamnesis-c-1')
+      expect(fila.childId).toBe('c-1')
+      expect(fila.authorId).toBe('u-1')
+      expect(useDataStore.getState().documents).toHaveLength(1)
+    })
+  })
+
+  it('si la base falla, avisa y deja el documento en pantalla', async () => {
+    // Igual que sus hermanas: el fallo se publica y no se pierde lo escrito,
+    // para que se pueda reintentar sin volver a teclearlo.
+    db.insertDocument.mockRejectedValueOnce(new Error('sin red'))
+    await useDataStore.getState().addDocument('c-1', { id: 'd-1', type: 'anamnesis' })
+    expect(useDataStore.getState().documents).toHaveLength(1)
+    expect(useAvisosStore.getState().avisos.length).toBeGreaterThan(0)
+  })
+})

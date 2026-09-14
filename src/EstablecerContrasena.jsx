@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { AlertTriangle, Check, KeyRound } from "lucide-react";
+import { AlertTriangle, Check, Eye, EyeOff, KeyRound } from "lucide-react";
 import { T, FONTS, inputStyle } from "./theme.js";
 import { auth, supabase } from "./supabase.js";
 import { Btn, Logo } from "./ui/index.js";
 import { avisar } from "./store/avisosStore.js";
 import { useDataStore } from "./store/dataStore.js";
 import { useAuthStore } from "./store/authStore.js";
-import { MINIMO, problemaConContrasena, fuerzaDeContrasena } from "./lib/contrasena.js";
+import { MINIMO, problemaConContrasena, fuerzaDeContrasena, mensajeDeGuardarContrasena } from "./lib/contrasena.js";
 
 // Pantalla para establecer la contraseña, al llegar por un enlace de acceso.
 //
@@ -33,6 +33,9 @@ export default function EstablecerContrasena({ onListo, motivo = "enlace", usuar
   const [repetida, setRepetida] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [hecho, setHecho] = useState(false);
+  // Un solo interruptor para los dos campos: se escribe la misma contraseña
+  // dos veces, y poder ver una y la otra no es de mucha ayuda.
+  const [verClave, setVerClave] = useState(false);
   const [cuenta, setCuenta] = useState(null);
   const actualizarUsuario = useDataStore((s) => s.updateUser);
   const setCurrentUser = useAuthStore((s) => s.setCurrentUser);
@@ -58,13 +61,12 @@ export default function EstablecerContrasena({ onListo, motivo = "enlace", usuar
     setGuardando(true);
     const { error } = await supabase.auth.updateUser({ password: clave });
     if (error) {
-      // El enlace caduca. Decirlo evita que la persona pruebe tres veces
-      // pensando que se equivoca al escribir.
-      const caducado = /expired|invalid|not found/i.test(error.message);
-      avisar.error(
-        caducado ? "El enlace ya caducó" : "No se pudo guardar la contraseña",
-        caducado ? "Pide uno nuevo a la administración del centro." : error.message
-      );
+      // En español y diciendo qué corregir. Antes el mensaje del servidor
+      // llegaba tal cual —"Password should be at least 10 characters"— a una
+      // pantalla que está entera en español, justo en el momento en que hace
+      // falta entenderlo.
+      const { titulo, detalle } = mensajeDeGuardarContrasena(error);
+      avisar.error(titulo, detalle);
       setGuardando(false);
       return;
     }
@@ -149,10 +151,9 @@ export default function EstablecerContrasena({ onListo, motivo = "enlace", usuar
             </p>
 
             <Campo etiqueta="Contraseña nueva">
-              <input
-                type="password" value={clave} autoFocus autoComplete="new-password"
-                onChange={(e) => setClave(e.target.value)}
-                style={{ ...inputStyle, width: "100%", boxSizing: "border-box" }}
+              <CampoClave
+                value={clave} onChange={setClave} autoFocus
+                visible={verClave} onAlternar={() => setVerClave((v) => !v)}
               />
             </Campo>
 
@@ -170,10 +171,9 @@ export default function EstablecerContrasena({ onListo, motivo = "enlace", usuar
             )}
 
             <Campo etiqueta="Repítela">
-              <input
-                type="password" value={repetida} autoComplete="new-password"
-                onChange={(e) => setRepetida(e.target.value)}
-                style={{ ...inputStyle, width: "100%", boxSizing: "border-box" }}
+              <CampoClave
+                value={repetida} onChange={setRepetida}
+                visible={verClave} onAlternar={() => setVerClave((v) => !v)}
               />
             </Campo>
 
@@ -211,6 +211,43 @@ function Campo({ etiqueta, children }) {
         {etiqueta}
       </div>
       {children}
+    </div>
+  );
+}
+
+// Campo de contraseña con ojito para verla.
+//
+// Se escribe una contraseña nueva a ciegas y además dos veces: sin poder
+// mirarla, el error tipográfico solo aparece al final, como "las dos
+// contraseñas no coinciden", sin decir cuál de las dos está mal.
+function CampoClave({ value, onChange, visible, onAlternar, autoFocus }) {
+  return (
+    <div style={{ position: "relative" }}>
+      <input
+        type={visible ? "text" : "password"}
+        value={value}
+        autoFocus={autoFocus}
+        autoComplete="new-password"
+        onChange={(e) => onChange(e.target.value)}
+        style={{ ...inputStyle, width: "100%", boxSizing: "border-box", paddingRight: 42 }}
+      />
+      <button
+        type="button"
+        onClick={onAlternar}
+        // Sin esto el lector de pantalla anuncia un botón sin nombre, y el
+        // estado —visible u oculta— es justo lo que hace falta saber.
+        aria-label={visible ? "Ocultar la contraseña" : "Ver la contraseña"}
+        aria-pressed={visible}
+        title={visible ? "Ocultar" : "Ver"}
+        style={{
+          position: "absolute", top: 0, bottom: 0, right: 0, width: 40,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          background: "none", border: "none", padding: 0, cursor: "pointer",
+          color: T.inkFaint,
+        }}
+      >
+        {visible ? <EyeOff size={17} /> : <Eye size={17} />}
+      </button>
     </div>
   );
 }

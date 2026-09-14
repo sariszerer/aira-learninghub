@@ -20,7 +20,7 @@ function SesionesTab({ child, sessions, objectives, users, currentUser, onUpdate
     <div>
       {editingSession && (
         <EditSessionModal
-          session={editingSession} objectives={objectives} users={users}
+          session={editingSession} child={child} objectives={objectives} users={users}
           onClose={() => setEditingSession(null)}
           onSave={(updated) => { if (onUpdateSession) onUpdateSession(updated); setEditingSession(null); }}
         />

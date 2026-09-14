@@ -11,6 +11,22 @@ import AddPatientWizard from "./AddPatientWizard.jsx";
 import PageHeader from "../shell/PageHeader.jsx";
 import { useEsMovil, paddingPagina } from "../lib/pantalla.js";
 
+// Los atajos de orden que se ofrecen sobre la lista.
+//
+// La tabla ya ordenaba al pulsar un encabezado, pero eso no basta: alfabetico
+// es lo unico que se ve al entrar, y el paciente que acabas de dar de alta cae
+// en la M sin nada que lo distinga. Cada atajo dice con que columna y en que
+// sentido, asi que la flecha del encabezado y el atajo marcado coinciden
+// siempre — la tabla recibe el orden, no lo inventa.
+export const ORDENES = [
+  { label: "Nombre", clave: "nombre", dir: "asc" },
+  { label: "Creados más recientes", clave: "admissionDate", dir: "desc" },
+  { label: "Más sesiones", clave: "sesiones", dir: "desc" },
+  { label: "Última sesión", clave: "ultima", dir: "desc" },
+];
+
+const ORDEN_INICIAL = ORDENES[0];
+
 // Listado de pacientes.
 //
 // El alcance lo resuelve visibleChildren y no esta pantalla: un especialista ve
@@ -29,6 +45,7 @@ export default function PatientsList({ onOpenChild }) {
 
   const [query, setQuery] = useState("");
   const [especialidad, setEspecialidad] = useState("Todas");
+  const [orden, setOrden] = useState(ORDEN_INICIAL);
 
   // Dar de alta se hace desde aqui, que es donde se viene a buscar un paciente
   // y donde se descubre que no esta. Estaba montado en el panel de inicio y sin
@@ -127,6 +144,17 @@ export default function PatientsList({ onOpenChild }) {
         </span>
       ),
     },
+    // Se muestra porque si no, "Creados más recientes" ordena por un dato que
+    // no está en pantalla y no hay forma de comprobar que el orden es el que
+    // dice ser.
+    {
+      clave: "admissionDate", titulo: "Ingreso", ancho: "120px", alinear: "derecha",
+      celda: (c) => (
+        <span style={{ color: c.admissionDate ? T.inkSoft : T.inkFaint, fontSize: 12.5 }}>
+          {c.admissionDate ? fmtDateShort(c.admissionDate) : "—"}
+        </span>
+      ),
+    },
   ];
 
   const titulo = estado === "activo" ? "Pacientes activos"
@@ -160,27 +188,89 @@ export default function PatientsList({ onOpenChild }) {
       )}
 
       <div style={{ padding: paddingPagina(esMovil) }}>
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
-          {especialidades.map((e) => (
-            <Chip
-              key={e}
-              label={e}
-              selected={especialidad === e}
-              onClick={() => setEspecialidad(e)}
-            />
-          ))}
+        {/* El orden va en un select y a la derecha, no en una segunda hilera de
+            chips: cuatro chips más su rótulo empujaban la tabla casi media
+            pantalla hacia abajo, y a la tabla se viene a mirar filas.
+            Las especialidades siguen como chips porque son el filtro que se
+            alterna a cada rato y se quieren ver todas de un vistazo. */}
+        <div style={{
+          display: "flex", gap: 16, alignItems: "flex-end",
+          justifyContent: "space-between", flexWrap: "wrap", marginBottom: 14,
+        }}>
+          <FilaDeChips titulo="Especialidad">
+            {especialidades.map((e) => (
+              <Chip
+                key={e}
+                label={e}
+                selected={especialidad === e}
+                onClick={() => setEspecialidad(e)}
+              />
+            ))}
+          </FilaDeChips>
+
+          <SelectorDeOrden orden={orden} onOrden={setOrden} />
         </div>
 
         <Table
           columnas={columnas}
           filas={filtradas}
           onFila={(c) => onOpenChild(c.id)}
-          ordenInicial={{ clave: "nombre", dir: "asc" }}
+          orden={orden}
+          onOrden={setOrden}
           vacio={alcance.length === 0
             ? "No tienes pacientes asignados."
             : "Ningún paciente coincide con la búsqueda."}
         />
       </div>
     </>
+  );
+}
+
+function FilaDeChips({ titulo, children }) {
+  return (
+    <div>
+      <div style={{
+        fontSize: 11.5, fontWeight: 700, color: T.inkFaint, marginBottom: 6,
+        textTransform: "uppercase", letterSpacing: "0.05em",
+      }}>
+        {titulo}
+      </div>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>{children}</div>
+    </div>
+  );
+}
+
+// Ordenar por, como select.
+//
+// Pulsar un encabezado de la tabla también ordena, y puede dejar un orden que
+// no es ninguno de los atajos — "Edad, ascendente". El select lo dice en vez
+// de mostrar el primero de la lista, que sería mentir sobre cómo está
+// ordenada la tabla que se tiene delante.
+function SelectorDeOrden({ orden, onOrden }) {
+  const i = ORDENES.findIndex((o) => o.clave === orden?.clave && o.dir === orden?.dir);
+  return (
+    <div>
+      <div style={{
+        fontSize: 11.5, fontWeight: 700, color: T.inkFaint, marginBottom: 6,
+        textTransform: "uppercase", letterSpacing: "0.05em",
+      }}>
+        Ordenar por
+      </div>
+      <select
+        value={i}
+        onChange={(e) => {
+          const n = Number(e.target.value);
+          if (ORDENES[n]) onOrden(ORDENES[n]);
+        }}
+        style={{
+          padding: "9px 12px", borderRadius: 8, border: `1px solid ${T.border}`,
+          fontSize: 13.5, fontFamily: T.font, background: "#fff",
+          color: T.ink, outline: "none", cursor: "pointer",
+        }}
+      >
+        {ORDENES.map((o, n) => <option key={o.label} value={n}>{o.label}</option>)}
+        {i === -1 && <option value={-1}>Otro orden (columna)</option>}
+      </select>
+    </div>
   );
 }

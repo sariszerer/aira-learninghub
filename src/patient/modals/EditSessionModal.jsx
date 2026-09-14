@@ -3,6 +3,7 @@ import { Check, ChevronDown } from "lucide-react";
 import { T, STATUS, inputStyle } from "../../theme.js";
 import { fmtDate, contar } from "../../lib/format.js";
 import { repartirObjetivosDeSesion } from "../../lib/reportes.js";
+import { textoRecomendaciones } from "../../lib/expediente.js";
 import { Btn, EmptyNote, Field, Modal, ModalHeader, SelectorAsistencia, StatusIcon } from "../../ui/index.js";
 
 // Una fila del selector de objetivos, con su casilla y sus tres estados.
@@ -85,7 +86,10 @@ const ESTADOS = ["logrado", "proceso", "apoyo"];
 // actividades se mostraban de solo lectura y unicamente si ya tenian contenido,
 // asi que una sesion vacia — que es el caso de las 438 importadas del
 // calendario — no ofrecia ninguna forma de rellenarlos.
-function EditSessionModal({ session, objectives, users, onClose, onSave }) {
+function EditSessionModal({ session, child, objectives, users, onClose, onSave }) {
+  // El mismo rótulo que al registrar: si al crear dice "Pautas y
+  // recomendaciones", al editar no puede decir otra cosa.
+  const recomendaciones = textoRecomendaciones(child);
   const specialist = users.find((u) => u.id === session.specialistId);
 
   const delNino = useMemo(
@@ -245,12 +249,12 @@ function EditSessionModal({ session, objectives, users, onClose, onSave }) {
           />
         </Seccion>
 
-        <Seccion titulo="Recomendaciones para casa / escuela">
+        <Seccion titulo={recomendaciones.titulo}>
           <textarea
             value={nextSteps}
             onChange={(e) => setNextSteps(e.target.value)}
             rows={3}
-            placeholder="Indicaciones para los padres o el equipo escolar..."
+            placeholder={recomendaciones.placeholder}
             style={areaTexto}
           />
         </Seccion>
