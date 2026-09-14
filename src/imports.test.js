@@ -26,7 +26,7 @@ const CONOCIDOS = [
   'useState', 'useEffect', 'useMemo', 'useRef', 'useCallback',
   'Logo', 'Eyebrow', 'StatusPill', 'StatusRing', 'Avatar', 'Btn', 'Chip', 'Card',
   'Modal', 'ModalHeader', 'Field', 'Section', 'FieldLabel', 'StepDots', 'EmptyNote',
-  'SavedToast', 'StatStrip', 'DateRangeBar', 'ReportCard',
+  'SavedToast', 'StatStrip', 'DateRangeBar', 'ReportCard', 'BloqueFirma',
   'Search', 'ChevronRight', 'ChevronLeft', 'Plus', 'Check', 'Calendar', 'Clock',
   'User', 'Users', 'FileText', 'LayoutGrid', 'ClipboardList', 'TrendingUp',
   'AlertTriangle', 'LogOut', 'Sparkles', 'ArrowRight', 'Printer', 'Filter',

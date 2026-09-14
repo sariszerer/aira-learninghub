@@ -5,6 +5,8 @@ import { DOC_TYPES } from "../constants.js";
 import { fmtDateShort } from "../lib/format.js";
 import { can } from "../permissions.js";
 import { Btn, Card, EmptyNote, Eyebrow } from "../ui/index.js";
+import { abrirPdf, tienePdf } from "../lib/adjuntos.js";
+import { avisar } from "../store/avisosStore.js";
 
 // `canAdd` llega desde quien la usa y no se decide aqui: cada tab tiene su
 // propio permiso (workplan:create para el plan, document:create para reportes).
@@ -34,7 +36,7 @@ function DocumentsSection({ type, documents, users, onAdd, onUpdateDocument, cur
             const author = users.find((u) => u.id === d.authorId);
             const isEditing = editingId === d.id;
             const isExpanded = expandedId === d.id;
-            const isPdf = d.fields?.pdfUrl || d.fields?.pdfData;
+            const isPdf = tienePdf(d.fields);
             const canEdit = can(currentUser, "document:edit", d);
             return (
               <div key={d.id} style={{ padding: "13px 14px", borderTop: i > 0 ? `1px solid ${T.border}` : "none" }}>
@@ -48,10 +50,18 @@ function DocumentsSection({ type, documents, users, onAdd, onUpdateDocument, cur
                   </div>
                   <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
                     {isPdf && (
-                      <a href={d.fields.pdfUrl} target="_blank" rel="noreferrer"
-                        style={{ fontSize: 12, color: T.brand, textDecoration: "none", padding: "4px 8px", border: `1px solid ${T.border}`, borderRadius: 6 }}>
+                      // Botón y no enlace: el archivo está guardado como data
+                      // URL y los navegadores bloquean navegar a data: desde
+                      // hace años, sin decir nada. Hay que pasarlo por un blob.
+                      <button
+                        onClick={() => abrirPdf(d.fields, { alFallar: (m) => avisar.error("No se pudo abrir el PDF", m) })}
+                        style={{
+                          fontSize: 12, color: T.brand, background: "none", cursor: "pointer",
+                          padding: "4px 8px", border: `1px solid ${T.border}`, borderRadius: 6,
+                          fontFamily: T.font, fontWeight: 600,
+                        }}>
                         Ver PDF
-                      </a>
+                      </button>
                     )}
                     {canEdit && !isEditing && (
                       <Btn variant="secondary" size="sm" onClick={() => startEdit(d)}>Editar</Btn>
