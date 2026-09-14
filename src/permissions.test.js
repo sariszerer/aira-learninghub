@@ -6,10 +6,10 @@ const usuario = (perms, extra = {}) => ({
 })
 
 describe('PERMISSIONS', () => {
-  it('tiene 39 claves únicas', () => {
+  it('tiene 41 claves únicas', () => {
     const keys = PERMISSIONS.map(p => p.key)
-    expect(keys).toHaveLength(39)
-    expect(new Set(keys).size).toBe(39)
+    expect(keys).toHaveLength(41)
+    expect(new Set(keys).size).toBe(41)
   })
 
   it('cada permiso declara grupo y descripción no vacíos', () => {
@@ -73,7 +73,20 @@ describe('can — pares own/any', () => {
     expect(can(usuario(['objective:edit:own']), 'objective:edit', { specialistId: 'u-1' })).toBe(true)
   })
 
+  it('minutas usan createdBy como campo dueño', () => {
+    // Una minuta sale del centro. Quien la registro la corrige; otra
+    // especialista del mismo paciente, no.
+    expect(can(usuario(['meeting:edit:own']), 'meeting:edit', { createdBy: 'u-1' })).toBe(true)
+    expect(can(usuario(['meeting:edit:own']), 'meeting:edit', { createdBy: 'u-9' })).toBe(false)
+    expect(can(usuario(['meeting:edit:any']), 'meeting:edit', { createdBy: 'u-9' })).toBe(true)
+  })
+
   it('un recurso sin campo dueño conocido no concede por own', () => {
+    // 'guidelines' no esta en OWNER_FIELD: falla cerrado en vez de conceder.
+    expect(can(usuario(['guidelines:edit:own']), 'guidelines:edit', { id: 'g-1' })).toBe(false)
+  })
+
+  it('un recurso al que le falta su campo dueño tampoco concede', () => {
     expect(can(usuario(['meeting:edit:own']), 'meeting:edit', { id: 'm-1' })).toBe(false)
   })
 })
@@ -268,7 +281,7 @@ describe('ROLES — matriz semilla', () => {
       'document:create', 'document:edit:any', 'document:view',
       'gabinete:session:create', 'gabinete:supervision:write', 'gabinete:view',
       'guidelines:view',
-      'meeting:create', 'meeting:view',
+      'meeting:create', 'meeting:edit:any', 'meeting:view',
       'objective:create', 'objective:edit:any', 'objective:view',
       'patient:assign', 'patient:close', 'patient:create', 'patient:delete', 'patient:edit', 'patient:renew_package', 'patient:view',
       'report:evolution:generate', 'report:history:generate', 'report:parent:generate', 'report:view',
@@ -287,7 +300,7 @@ describe('ROLES — matriz semilla', () => {
       'document:create', 'document:edit:any', 'document:view',
       'gabinete:session:create', 'gabinete:supervision:write', 'gabinete:view',
       'guidelines:view',
-      'meeting:create', 'meeting:view',
+      'meeting:create', 'meeting:edit:any', 'meeting:view',
       'objective:create', 'objective:edit:any', 'objective:view',
       'patient:assign', 'patient:close', 'patient:delete', 'patient:edit', 'patient:renew_package', 'patient:view',
       'report:evolution:generate', 'report:history:generate', 'report:parent:generate', 'report:view',
@@ -303,7 +316,7 @@ describe('ROLES — matriz semilla', () => {
       'anamnesis:edit', 'anamnesis:view',
       'calendar:view',
       'document:create', 'document:edit:own', 'document:view',
-      'meeting:create', 'meeting:view',
+      'meeting:create', 'meeting:edit:own', 'meeting:view',
       'objective:create', 'objective:edit:own', 'objective:view',
       'patient:close', 'patient:edit', 'patient:renew_package', 'patient:view',
       'report:evolution:generate', 'report:parent:generate', 'report:view',

@@ -43,6 +43,11 @@ export const PERMISSIONS = [
 
   { key: 'meeting:view',            grupo: 'Interdisciplinario', descripcion: 'Ver reuniones' },
   { key: 'meeting:create',          grupo: 'Interdisciplinario', descripcion: 'Registrar reuniones' },
+  // Una minuta sale del centro: va al colegio y al especialista externo. Un
+  // nombre mal escrito o un acuerdo que falta no es un detalle interno, y
+  // hasta ahora no habia forma de corregirlo.
+  { key: 'meeting:edit:own',        grupo: 'Interdisciplinario', descripcion: 'Editar sus propias minutas' },
+  { key: 'meeting:edit:any',        grupo: 'Interdisciplinario', descripcion: 'Editar minutas de cualquiera' },
   { key: 'guidelines:view',         grupo: 'Interdisciplinario', descripcion: 'Ver pautas interdisciplinarias' },
   // La agenda del centro lleva los titulos de las citas de TODOS los pacientes,
   // asi que no la ve quien tiene alcance de un solo nino.
@@ -68,6 +73,7 @@ const OWNER_FIELD = {
   session: 'specialistId',
   document: 'authorId',
   objective: 'specialistId',
+  meeting: 'createdBy',
 }
 
 function isOwner(user, action, resource) {
@@ -137,7 +143,7 @@ export const ROLES = {
       'document:create', 'document:edit:any',
       'anamnesis:edit', 'workplan:create',
       'report:evolution:generate', 'report:history:generate', 'report:parent:generate',
-      'meeting:create', 'guidelines:view', 'calendar:view',
+      'meeting:create', 'meeting:edit:any', 'guidelines:view', 'calendar:view',
       'gabinete:view', 'gabinete:session:create', 'school:create',
       'gabinete:supervision:write',
       // sin tutorreport:create — el único punto de creación es TutorAiraHome,
@@ -160,7 +166,7 @@ export const ROLES = {
       'document:create', 'document:edit:any',
       'anamnesis:edit', 'workplan:create',
       'report:evolution:generate', 'report:history:generate', 'report:parent:generate',
-      'meeting:create', 'guidelines:view', 'calendar:view',
+      'meeting:create', 'meeting:edit:any', 'guidelines:view', 'calendar:view',
       'gabinete:view', 'gabinete:session:create', 'school:create',
       'gabinete:supervision:write',
       // sin tutorreport:create — el único punto de creación es TutorAiraHome,
@@ -183,7 +189,7 @@ export const ROLES = {
       // sin report:history:generate — el documento lo restringe a
       // "Administrador y Direccion Clinica unicamente"
       'report:evolution:generate', 'report:parent:generate',
-      'meeting:create', 'calendar:view',
+      'meeting:create', 'meeting:edit:own', 'calendar:view',
     ],
   },
 

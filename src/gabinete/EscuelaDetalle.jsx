@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { nuevoId } from "../lib/identificador.js";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft, FileText, GraduationCap, Plus, Trash2, Users } from "lucide-react";
 import { T, TODAY } from "../theme.js";
@@ -85,7 +86,7 @@ export default function EscuelaDetalle({ onAddSession }) {
     // La especialidad no se pide en el formulario y se guardaba vacia: sale de
     // quien imparte, que si se elige.
     const especialidad = allSpecialists.find((u) => u.id === sessionForm.specialistId)?.specialty || "";
-    onAddSession({ id: `gs-${Date.now()}`, schoolId: school.id, ...sessionForm, specialty: especialidad });
+    onAddSession({ id: nuevoId('gs'), schoolId: school.id, ...sessionForm, specialty: especialidad });
     setSessionForm(null);
   };
 

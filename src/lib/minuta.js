@@ -16,8 +16,13 @@ export function participantesDe(texto = "") {
     .filter(Boolean);
 }
 
-export function participantesATexto(lista = []) {
-  return lista.join("\n");
+// El camino de vuelta, para rellenar el formulario al corregir una minuta.
+// Acepta tambien la cadena tal como esta guardada: en el store la minuta
+// lleva `participants` como texto, y llamar a .join sobre eso reventaba
+// el modal de editar en el primer intento.
+export function participantesATexto(valor = []) {
+  if (Array.isArray(valor)) return valor.join("\n");
+  return participantesDe(valor).join("\n");
 }
 
 // El tipo es una lista: una reunión con la escuela Y la familia es lo normal.

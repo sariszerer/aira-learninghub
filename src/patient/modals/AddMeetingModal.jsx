@@ -4,9 +4,9 @@ import { MEETING_TYPES } from "../../constants.js";
 import { Btn, Chip, Modal, ModalHeader, FieldLabel } from "../../ui/index.js";
 import { avisar } from "../../store/avisosStore.js";
 import { queFalta } from "../../lib/validacion.js";
-import { participantesDe, faltaEnMinuta } from "../../lib/minuta.js";
+import { participantesDe, participantesATexto, faltaEnMinuta } from "../../lib/minuta.js";
 
-// Registro de una minuta interdisciplinaria.
+// Registro y correccion de una minuta interdisciplinaria.
 //
 // El tipo admite varios: una reunión con la escuela Y la familia sobre el mismo
 // niño es lo normal, y obligar a elegir uno hacía que el otro se perdiera —
@@ -15,12 +15,17 @@ import { participantesDe, faltaEnMinuta } from "../../lib/minuta.js";
 // Los participantes van uno por línea. En una reunión de escuela con cinco
 // personas y sus cargos, una sola línea con comas es una cadena que nadie
 // vuelve a leer; separados se cuentan, se listan y salen bien en el PDF.
-function AddMeetingModal({ onClose, onSave }) {
-  const [date, setDate] = useState(TODAY);
-  const [tipos, setTipos] = useState([]);
-  const [participants, setParticipants] = useState("");
-  const [summary, setSummary] = useState("");
-  const [agreements, setAgreements] = useState("");
+//
+// El mismo formulario sirve para corregir una ya registrada. Es un formulario
+// y no otro porque los dos escriben la misma minuta: duplicarlo garantiza que
+// dentro de un mes el de editar no tenga el campo que se anada al de crear.
+function AddMeetingModal({ onClose, onSave, minuta = null }) {
+  const editando = !!minuta;
+  const [date, setDate] = useState(minuta?.date || TODAY);
+  const [tipos, setTipos] = useState(minuta?.type ? [...minuta.type] : []);
+  const [participants, setParticipants] = useState(participantesATexto(minuta?.participants));
+  const [summary, setSummary] = useState(minuta?.summary || "");
+  const [agreements, setAgreements] = useState(minuta?.agreements || "");
 
   const alternarTipo = (t) =>
     setTipos((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
@@ -31,6 +36,10 @@ function AddMeetingModal({ onClose, onSave }) {
     const falta = queFalta(faltaEnMinuta({ participants, summary }).map((q) => [false, q]));
     if (falta) { avisar.error(falta); return; }
     onSave({
+      // Al corregir se conserva la minuta entera y se pisan los campos: id,
+      // childId y createdBy siguen siendo los mismos. Quien la registro no
+      // cambia porque otra persona la corrija.
+      ...(minuta || {}),
       date,
       type: tipos,
       participants: participantesDe(participants).join("\n"),
@@ -41,7 +50,11 @@ function AddMeetingModal({ onClose, onSave }) {
 
   return (
     <Modal onClose={onClose} width={560}>
-      <ModalHeader title="Registrar minuta" subtitle="Comunicación interdisciplinaria" onClose={onClose} />
+      <ModalHeader
+        title={editando ? "Editar minuta" : "Registrar minuta"}
+        subtitle="Comunicación interdisciplinaria"
+        onClose={onClose}
+      />
       <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 14, maxHeight: "62vh", overflowY: "auto" }}>
         <div>
           <FieldLabel>Fecha</FieldLabel>
@@ -90,7 +103,9 @@ function AddMeetingModal({ onClose, onSave }) {
 
       <div style={{ padding: "14px 24px", borderTop: `1px solid ${T.border}`, display: "flex", justifyContent: "flex-end", gap: 10 }}>
         <Btn variant="ghost" onClick={onClose}>Cancelar</Btn>
-        <Btn variant="primary" onClick={guardar}>Guardar minuta</Btn>
+        <Btn variant="primary" onClick={guardar}>
+          {editando ? "Guardar cambios" : "Guardar minuta"}
+        </Btn>
       </div>
     </Modal>
   );

@@ -34,6 +34,8 @@ vi.mock('../supabase.js', () => ({
     insertTutorReport: vi.fn(async () => {}),
     insertGabineteSession: vi.fn(async () => {}),
     insertSchool: vi.fn(async () => {}),
+    insertMeeting: vi.fn(async () => {}),
+    updateMeeting: vi.fn(async () => {}),
   },
 }))
 
@@ -175,6 +177,41 @@ describe('addDocument y addMeeting', () => {
     const m = useDataStore.getState().meetings.slice(-1)[0]
     expect(m.childId).toBe('c-mili')
     expect(m.createdBy).toBe('u-1')
+  })
+
+  it('addMeeting GUARDA la minuta, no solo la pone en pantalla', async () => {
+    // Esta accion solo hacia set(...). La minuta aparecia en la ficha, se
+    // abria el PDF, y al recargar no quedaba nada: la tabla meetings estaba
+    // vacia en produccion con el centro llevando meses de reuniones.
+    db.insertMeeting.mockClear()
+    await useDataStore.getState().addMeeting('c-mili', { summary: 'Reunion con la escuela' })
+    expect(db.insertMeeting).toHaveBeenCalledTimes(1)
+    expect(db.insertMeeting.mock.calls[0][0]).toMatchObject({
+      childId: 'c-mili', createdBy: 'u-1', summary: 'Reunion con la escuela',
+    })
+  })
+
+  it('dos minutas seguidas no comparten identificador', () => {
+    // Es el fallo de "Pegar varios": dentro del mismo milisegundo, un id
+    // sacado solo del reloj se repite y el upsert deja una sola fila.
+    useDataStore.getState().addMeeting('c-mili', { summary: 'A' })
+    useDataStore.getState().addMeeting('c-mili', { summary: 'B' })
+    const [a, b] = useDataStore.getState().meetings.slice(-2)
+    expect(a.id).not.toBe(b.id)
+  })
+})
+
+describe('actualizarMinuta', () => {
+  it('corrige la minuta y la persiste sin cambiar quien la registro', async () => {
+    useDataStore.setState({ meetings: [
+      { id: 'mtg-1', childId: 'c-mili', createdBy: 'u-9', summary: 'con herror' },
+    ] })
+    await useDataStore.getState().actualizarMinuta({
+      id: 'mtg-1', childId: 'c-mili', createdBy: 'u-9', summary: 'con error',
+    })
+    expect(useDataStore.getState().meetings[0].summary).toBe('con error')
+    expect(useDataStore.getState().meetings[0].createdBy).toBe('u-9')
+    expect(db.updateMeeting).toHaveBeenCalled()
   })
 })
 

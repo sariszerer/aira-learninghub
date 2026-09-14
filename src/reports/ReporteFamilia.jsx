@@ -7,7 +7,7 @@ import {
   sesionesEnRango, textoRango, especialidadesDelPaciente, especialistasQueAtendieron,
 } from "../lib/reportes.js";
 import { Btn } from "../ui/index.js";
-import DocumentoAira, { CONTACTO_AIRA } from "./DocumentoAira.jsx";
+import DocumentoAira, { CONTACTO_AIRA, lineaDeContacto } from "./DocumentoAira.jsx";
 import BloqueFirma from "./BloqueFirma.jsx";
 import VisorReporte from "./VisorReporte.jsx";
 import FiltrosReporte from "./FiltrosReporte.jsx";
@@ -94,7 +94,7 @@ export default function ReporteFamilia({
     const copia = doc.cloneNode(true);
     copia.querySelectorAll(".no-imprimir, .no-mensaje").forEach((n) => n.remove());
     const cuerpo = copia.innerText.replace(/\n{3,}/g, "\n\n").trim();
-    const pie = `${CONTACTO_AIRA.nombre} · ${CONTACTO_AIRA.telefono} · ${CONTACTO_AIRA.correo}`;
+    const pie = lineaDeContacto();
     return `${cuerpo}\n\n${pie}`;
   };
 
@@ -122,7 +122,7 @@ export default function ReporteFamilia({
     if (asistencia.asistidas) l.push(`Gracias por acompañar el proceso: ${child.name} asistió a ${contar(asistencia.asistidas, "sesión", "sesiones")} en este período.`);
     l.push("");
     l.push("Cualquier duda, con gusto la conversamos en la próxima sesión.");
-    l.push(`${CONTACTO_AIRA.nombre} · ${CONTACTO_AIRA.telefono} · ${CONTACTO_AIRA.correo}`);
+    l.push(lineaDeContacto());
     return l.join("\n");
   }, [child, desde, hasta, contacto.name, enQueTrabajamos, trabajados, logros, recomendaciones, proximosPasos, asistencia.asistidas]);
 
