@@ -1,11 +1,11 @@
 import React from "react";
-import { FileDown } from "lucide-react";
+import { FileDown, Pencil } from "lucide-react";
 import { T } from "../theme.js";
 import { fmtDateShort } from "../lib/format.js";
 import { Card, FieldLabel } from "../ui/index.js";
 import { participantesDe, textoDeTipos } from "../lib/minuta.js";
 
-function MeetingCard({ meeting, users, onAbrirPdf }) {
+function MeetingCard({ meeting, users, onAbrirPdf, onEditar }) {
   const author = users.find((u) => u.id === meeting.createdBy);
   const participantes = participantesDe(meeting.participants);
   const acuerdos = String(meeting.agreements || "")
@@ -26,6 +26,22 @@ function MeetingCard({ meeting, users, onAbrirPdf }) {
           <span style={{ fontSize: 11.5, fontWeight: 600, color: T.brand, background: T.brandTint, padding: "3px 10px", borderRadius: 999, whiteSpace: "nowrap" }}>
             Registrada por {author?.name.split(" ")[0] || "—"}
           </span>
+          {/* Corregir una ya registrada. Sale del centro — va al colegio, al
+              especialista externo — asi que un nombre mal escrito o un acuerdo
+              que falta no es un detalle interno. */}
+          {onEditar && (
+            <button
+              onClick={() => onEditar(meeting)}
+              style={{
+                display: "flex", alignItems: "center", gap: 6, cursor: "pointer",
+                padding: "4px 10px", borderRadius: 8, border: `1px solid ${T.border}`,
+                background: T.surface, fontFamily: T.font, fontSize: 12,
+                fontWeight: 600, color: T.inkSoft, whiteSpace: "nowrap",
+              }}
+            >
+              <Pencil size={13} /> Editar
+            </button>
+          )}
           {onAbrirPdf && (
             <button
               onClick={() => onAbrirPdf(meeting)}

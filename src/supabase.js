@@ -411,6 +411,16 @@ export const db = {
     })
     if (error) throw error
   },
+  // No lleva created_by: quien la registro no cambia porque otra persona la
+  // corrija, y la politica meetings_update se apoya en ese campo para decidir
+  // quien puede tocarla.
+  async updateMeeting(m) {
+    const { error } = await supabase.from('meetings').update({
+      child_id: m.childId, date: fecha(m.date), type: tiposDe(m.type),
+      participants: m.participants, summary: m.summary, agreements: m.agreements,
+    }).eq('id', m.id)
+    if (error) throw error
+  },
   async getSchools() {
     const { data, error } = await supabase.from('schools').select('*').order('name')
     if (error) throw error

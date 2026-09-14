@@ -28,6 +28,7 @@ export default function PatientRoute() {
   const saveSession = useDataStore((s) => s.saveSession);
   const addDocument = useDataStore((s) => s.addDocument);
   const addMeeting = useDataStore((s) => s.addMeeting);
+  const actualizarMinuta = useDataStore((s) => s.actualizarMinuta);
   const addParentReport = useDataStore((s) => s.addParentReport);
   const documents = useDataStore((s) => s.documents);
   const meetings = useDataStore((s) => s.meetings);
@@ -70,6 +71,7 @@ export default function PatientRoute() {
         onGenerateParentReport={() => setParentReportOpen(true)}
         onAddDocument={(doc) => addDocument(child.id, doc)}
         onAddMeeting={(meeting) => addMeeting(child.id, meeting)}
+        onEditMeeting={actualizarMinuta}
       />
 
       {wizardOpen && (

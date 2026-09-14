@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { nuevoId } from "../../lib/identificador.js";
 import { Plus } from "lucide-react";
 import { T, TODAY } from "../../theme.js";
 import { fmtDate } from "../../lib/format.js";
@@ -8,10 +9,13 @@ import MeetingCard from "../MeetingCard.jsx";
 import AddMeetingModal from "../modals/AddMeetingModal.jsx";
 import MinutaDocumento from "../../reports/MinutaDocumento.jsx";
 
-function InterdisciplinaryTab({ child, meetings, users, onAddMeeting, currentUser, documents, onAddDocument }) {
+function InterdisciplinaryTab({ child, meetings, users, onAddMeeting, onEditMeeting, currentUser, documents, onAddDocument }) {
   // La minuta se abre como documento imprimible para mandarla fuera.
   const [minutaAbierta, setMinutaAbierta] = useState(null);
   const [adding, setAdding] = useState(false);
+  // La minuta que se esta corrigiendo. Es el mismo formulario que la registra:
+  // dos formularios para la misma minuta divergen a la primera correccion.
+  const [editando, setEditando] = useState(null);
   const [addingPautas, setAddingPautas] = useState(false);
   const [pautasNote, setPautasNote] = useState("");
   const [pautasDate, setPautasDate] = useState(TODAY);
@@ -24,7 +28,7 @@ function InterdisciplinaryTab({ child, meetings, users, onAddMeeting, currentUse
   const savePautas = () => {
     if (!pautasNote.trim()) return;
     const doc = {
-      id: `d-pautas-${Date.now()}`,
+      id: nuevoId('d-pautas'),
       childId: child.id,
       type: "pautas_crianza",
       title: `Pautas de Crianza - ${fmtDate(pautasDate)}`,
@@ -95,12 +99,23 @@ function InterdisciplinaryTab({ child, meetings, users, onAddMeeting, currentUse
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {childMeetings.map((m) => (
-              <MeetingCard key={m.id} meeting={m} users={users} onAbrirPdf={setMinutaAbierta} />
+              <MeetingCard
+                key={m.id} meeting={m} users={users} onAbrirPdf={setMinutaAbierta}
+                onEditar={onEditMeeting && can(currentUser, "meeting:edit", m) ? setEditando : null}
+              />
             ))}
           </div>
         )}
         {adding && (
           <AddMeetingModal onClose={() => setAdding(false)} onSave={(m) => { onAddMeeting(m); setAdding(false); }} />
+        )}
+
+        {editando && (
+          <AddMeetingModal
+            minuta={editando}
+            onClose={() => setEditando(null)}
+            onSave={(m) => { onEditMeeting(m); setEditando(null); }}
+          />
         )}
 
         {minutaAbierta && (

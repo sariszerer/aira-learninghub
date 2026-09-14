@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { nuevoId } from "../lib/identificador.js";
 import { useNavigate } from "react-router-dom";
 import { GraduationCap, HeartHandshake, Plus, School, Users } from "lucide-react";
 import { T } from "../theme.js";
@@ -37,7 +38,7 @@ function GabinetePanel() {
   const handleSaveSchool = async () => {
     const falta = queFalta([[!!newSchool.name.trim(), "el nombre del colegio"]]);
     if (falta) { avisar.error(falta); return; }
-    const id = `sch-${Date.now()}`;
+    const id = nuevoId('sch');
     // Si el alta falla, addSchool ya publicó el error y aquí se corta: ni se
     // adjunta el contrato ni se confirma nada. El formulario se queda abierto
     // con lo escrito, que es lo que permite reintentar sin volver a teclearlo.

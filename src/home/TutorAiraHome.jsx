@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { nuevoId } from "../lib/identificador.js";
 import { T, TODAY } from "../theme.js";
 import { fmtDate } from "../lib/format.js";
 import { Eyebrow, Card, Btn } from "../ui/index.js";
@@ -34,7 +35,7 @@ function TutorAiraHome({ user, onOpenChild }) {
     const falta = queFalta([[!!form.logros.trim(), "los logros de la jornada"]]);
     if (falta) { avisar.error(falta); return; }
     const report = {
-      id: `sr-${Date.now()}`, shadowId: user.id, childId: user.assignedChildId,
+      id: nuevoId('sr'), shadowId: user.id, childId: user.assignedChildId,
       date: TODAY, school: user.school,
       logros: form.logros, dificultades: form.dificultades, solicitudes: form.solicitudes,
       objetivoStatus: form.objetivoStatus,

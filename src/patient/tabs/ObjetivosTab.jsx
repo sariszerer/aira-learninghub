@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { T, TODAY } from "../../theme.js";
-import { Card, EmptyNote, StatusIcon, StatusPill, StatusRing } from "../../ui/index.js";
+import { Card, EmptyNote, Modal, ModalHeader, StatusIcon, StatusPill, StatusRing } from "../../ui/index.js";
 import { useDataStore } from "../../store/dataStore.js";
 import { useAuthStore } from "../../store/authStore.js";
 import { can } from "../../permissions.js";
@@ -141,14 +141,12 @@ function ObjectivesList({ objectives, compact, onUpdate, onAdd, onDelete, defaul
 // Vista de objetivos agrupados por especialista y area. Estaba en linea dentro
 // de ChildProfile como una IIFE de 155 lineas; aqui es un componente con nombre.
 function ObjetivosTab({ child }) {
-  // Que secciones de edicion estan abiertas. Se permite mas de una: un paciente
-  // con tres disciplinas se revisa comparando, no de una en una.
-  const [abiertas, setAbiertas] = useState(() => new Set());
-  const alternar = (clave) => setAbiertas((s) => {
-    const n = new Set(s);
-    if (n.has(clave)) n.delete(clave); else n.add(clave);
-    return n;
-  });
+  // Editar y borrar ocurren sobre el objetivo, dentro de su columna. Antes
+  // habia una seccion "Editar objetivos" al pie con un acordeon por
+  // especialidad: los objetivos se veian arriba y se editaban abajo, y desde
+  // arriba no habia manera de entrar en ellos.
+  const [editandoObjetivo, setEditandoObjetivo] = useState(null);
+  const [borrando, setBorrando] = useState(null);
 
   const objectives = useDataStore((s) => s.objectives);
   const sessions = useDataStore((s) => s.sessions);
@@ -197,7 +195,10 @@ function ObjetivosTab({ child }) {
       return (
         <div>
           {/* Column grid */}
-          <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(groupList.length + specsWithNoObjs.length, 3)}, 1fr)`, gap: 12, marginBottom: 16 }}>
+          {/* auto-fit y no un numero de columnas fijo: con tres columnas duras,
+              en el telefono cada una quedaba de 90px y el nombre del objetivo
+              salia en vertical, una letra por linea. */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(255px, 1fr))", gap: 12, marginBottom: 16 }}>
             {groupList.map(({ specId, area, objs }) => {
               const spec = users.find(u => u.id === specId);
               const canEditThis = canEdit(specId);
@@ -226,7 +227,31 @@ function ObjetivosTab({ child }) {
                         <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
                           <span style={{ display: "flex", flexShrink: 0, marginTop: 2 }}><StatusIcon status={o.status} size={14} /></span>
                           <span style={{ fontSize: 12.5, color: o.status === "logrado" ? T.logrado : T.ink, lineHeight: 1.4, flex: 1 }}>{o.name}</span>
+                          {/* Editar y borrar viven aqui, en el objetivo. Antes
+                              estaban en una seccion aparte al pie de la pagina:
+                              se veian los objetivos arriba y no habia forma de
+                              entrar en ellos desde donde se estaban mirando. */}
+                          {canEditThis && (
+                            <span style={{ display: "flex", gap: 2, flexShrink: 0 }}>
+                              <button onClick={() => setEditandoObjetivo(o)} title="Editar objetivo"
+                                style={{ background: "none", border: "none", color: T.inkFaint, cursor: "pointer", padding: "1px 3px", lineHeight: 0 }}>
+                                <Pencil size={12} />
+                              </button>
+                              <button onClick={() => setBorrando(o)} title="Eliminar objetivo"
+                                style={{ background: "none", border: "none", color: T.inkFaint, cursor: "pointer", padding: "1px 3px", lineHeight: 0 }}>
+                                <Trash2 size={12} />
+                              </button>
+                            </span>
+                          )}
                         </div>
+                        {/* El progreso, donde esta el objetivo. Solo si lleva
+                            escala puesta: un hueco vacio en cada fila sugeriria
+                            que falta rellenar algo obligatorio, y no lo es. */}
+                        {(o.gasCurrent != null || o.gasTarget != null || o.gasBaseline != null) && (
+                          <div style={{ marginTop: 6, marginLeft: 22 }}>
+                            <EscalaGas base={o.gasBaseline} meta={o.gasTarget} actual={o.gasCurrent} ancho={150} />
+                          </div>
+                        )}
                         {canEditThis && (
                           <div style={{ display: "flex", gap: 4, marginTop: 5, marginLeft: 22 }}>
                             {["logrado","proceso","apoyo"].map(st => (
@@ -283,80 +308,34 @@ function ObjetivosTab({ child }) {
               );
             })}
           </div>
-          {/* Edicion, debajo de las columnas y solo de lo que uno puede tocar.
-              Antes eran dos enlaces sueltos al pie de la pagina, con un icono
-              <i class="ti ti-edit"> de una fuente que este proyecto no carga: no
-              se veia nada y quedaba un hueco antes del texto. */}
-          {(() => {
-            const editables = groupList.filter(({ specId }) => canEdit(specId));
-            if (editables.length === 0) return null;
-            return (
-              <div style={{ marginTop: 22 }}>
-                <div style={{
-                  fontSize: 11.5, fontWeight: 700, color: T.inkFaint, marginBottom: 9,
-                  textTransform: "uppercase", letterSpacing: "0.05em",
-                }}>
-                  Editar objetivos
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {editables.map(({ specId, area, objs }) => {
-                    const color = AREA_COLORS[area] || T.inkSoft;
-                    const spec = users.find((u) => u.id === specId);
-                    const clave = `${specId}__${area}`;
-                    const abierta = abiertas.has(clave);
-                    const logrados = objs.filter((o) => o.status === "logrado").length;
-                    return (
-                      <div key={`edit-${clave}`} style={{
-                        border: `1px solid ${abierta ? color : T.border}`,
-                        borderRadius: 12, background: T.surface, overflow: "hidden",
-                      }}>
-                        <button
-                          type="button" onClick={() => alternar(clave)}
-                          style={{
-                            display: "flex", alignItems: "center", gap: 11, width: "100%",
-                            padding: "12px 14px", border: "none", cursor: "pointer",
-                            textAlign: "left", fontFamily: T.font,
-                            background: abierta ? `${color}0D` : "transparent",
-                          }}
-                        >
-                          <span style={{
-                            width: 30, height: 30, borderRadius: 9, flexShrink: 0,
-                            background: `${color}1A`, color,
-                            display: "flex", alignItems: "center", justifyContent: "center",
-                          }}>
-                            <Pencil size={14} />
-                          </span>
-                          <span style={{ flex: 1, minWidth: 0 }}>
-                            <span style={{ display: "block", fontSize: 13.5, fontWeight: 600, color: T.ink }}>{area}</span>
-                            <span style={{ display: "block", fontSize: 12, color: T.inkSoft, marginTop: 1 }}>
-                              {spec?.name || "Sin especialista"}
-                            </span>
-                          </span>
-                          <span style={{ fontSize: 12, color: T.inkFaint, whiteSpace: "nowrap", flexShrink: 0 }}>
-                            {logrados}/{objs.length} logrados
-                          </span>
-                          <ChevronDown
-                            size={16} color={T.inkFaint}
-                            style={{ flexShrink: 0, transform: abierta ? "rotate(180deg)" : "none", transition: "transform .15s" }}
-                          />
-                        </button>
-                        {abierta && (
-                          <div style={{ padding: "4px 16px 14px", borderTop: `1px solid ${T.borderSoft}` }}>
-                            <ObjectivesList
-                              objectives={objs}
-                              onUpdate={onUpdateObjective}
-                              onAdd={(data) => onAddObjective({ ...data, childId: child.id, specialistId: specId, area, createdDate: TODAY, status: "proceso" })}
-                              onDelete={onDeleteObjective}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+
+          {editandoObjetivo && (
+            <ObjetivoModal
+              objetivo={editandoObjetivo}
+              areasSugeridas={[...new Set(childObjs.map((o) => o.area).filter(Boolean))]}
+              onClose={() => setEditandoObjetivo(null)}
+              onGuardar={(o) => onUpdateObjective(o)}
+            />
+          )}
+
+          {/* Un objetivo borrado se lleva su historia: el avance que registran
+              las sesiones cuelga de el. Y el lapiz y la papelera estan ahora a
+              dos milimetros uno del otro en un telefono. */}
+          {borrando && (
+            <Modal onClose={() => setBorrando(null)} width={420}>
+              <ModalHeader title="Eliminar objetivo" subtitle={borrando.name} onClose={() => setBorrando(null)} />
+              <div style={{ padding: "18px 24px", fontSize: 13.5, color: T.inkSoft, lineHeight: 1.6 }}>
+                Se elimina del expediente junto con el avance que se haya registrado
+                sobre él. No se puede deshacer.
               </div>
-            );
-          })()}
+              <div style={{ padding: "14px 24px", borderTop: `1px solid ${T.border}`, display: "flex", justifyContent: "flex-end", gap: 10 }}>
+                <Btn variant="ghost" onClick={() => setBorrando(null)}>Cancelar</Btn>
+                <Btn variant="danger" onClick={() => { onDeleteObjective(borrando.id); setBorrando(null); }}>
+                  Eliminar
+                </Btn>
+              </div>
+            </Modal>
+          )}
         </div>
       );
 }

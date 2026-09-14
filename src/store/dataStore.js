@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { nuevoId } from "../lib/identificador.js";
 import { db } from '../supabase.js'
 import { TODAY } from '../theme.js'
 import { useAuthStore } from './authStore.js'
@@ -114,10 +115,10 @@ export const useDataStore = create((set, get) => ({
 
   // Devuelve la sesion creada para que quien la llame decida que hacer con la
   // interfaz (cerrar el asistente, mostrar el aviso). El store no sabe de eso.
-  saveSession: (payload) => {
+  saveSession: async (payload) => {
     const { objectives, children } = get()
-    const newObjectives = (payload._newObjectiveNames || []).map((name, i) => ({
-      id: `obj-${Date.now()}-${i}`,
+    const newObjectives = (payload._newObjectiveNames || []).map((name) => ({
+      id: nuevoId('obj'),
       childId: payload.childId,
       name,
       area: payload.specialty,
@@ -144,7 +145,7 @@ export const useDataStore = create((set, get) => ({
     }))
 
     const newSession = {
-      id: `s-${Date.now()}`,
+      id: nuevoId('s'),
       childId: payload.childId,
       specialistId: payload.specialistId,
       specialty: payload.specialty,
@@ -162,14 +163,17 @@ export const useDataStore = create((set, get) => ({
     const child = children.find((c) => c.id === newSession.childId)
     set((s) => ({
       activityLog: [{
-        id: `act-${Date.now()}`, type: 'session', timestamp: new Date().toISOString(),
+        id: nuevoId('act'), type: 'session', timestamp: new Date().toISOString(),
         specialistId: newSession.specialistId, childId: newSession.childId,
         childName: child ? `${child.name} ${child.lastName}` : 'Paciente',
         description: 'Sesión registrada',
         seen: false,
       }, ...s.activityLog],
     }))
-    try { db.insertSession(newSession) } catch (e) { get().avisarFallo('Save session', e) }
+    // Con await. Sin el, el catch no atrapa nada: la promesa se rechaza sola,
+    // no sale aviso y la sesion se pierde en silencio — que es justo el fallo
+    // que este canal de avisos existe para impedir.
+    try { await db.insertSession(newSession) } catch (e) { get().avisarFallo('Guardar la sesion', e) }
     return newSession
   },
 
@@ -201,7 +205,7 @@ export const useDataStore = create((set, get) => ({
     if (!child) return
     // Crea el documento de cierre (Reporte de Logros).
     const doc = {
-      id: `d-close-${Date.now()}`,
+      id: nuevoId('d-close'),
       childId,
       type: 'reporte',
       title: 'Reporte de Logros - Cierre de Proceso',
@@ -218,7 +222,7 @@ export const useDataStore = create((set, get) => ({
     set((s) => ({ documents: [doc, ...s.documents] }))
     set((s) => ({
       activityLog: [{
-        id: `act-${Date.now()}`, type: 'document', timestamp: new Date().toISOString(),
+        id: nuevoId('act'), type: 'document', timestamp: new Date().toISOString(),
         specialistId: currentUser.id, childId,
         childName: `${child.name} ${child.lastName}`,
         description: 'Reporte de Logros generado - Cierre de proceso',
@@ -249,7 +253,7 @@ export const useDataStore = create((set, get) => ({
   },
 
   addObjective: async (obj) => {
-    const newObj = { id: `o-${Date.now()}`, ...obj }
+    const newObj = { id: nuevoId('o'), ...obj }
     set((s) => ({ objectives: [...s.objectives, newObj] }))
     try { await db.upsertObjective(newObj) } catch (e) { get().avisarFallo('Add objective', e) }
   },
@@ -271,16 +275,34 @@ export const useDataStore = create((set, get) => ({
   // addChild, que persiste por su cuenta; nada de lo escrito despues sobrevivia.
   addDocument: async (childId, doc) => {
     const currentUser = useAuthStore.getState().currentUser
-    const fila = { id: `doc-${Date.now()}`, childId, authorId: currentUser.id, ...doc }
+    const fila = { id: nuevoId('doc'), childId, authorId: currentUser.id, ...doc }
     set((s) => ({ documents: [...s.documents, fila] }))
     try { await db.insertDocument(fila) }
     catch (e) { get().avisarFallo('Guardar documento', e) }
     return fila
   },
 
-  addMeeting: (childId, meeting) => {
+  // Esta accion NO guardaba. Solo hacia set(...), y db.insertMeeting llevaba
+  // desde la migracion escrito sin un solo llamante: la minuta aparecia en la
+  // ficha, se abria el PDF, y al recargar no quedaba nada. La tabla meetings
+  // estaba vacia. Lo cubre ahora persistencia.test.js.
+  addMeeting: async (childId, meeting) => {
     const currentUser = useAuthStore.getState().currentUser
-    set((s) => ({ meetings: [...s.meetings, { id: `mtg-${Date.now()}`, childId, createdBy: currentUser.id, ...meeting }] }))
+    const fila = { id: nuevoId('mtg'), childId, createdBy: currentUser.id, ...meeting }
+    set((s) => ({ meetings: [...s.meetings, fila] }))
+    try { await db.insertMeeting(fila) }
+    catch (e) { get().avisarFallo('Guardar minuta', e) }
+    return fila
+  },
+
+  // Corregir una minuta ya registrada. Sale del centro — va al colegio, al
+  // especialista externo — asi que un nombre mal escrito no es un detalle
+  // interno. Quien puede lo decide can(...,'meeting:edit', minuta) en la
+  // vista, y la politica meetings_update lo vuelve a decidir en la base.
+  actualizarMinuta: async (minuta) => {
+    set((s) => ({ meetings: s.meetings.map((m) => (m.id === minuta.id ? minuta : m)) }))
+    try { await db.updateMeeting(minuta) }
+    catch (e) { get().avisarFallo('Guardar los cambios de la minuta', e) }
   },
 
   // La tabla parent_reports no la consume supabase.js todavia: el reporte se
@@ -289,7 +311,7 @@ export const useDataStore = create((set, get) => ({
   // el listado de los generados, asi que si no se persiste esa seccion nunca
   // tendria contenido.
   guardarReporteEvolucion: async (reporte) => {
-    const fila = { id: `er-${Date.now()}`, ...reporte }
+    const fila = { id: nuevoId('er'), ...reporte }
     set((s) => ({ evolutionReports: [fila, ...s.evolutionReports] }))
     try { await db.insertEvolutionReport(fila) }
     catch (e) { get().avisarFallo('Guardar reporte de evolucion', e) }
@@ -297,7 +319,7 @@ export const useDataStore = create((set, get) => ({
   },
 
   addParentReport: (report) => {
-    set((s) => ({ parentReports: [...s.parentReports, { id: `pr-${Date.now()}`, ...report }] }))
+    set((s) => ({ parentReports: [...s.parentReports, { id: nuevoId('pr'), ...report }] }))
   },
 
   // Los especialistas son filas de la misma tabla `users` que ya se carga al
@@ -376,7 +398,7 @@ export const useDataStore = create((set, get) => ({
   },
 
   guardarEstudianteGabinete: async (est) => {
-    const fila = { id: est.id || `ge-${Date.now()}`, ...est }
+    const fila = { id: est.id || nuevoId('ge'), ...est }
     set((s) => ({
       estudiantesGabinete: s.estudiantesGabinete.some((x) => x.id === fila.id)
         ? s.estudiantesGabinete.map((x) => (x.id === fila.id ? fila : x))
@@ -395,7 +417,7 @@ export const useDataStore = create((set, get) => ({
   },
 
   guardarTamizaje: async (t) => {
-    const fila = { id: t.id || `tz-${Date.now()}`, ...t }
+    const fila = { id: t.id || nuevoId('tz'), ...t }
     set((s) => ({
       tamizajes: s.tamizajes.some((x) => x.id === fila.id)
         ? s.tamizajes.map((x) => (x.id === fila.id ? fila : x))
@@ -433,7 +455,7 @@ export const useDataStore = create((set, get) => ({
   },
 
   guardarTutor: async (t) => {
-    const fila = { id: t.id || `tu-${Date.now()}`, ...t }
+    const fila = { id: t.id || nuevoId('tu'), ...t }
     set((s) => ({
       tutores: s.tutores.some((x) => x.id === fila.id)
         ? s.tutores.map((x) => (x.id === fila.id ? fila : x))
@@ -448,7 +470,7 @@ export const useDataStore = create((set, get) => ({
   // contrato guardado contra el colegio no dice de quien es.
   agregarDocumentoDeTerapeuta: async (tutorId, doc) => {
     const autor = useAuthStore.getState().currentUser?.id || null
-    const fila = { id: `d-${Date.now()}`, tutorId, childId: null, schoolId: null, studentId: null, authorId: autor, ...doc }
+    const fila = { id: nuevoId('d'), tutorId, childId: null, schoolId: null, studentId: null, authorId: autor, ...doc }
     set((s) => ({ documents: [fila, ...s.documents] }))
     try { await db.insertDocument(fila) }
     catch (e) { get().avisarFallo('Guardar el contrato de la terapeuta', e); throw e }
@@ -458,7 +480,7 @@ export const useDataStore = create((set, get) => ({
   // Documento del expediente de un estudiante de gabinete.
   agregarDocumentoDeEstudiante: async (studentId, doc) => {
     const autor = useAuthStore.getState().currentUser?.id || null
-    const fila = { id: `d-${Date.now()}`, studentId, childId: null, schoolId: null, authorId: autor, ...doc }
+    const fila = { id: nuevoId('d'), studentId, childId: null, schoolId: null, authorId: autor, ...doc }
     set((s) => ({ documents: [fila, ...s.documents] }))
     try { await db.insertDocument(fila) }
     catch (e) { get().avisarFallo('Documento de estudiante', e) }
@@ -479,7 +501,7 @@ export const useDataStore = create((set, get) => ({
   // childId y le pone el autor de la sesion; aqui el dueño es el colegio.
   agregarDocumentoDeColegio: async (schoolId, doc) => {
     const autor = useAuthStore.getState().currentUser?.id || null
-    const fila = { id: `d-${Date.now()}`, schoolId, childId: null, authorId: autor, ...doc }
+    const fila = { id: nuevoId('d'), schoolId, childId: null, authorId: autor, ...doc }
     set((s) => ({ documents: [fila, ...s.documents] }))
     try { await db.insertDocument(fila) }
     catch (e) { get().avisarFallo('Documento de colegio', e) }

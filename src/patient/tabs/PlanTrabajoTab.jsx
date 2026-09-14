@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { nuevoId } from "../../lib/identificador.js";
 import { T } from "../../theme.js";
 import { can } from "../../permissions.js";
 import DocumentsSection from "../DocumentsSection.jsx";
@@ -15,7 +16,7 @@ function PlanTrabajoTab({ child, documents, users, currentUser, onAddDocument, o
           mostraba dos controles para la misma accion con etiquetas distintas. */}
       {adding && (
         <AddDocumentModal type="plan_trabajo" onClose={() => setAdding(false)}
-          onSave={(d) => { onAddDocument({ ...d, childId: child.id, authorId: currentUser.id, id: `d-plan-${Date.now()}` }); setAdding(false); }}
+          onSave={(d) => { onAddDocument({ ...d, childId: child.id, authorId: currentUser.id, id: nuevoId('d-plan') }); setAdding(false); }}
         />
       )}
       <DocumentsSection type="plan_trabajo" documents={planDocs} users={users}

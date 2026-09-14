@@ -33,7 +33,7 @@ const CHILD_TABS = [
 
 const DEFAULT_CHILD_TAB = "resumen";
 
-function ChildProfile({ child, onOpenSessionForm, onViewReport, onGenerateFull, onGenerateEvolution, onGenerateParentReport, onAddDocument, onAddMeeting }) {
+function ChildProfile({ child, onOpenSessionForm, onViewReport, onGenerateFull, onGenerateEvolution, onGenerateParentReport, onAddDocument, onAddMeeting, onEditMeeting }) {
   const users = useDataStore((s) => s.users);
   const sessions = useDataStore((s) => s.sessions);
   const objectives = useDataStore((s) => s.objectives);
@@ -201,7 +201,7 @@ function ChildProfile({ child, onOpenSessionForm, onViewReport, onGenerateFull, 
         />
       )}
       {tab === "interdisciplinario" && (
-        <InterdisciplinaryTab child={child} meetings={meetings} users={users} onAddMeeting={onAddMeeting} currentUser={currentUser} documents={documents} onAddDocument={onAddDocument} />
+        <InterdisciplinaryTab child={child} meetings={meetings} users={users} onAddMeeting={onAddMeeting} onEditMeeting={onEditMeeting} currentUser={currentUser} documents={documents} onAddDocument={onAddDocument} />
       )}
       </div>
     </div>
