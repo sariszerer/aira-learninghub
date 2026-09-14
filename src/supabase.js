@@ -83,6 +83,14 @@ export function dbEvolutionReportToApp(r) {
     generatedDate: r.generated_date, generatedBy: r.generated_by,
     content: r.content || {}, createdAt: r.created_at }
 }
+// El reporte para la familia. No guarda el texto: guarda que se hizo, de que
+// periodo y con cuantas sesiones. De ahi sale la alerta "van N sesiones desde
+// el ultimo reporte", que es para lo que el centro lo mira.
+export function dbParentReportToApp(r) {
+  return { id: r.id, childId: r.child_id, generatedDate: r.generated_date,
+    fromDate: r.from_date, toDate: r.to_date, sessionCount: r.session_count,
+    createdAt: r.created_at }
+}
 export function dbTamizajeToApp(t) {
   return { id: t.id, studentId: t.student_id, fecha: t.fecha, instrumento: t.instrumento,
     aplicadoPor: t.aplicado_por, resultado: t.resultado, areasAlerta: t.areas_alerta || [],
@@ -119,6 +127,22 @@ export function dbDocumentToApp(d) {
     tutorId: d.tutor_id || null,
     schoolId: d.school_id, studentId: d.student_id }
 }
+// Un UPDATE que RLS rechaza no da error: devuelve cero filas y ya.
+//
+// Es la forma mas callada de perder un cambio. El aviso sale, la pantalla
+// muestra el dato nuevo — el store ya lo puso — y al recargar vuelve el
+// viejo. Con .select('id') la respuesta trae las filas que de verdad se
+// tocaron, y si no hay ninguna se convierte en un error que llega al usuario.
+//
+// Cero filas tambien puede ser que la fila ya no exista. Las dos cosas
+// significan lo mismo para quien esta delante: no se guardo.
+function exigirQueTocaraAlgo(filas, error, queEra) {
+  if (error) throw error
+  if (!filas || filas.length === 0) {
+    throw new Error(`No se guardó ${queEra}. Puede que no tengas permiso para editarlo o que ya no exista.`)
+  }
+}
+
 export function dbMeetingToApp(m) {
   return { id: m.id, childId: m.child_id, date: m.date, type: tiposDe(m.type),
     participants: m.participants, summary: m.summary, agreements: m.agreements, createdBy: m.created_by }
@@ -160,8 +184,8 @@ export const db = {
     if ('licenseNo' in updates) m.license_no = updates.licenseNo
     if ('firma' in updates) m.firma = updates.firma
     if ('debeCambiarClave' in updates) m.debe_cambiar_clave = updates.debeCambiarClave
-    const { error } = await supabase.from('users').update(m).eq('id', id)
-    if (error) throw error
+    const { data, error } = await supabase.from('users').update(m).eq('id', id).select('id')
+    exigirQueTocaraAlgo(data, error, 'el usuario')
   },
   // ── Roles ────────────────────────────────────────────────────────────────
   async getRoles() {
@@ -184,11 +208,11 @@ export const db = {
   },
 
   async updateRole(id, rol) {
-    const { error } = await supabase.from('roles').update({
+    const { data, error } = await supabase.from('roles').update({
       nombre: rol.nombre, scope: rol.scope, home: rol.home,
       es_clinico: rol.esClinico, etiqueta: rol.etiqueta, color: rol.color,
-    }).eq('id', id)
-    if (error) throw error
+    }).eq('id', id).select('id')
+    exigirQueTocaraAlgo(data, error, 'el rol')
   },
 
   async deleteRole(id) {
@@ -295,8 +319,8 @@ export const db = {
     if ('dischargeDate' in updates) m.discharge_date = fecha(updates.dischargeDate)
     if ('dischargeReason' in updates) m.discharge_reason = updates.dischargeReason
     if ('acudienteDe' in updates) m.acudiente_de = updates.acudienteDe
-    const { error } = await supabase.from('children').update(m).eq('id', id)
-    if (error) throw error
+    const { data, error } = await supabase.from('children').update(m).eq('id', id).select('id')
+    exigirQueTocaraAlgo(data, error, 'el paciente')
   },
   async insertChild(c) {
     const { error } = await supabase.from('children').insert({
@@ -327,6 +351,20 @@ export const db = {
       specialist_id: r.specialistId, from_date: fecha(r.fromDate), to_date: fecha(r.toDate),
       generated_date: fecha(r.generatedDate), generated_by: r.generatedBy,
       content: r.content || {},
+    })
+    if (error) throw error
+  },
+  async getParentReports() {
+    const { data, error } = await supabase
+      .from('parent_reports').select('*').order('generated_date', { ascending: false })
+    if (error) throw error
+    return data.map(dbParentReportToApp)
+  },
+  async insertParentReport(r) {
+    const { error } = await supabase.from('parent_reports').insert({
+      id: r.id, child_id: r.childId, generated_date: fecha(r.generatedDate),
+      from_date: fecha(r.fromDate), to_date: fecha(r.toDate),
+      session_count: r.sessionCount ?? null,
     })
     if (error) throw error
   },
@@ -368,14 +406,14 @@ export const db = {
     if (error) throw error
   },
   async updateSession(s) {
-    const { error } = await supabase.from('sessions').update({
+    const { data, error } = await supabase.from('sessions').update({
       child_id: s.childId, specialist_id: s.specialistId,
       specialty: s.specialty, date: fecha(s.date), duration: s.duration,
       objectives_worked: s.objectivesWorked, activities: s.activities,
       observation: s.observation, next_steps: s.nextSteps,
       attendance: s.attendance || 'asistio',
-    }).eq('id', s.id)
-    if (error) throw error
+    }).eq('id', s.id).select('id')
+    exigirQueTocaraAlgo(data, error, 'la sesión')
   },
   async getDocuments() {
     const { data, error } = await supabase.from('documents').select('*').order('date', { ascending: false })
@@ -392,11 +430,11 @@ export const db = {
     if (error) throw error
   },
   async updateDocument(d) {
-    const { error } = await supabase.from('documents').update({
+    const { data, error } = await supabase.from('documents').update({
       child_id: d.childId, type: d.type, title: d.title,
       date: fecha(d.date), author_id: d.authorId, notes: d.notes, fields: d.fields || {},
-    }).eq('id', d.id)
-    if (error) throw error
+    }).eq('id', d.id).select('id')
+    exigirQueTocaraAlgo(data, error, 'el documento')
   },
   async getMeetings() {
     const { data, error } = await supabase.from('meetings').select('*').order('date', { ascending: false })
@@ -415,11 +453,11 @@ export const db = {
   // corrija, y la politica meetings_update se apoya en ese campo para decidir
   // quien puede tocarla.
   async updateMeeting(m) {
-    const { error } = await supabase.from('meetings').update({
+    const { data, error } = await supabase.from('meetings').update({
       child_id: m.childId, date: fecha(m.date), type: tiposDe(m.type),
       participants: m.participants, summary: m.summary, agreements: m.agreements,
-    }).eq('id', m.id)
-    if (error) throw error
+    }).eq('id', m.id).select('id')
+    exigirQueTocaraAlgo(data, error, 'la minuta')
   },
   async getSchools() {
     const { data, error } = await supabase.from('schools').select('*').order('name')

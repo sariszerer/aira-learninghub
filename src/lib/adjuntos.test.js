@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { datosDelPdf, nombreDelPdf, tienePdf, abrirPdf } from './adjuntos.js'
+import { datosDelPdf, nombreDelPdf, tienePdf, pdfComoBlob } from './adjuntos.js'
 
 describe('datosDelPdf', () => {
   it('acepta los dos nombres que conviven en la base', () => {
@@ -35,47 +35,41 @@ describe('tienePdf', () => {
   })
 })
 
-describe('abrirPdf', () => {
-  it('avisa en vez de callarse cuando no hay nada que abrir', () => {
-    const alFallar = vi.fn()
-    expect(abrirPdf({}, { alFallar })).toBe(false)
-    expect(alFallar).toHaveBeenCalledWith(expect.stringContaining('no tiene'))
+describe('pdfComoBlob', () => {
+  it('convierte la data URL en un blob del tipo correcto', () => {
+    // Chrome y Safari bloquean navegar a data: desde hace anos, sin avisar,
+    // asi que el adjunto tiene que pasar por un blob para poder mostrarse.
+    const blob = pdfComoBlob('data:application/pdf;base64,QUFB')
+    expect(blob).toBeInstanceOf(Blob)
+    expect(blob.type).toBe('application/pdf')
   })
 
-  it('una URL normal se abre tal cual', () => {
-    const abrir = vi.fn(() => ({}))
-    vi.stubGlobal('window', { open: abrir })
-    expect(abrirPdf({ pdfUrl: 'https://x.test/plan.pdf' })).toBe(true)
-    expect(abrir).toHaveBeenCalledWith('https://x.test/plan.pdf', '_blank', 'noopener')
-    vi.unstubAllGlobals()
+  it('una URL normal se deja como esta', () => {
+    expect(pdfComoBlob('https://x.test/plan.pdf')).toBe(null)
   })
 
-  it('una data URL NO se navega directamente', () => {
-    // Chrome y Safari bloquean la navegación de nivel superior hacia data:
-    // desde hace años, sin avisar. Tiene que convertirse en blob.
-    const abrir = vi.fn(() => ({}))
-    const crear = vi.fn(() => 'blob:x')
-    vi.stubGlobal('window', { open: abrir })
-    vi.stubGlobal('URL', { createObjectURL: crear, revokeObjectURL: vi.fn() })
-    vi.stubGlobal('Blob', class { constructor() {} })
-    vi.stubGlobal('atob', () => 'PDF')
-
-    abrirPdf({ pdfData: 'data:application/pdf;base64,QUFB' })
-
-    expect(crear).toHaveBeenCalled()
-    expect(abrir.mock.calls[0][0]).toBe('blob:x')
-    vi.unstubAllGlobals()
+  it('sin datos no inventa un blob', () => {
+    expect(pdfComoBlob(null)).toBe(null)
+    expect(pdfComoBlob('')).toBe(null)
   })
+})
 
-  it('avisa si el navegador bloquea la ventana', () => {
-    const alFallar = vi.fn()
-    vi.stubGlobal('window', { open: () => null })
-    vi.stubGlobal('URL', { createObjectURL: () => 'blob:x', revokeObjectURL: vi.fn() })
-    vi.stubGlobal('Blob', class { constructor() {} })
-    vi.stubGlobal('atob', () => 'PDF')
-
-    expect(abrirPdf({ pdfData: 'data:application/pdf;base64,QUFB' }, { alFallar })).toBe(false)
-    expect(alFallar).toHaveBeenCalledWith(expect.stringContaining('emergentes'))
-    vi.unstubAllGlobals()
+// Ya no existe abrirPdf.
+//
+// Abria el adjunto con window.open(url, "_blank", "noopener") y comprobaba si
+// devolvia null para saber si el navegador habia bloqueado la ventana. Esa
+// comprobacion era falsa: con "noopener" window.open devuelve null SIEMPRE,
+// por especificacion, porque no hay handle que devolver. Asi que el aviso
+// "permite las ventanas emergentes" salia sin que nadie hubiera bloqueado
+// nada, y de paso se revocaba el blob, que dejaba en blanco la pestana que si
+// se habia abierto. La prueba de entonces daba por buena esa lectura porque
+// simulaba window.open a mano.
+//
+// Lo sustituye VisorPdf, que lo muestra en un <iframe> dentro de la
+// aplicacion: no hay ventana que bloquear.
+describe('no queda rastro de abrirPdf', () => {
+  it('la funcion ya no se exporta', async () => {
+    const modulo = await import('./adjuntos.js')
+    expect(modulo.abrirPdf).toBeUndefined()
   })
 })

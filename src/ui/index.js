@@ -15,6 +15,8 @@ export { default as StatusIcon } from "./StatusIcon.jsx";
 export { default as Chip } from "./Chip.jsx";
 export { default as Card } from "./Card.jsx";
 export { default as Modal } from "./Modal.jsx";
+export { default as VisorPdf } from "./VisorPdf.jsx";
+export { default as EditorTexto } from "./EditorTexto.jsx";
 export { default as ModalHeader } from "./ModalHeader.jsx";
 export { default as Field } from "./Field.jsx";
 export { default as Section } from "./Section.jsx";

@@ -74,3 +74,72 @@ describe('ningún identificador nace solo del reloj', () => {
     expect(codigo).not.toMatch(/`[\w-]*-\$\{Date\.now\(\)\}`/)
   })
 })
+
+// El otro sentido: una accion que cambia datos y no los escribe.
+//
+// La guarda de arriba pilla la escritura huerfana (existe y nadie la llama).
+// Esta pilla lo contrario y es el fallo que de verdad ocurrio dos veces:
+// addMeeting y addParentReport hacian `set(...)` y nada mas. En pantalla
+// quedaba todo bien; al recargar no habia nada. La minuta se perdio asi, y la
+// lista de reportes a la familia — de la que cuelga la alerta "van N sesiones
+// desde el ultimo" — arrancaba vacia cada vez, asi que el contador nunca
+// sabia que ya se habia mandado uno.
+describe('lo que cambia datos, los guarda', () => {
+  const STORE = fs.readFileSync('src/store/dataStore.js', 'utf8')
+
+  // Acciones que cambian estado a proposito sin tocar la base, con el motivo.
+  const SIN_BASE = {
+    loadAll: 'es la carga inicial: lee',
+    cargarUltimosAccesos: 'lee',
+    recargarUsuarios: 'lee',
+    cargarRoles: 'lee',
+    markLoaded: 'bandera de la interfaz, no es un dato del centro',
+    markActivitySeen: 'el muro de novedades vive en la pestana; no hay tabla',
+  }
+
+  const acciones = [...STORE.matchAll(/^ {2}(\w+):\s*(?:async\s*)?\(/gm)]
+    .map((m, i, todas) => {
+      const fin = todas[i + 1] ? todas[i + 1].index : STORE.length
+      return { nombre: m[1], cuerpo: STORE.slice(m.index, fin) }
+    })
+    .filter((a) => a.cuerpo.includes('set('))
+
+  it('hay acciones que revisar', () => {
+    expect(acciones.length).toBeGreaterThan(20)
+  })
+
+  it.each(acciones.map((a) => a.nombre))('%s', (nombre) => {
+    const { cuerpo } = acciones.find((a) => a.nombre === nombre)
+    if (SIN_BASE[nombre]) {
+      expect(cuerpo).not.toMatch(/db\.(insert|update|delete|upsert)/)
+      return
+    }
+    expect(cuerpo, `${nombre} cambia datos y no los escribe en la base`)
+      .toMatch(/db\.(insert|update|delete|upsert)/)
+  })
+})
+
+// Un UPDATE que RLS rechaza devuelve cero filas y ningún error.
+//
+// Es la forma más callada de perder un cambio: el store ya puso el dato nuevo
+// en pantalla, no salta ningún aviso, y al recargar vuelve el viejo. Las seis
+// tablas con política de UPDATE piden .select('id') para poder distinguir
+// "se guardó" de "no tocó nada".
+describe('ningún update se da por bueno sin comprobarlo', () => {
+  const llamadas = [...FUENTE.matchAll(/await supabase\s*\n?\s*\.?from\('(\w+)'\)\s*\n?\s*\.update\(/g)]
+
+  it('hay updates que revisar', () => {
+    expect(llamadas.length).toBeGreaterThanOrEqual(6)
+  })
+
+  it('todos piden las filas afectadas', () => {
+    // Cada .update( va seguido, antes del siguiente await, de un .select(
+    for (const m of llamadas) {
+      const desde = m.index
+      const hasta = FUENTE.indexOf('await', desde + 10)
+      const trozo = FUENTE.slice(desde, hasta === -1 ? FUENTE.length : hasta)
+      expect(trozo, `el update de ${m[1]} no comprueba si tocó alguna fila`).toContain(".select('id')")
+    }
+  })
+
+})

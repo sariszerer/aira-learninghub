@@ -20,7 +20,9 @@ function jsx(dir, acc = []) {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
     const p = path.join(dir, e.name)
     if (e.isDirectory()) jsx(p, acc)
-    else if (e.name.endsWith('.jsx')) acc.push(p)
+    // Las pruebas no son interfaz: una que busca un <textarea> por selector
+    // no es un campo sin tipografia.
+    else if (e.name.endsWith('.jsx') && !e.name.endsWith('.test.jsx')) acc.push(p)
   }
   return acc
 }

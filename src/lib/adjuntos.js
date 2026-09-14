@@ -39,28 +39,15 @@ export function pdfComoBlob(datos) {
   return new Blob([bytes], { type: tipo });
 }
 
-// Abre el adjunto en otra pestaña. Devuelve false si no había nada que abrir,
-// para que quien llama pueda decirlo en vez de quedarse callado.
-export function abrirPdf(fields, { alFallar } = {}) {
-  const datos = datosDelPdf(fields);
-  if (!datos) {
-    alFallar?.("Este documento no tiene ningún PDF adjunto.");
-    return false;
-  }
-  if (!datos.startsWith("data:")) {
-    window.open(datos, "_blank", "noopener");
-    return true;
-  }
-  const blob = pdfComoBlob(datos);
-  const url = URL.createObjectURL(blob);
-  const ventana = window.open(url, "_blank", "noopener");
-  if (!ventana) {
-    URL.revokeObjectURL(url);
-    alFallar?.("El navegador bloqueó la ventana. Permite las ventanas emergentes de este sitio.");
-    return false;
-  }
-  // Se libera con holgura: revocarla de inmediato deja la pestaña en blanco
-  // porque el navegador aún no ha terminado de leerla.
-  setTimeout(() => URL.revokeObjectURL(url), 60_000);
-  return true;
-}
+// Ya no hay "abrirPdf". El adjunto se muestra dentro de la aplicacion, con
+// VisorPdf, y no en una pestana nueva.
+//
+// Lo que habia antes daba un diagnostico falso: window.open(url, "_blank",
+// "noopener") devuelve null SIEMPRE — noopener corta el enlace con la ventana
+// nueva, asi que no hay nada que devolver — y el codigo leia ese null como
+// "el navegador la bloqueo". Salia el aviso "permite las ventanas emergentes"
+// sin que nadie hubiera bloqueado nada, y de paso revocaba el blob, que es lo
+// que dejaba en blanco la pestana cuando si se abria.
+//
+// Un <iframe> no se bloquea, funciona en el telefono y deja el PDF al lado del
+// expediente.

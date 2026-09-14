@@ -18,6 +18,9 @@ function ClinicalDirectorHome({ user, onOpenChild }) {
   const objectives = useDataStore((s) => s.objectives);
   const tutors = useDataStore((s) => s.tutors);
   const tutorReports = useDataStore((s) => s.tutorReports);
+  // Faltaba, y se usaba abajo en computeClinicalAlerts: un ReferenceError que
+  // tumbaba la pantalla de inicio entera de direccion clinica.
+  const parentReports = useDataStore((s) => s.parentReports);
   const activityLog = useDataStore((s) => s.activityLog);
   const onMarkSeen = useDataStore((s) => s.markActivitySeen);
   const [query, setQuery] = useState("");

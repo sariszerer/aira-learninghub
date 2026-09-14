@@ -2,6 +2,7 @@ import React from "react";
 import { T } from "../theme.js";
 import { fmtDate } from "../lib/format.js";
 import { participantesDe, textoDeTipos, tituloDeMinuta } from "../lib/minuta.js";
+import { textoAHtml, esHtml, htmlATexto } from "../lib/textoRico.js";
 import DocumentoAira from "./DocumentoAira.jsx";
 import VisorReporte from "./VisorReporte.jsx";
 import { SeccionDoc, SinDato, ListaDoc } from "./piezas.jsx";
@@ -15,8 +16,14 @@ import { SeccionDoc, SinDato, ListaDoc } from "./piezas.jsx";
 export default function MinutaDocumento({ minuta, child, users, onClose }) {
   const autor = users.find((u) => u.id === minuta.createdBy);
   const participantes = participantesDe(minuta.participants);
-  const acuerdos = String(minuta.agreements || "")
-    .split(/\r?\n/).map((a) => a.trim()).filter(Boolean);
+  // Con formato propio se pinta tal cual; el texto de antes del editor
+  // sigue saliendo en vinetas, un acuerdo por linea.
+  const acuerdosPlanos = esHtml(minuta.agreements)
+    ? null
+    : String(minuta.agreements || "").split(/\r?\n/).map((a) => a.trim()).filter(Boolean);
+  const sinAcuerdos = acuerdosPlanos
+    ? acuerdosPlanos.length === 0
+    : !htmlATexto(minuta.agreements).trim();
 
   return (
     <VisorReporte titulo={tituloDeMinuta(minuta, child)} onClose={onClose}>
@@ -39,17 +46,27 @@ export default function MinutaDocumento({ minuta, child, users, onClose }) {
 
         <SeccionDoc titulo="Temas tratados">
           {minuta.summary
-            ? <p style={{ fontSize: 12, lineHeight: 1.7, whiteSpace: "pre-wrap", margin: 0 }}>{minuta.summary}</p>
+            ? <div
+                style={{ fontSize: 12, lineHeight: 1.7 }}
+                dangerouslySetInnerHTML={{ __html: textoAHtml(minuta.summary) }}
+              />
             : <SinDato>Sin resumen registrado.</SinDato>}
         </SeccionDoc>
 
         {/* Los acuerdos se omiten al imprimir si no hay ninguno: una reunión
             puede cerrarse sin acordar nada, y un título con nada debajo en un
             documento que sale del centro se lee como un fallo. */}
-        <SeccionDoc titulo="Acuerdos" omitirEnImpresion={acuerdos.length === 0}>
-          {acuerdos.length === 0
-            ? <SinDato>No se registraron acuerdos.</SinDato>
-            : <ListaDoc items={acuerdos} />}
+        <SeccionDoc titulo="Acuerdos" omitirEnImpresion={sinAcuerdos}>
+          {sinAcuerdos ? (
+            <SinDato>No se registraron acuerdos.</SinDato>
+          ) : acuerdosPlanos ? (
+            <ListaDoc items={acuerdosPlanos} />
+          ) : (
+            <div
+              style={{ fontSize: 12, lineHeight: 1.7 }}
+              dangerouslySetInnerHTML={{ __html: textoAHtml(minuta.agreements) }}
+            />
+          )}
         </SeccionDoc>
 
         <div style={{
