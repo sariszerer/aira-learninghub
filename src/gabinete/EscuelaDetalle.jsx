@@ -163,7 +163,14 @@ export default function EscuelaDetalle({ onAddSession }) {
                       setErrorColegio(null);
                       try {
                         await borrarColegio(school.id);
-                        setSelectedSchool(null);
+                        // Vuelve al listado: esta pantalla es el colegio que
+                        // acaba de dejar de existir. Antes llamaba a
+                        // setSelectedSchool, que no existe en este componente
+                        // desde que la navegacion vive en la URL — el
+                        // ReferenceError caia en el catch de abajo y avisaba
+                        // "No se pudo eliminar el colegio" DESPUES de haberlo
+                        // eliminado.
+                        navegar("/gabinete");
                       } catch (e) {
                         setErrorColegio(e.message || "No se pudo eliminar el colegio.");
                         avisar.error("No se pudo eliminar el colegio", e);

@@ -4,8 +4,8 @@ import { T } from "../theme.js";
 import { DOC_TYPES } from "../constants.js";
 import { fmtDateShort } from "../lib/format.js";
 import { can } from "../permissions.js";
-import { Btn, Card, EmptyNote, Eyebrow } from "../ui/index.js";
-import { abrirPdf, tienePdf } from "../lib/adjuntos.js";
+import { Btn, Card, EmptyNote, Eyebrow, VisorPdf } from "../ui/index.js";
+import { tienePdf } from "../lib/adjuntos.js";
 import { avisar } from "../store/avisosStore.js";
 
 // `canAdd` llega desde quien la usa y no se decide aqui: cada tab tiene su
@@ -18,6 +18,9 @@ function DocumentsSection({ type, documents, users, onAdd, onUpdateDocument, cur
   const [editingId, setEditingId] = useState(null);
   const [editNotes, setEditNotes] = useState("");
   const [expandedId, setExpandedId] = useState(null);
+  // El adjunto se ve dentro de la aplicacion. Con window.open el navegador
+  // devolvia null por el "noopener" y el codigo lo confundia con un bloqueo.
+  const [pdfAbierto, setPdfAbierto] = useState(null);
 
   const startEdit = (d) => { setEditingId(d.id); setEditNotes(d.notes || ""); setExpandedId(d.id); };
   const saveEdit = (d) => { if (onUpdateDocument) onUpdateDocument({ ...d, notes: editNotes }); setEditingId(null); };
@@ -54,7 +57,7 @@ function DocumentsSection({ type, documents, users, onAdd, onUpdateDocument, cur
                       // URL y los navegadores bloquean navegar a data: desde
                       // hace años, sin decir nada. Hay que pasarlo por un blob.
                       <button
-                        onClick={() => abrirPdf(d.fields, { alFallar: (m) => avisar.error("No se pudo abrir el PDF", m) })}
+                        onClick={() => setPdfAbierto(d)}
                         style={{
                           fontSize: 12, color: T.brand, background: "none", cursor: "pointer",
                           padding: "4px 8px", border: `1px solid ${T.border}`, borderRadius: 6,
@@ -90,6 +93,14 @@ function DocumentsSection({ type, documents, users, onAdd, onUpdateDocument, cur
             );
           })}
         </Card>
+      )}
+
+      {pdfAbierto && (
+        <VisorPdf
+          fields={pdfAbierto.fields}
+          titulo={pdfAbierto.title}
+          onClose={() => setPdfAbierto(null)}
+        />
       )}
     </div>
   );

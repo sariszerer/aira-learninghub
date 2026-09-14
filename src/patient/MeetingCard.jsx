@@ -4,12 +4,19 @@ import { T } from "../theme.js";
 import { fmtDateShort } from "../lib/format.js";
 import { Card, FieldLabel } from "../ui/index.js";
 import { participantesDe, textoDeTipos } from "../lib/minuta.js";
+import { textoAHtml, esHtml } from "../lib/textoRico.js";
 
 function MeetingCard({ meeting, users, onAbrirPdf, onEditar }) {
   const author = users.find((u) => u.id === meeting.createdBy);
   const participantes = participantesDe(meeting.participants);
-  const acuerdos = String(meeting.agreements || "")
-    .split(/\r?\n/).map((a) => a.trim()).filter(Boolean);
+  // Los acuerdos viejos son texto con uno por linea y se pintan en
+  // vinetas; los nuevos traen su propio formato y se pintan tal cual.
+  const acuerdosPlanos = esHtml(meeting.agreements)
+    ? null
+    : String(meeting.agreements || "").split(/\r?\n/).map((a) => a.trim()).filter(Boolean);
+  const hayAcuerdos = acuerdosPlanos
+    ? acuerdosPlanos.length > 0
+    : !!String(meeting.agreements || "").trim();
 
   return (
     <Card style={{ padding: 18 }}>
@@ -73,17 +80,27 @@ function MeetingCard({ meeting, users, onAbrirPdf, onEditar }) {
 
       <div style={{ marginTop: 10 }}>
         <FieldLabel>Resumen</FieldLabel>
-        <p style={{ margin: 0, fontSize: 14, color: T.ink, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
-          {meeting.summary}
-        </p>
+        {/* textoAHtml limpia siempre, tambien lo ya guardado: en la base hay
+            minutas escritas antes de que existiera la limpieza. */}
+        <div
+          style={{ fontSize: 14, color: T.ink, lineHeight: 1.6 }}
+          dangerouslySetInnerHTML={{ __html: textoAHtml(meeting.summary) }}
+        />
       </div>
 
-      {acuerdos.length > 0 && (
+      {hayAcuerdos && (
         <div style={{ marginTop: 10 }}>
           <FieldLabel>Acuerdos</FieldLabel>
-          <ul style={{ margin: "2px 0 0", paddingLeft: 18, fontSize: 14, color: T.ink, lineHeight: 1.6, fontWeight: 600 }}>
-            {acuerdos.map((a, i) => <li key={i}>{a}</li>)}
-          </ul>
+          {acuerdosPlanos ? (
+            <ul style={{ margin: "2px 0 0", paddingLeft: 18, fontSize: 14, color: T.ink, lineHeight: 1.6, fontWeight: 600 }}>
+              {acuerdosPlanos.map((a, i) => <li key={i}>{a}</li>)}
+            </ul>
+          ) : (
+            <div
+              style={{ fontSize: 14, color: T.ink, lineHeight: 1.6, fontWeight: 600 }}
+              dangerouslySetInnerHTML={{ __html: textoAHtml(meeting.agreements) }}
+            />
+          )}
         </div>
       )}
     </Card>

@@ -71,11 +71,11 @@ export const useDataStore = create((set, get) => ({
       const [
         dbChildren, dbObjectives, dbSessions, dbDocuments,
         dbMeetings, dbSchools, dbGabineteSessions, dbTutorReports,
-        dbEvolutionReports, dbEstudiantes, dbTutores, dbTamizajes, dbUsers,
+        dbEvolutionReports, dbParentReports, dbEstudiantes, dbTutores, dbTamizajes, dbUsers,
       ] = await Promise.all([
         db.getChildren(), db.getObjectives(), db.getSessions(), db.getDocuments(),
         db.getMeetings(), db.getSchools(), db.getGabineteSessions(), db.getTutorReports(),
-        db.getEvolutionReports(), db.getEstudiantesGabinete(), db.getTutores(),
+        db.getEvolutionReports(), db.getParentReports(), db.getEstudiantesGabinete(), db.getTutores(),
         db.getTamizajes(), db.getUsers(),
       ])
       // Incondicional, a diferencia de las demas: ahora que RLS aplica el
@@ -99,6 +99,7 @@ export const useDataStore = create((set, get) => ({
       // Incondicional: sin semilla, un resultado vacio es la verdad.
       set({
         evolutionReports: dbEvolutionReports,
+        parentReports: dbParentReports,
         estudiantesGabinete: dbEstudiantes,
         tutores: dbTutores,
         tamizajes: dbTamizajes,
@@ -318,8 +319,16 @@ export const useDataStore = create((set, get) => ({
     return fila
   },
 
-  addParentReport: (report) => {
-    set((s) => ({ parentReports: [...s.parentReports, { id: nuevoId('pr'), ...report }] }))
+  // Tampoco guardaba. Y de esta cuelga la alerta "van N sesiones desde el
+  // ultimo reporte a la familia": como la lista se vaciaba en cada recarga,
+  // el contador arrancaba siempre de cero y el centro no sabia nunca que ya
+  // se habia mandado uno.
+  addParentReport: async (report) => {
+    const fila = { id: nuevoId('pr'), ...report }
+    set((s) => ({ parentReports: [...s.parentReports, fila] }))
+    try { await db.insertParentReport(fila) }
+    catch (e) { get().avisarFallo('Registrar el reporte para la familia', e) }
+    return fila
   },
 
   // Los especialistas son filas de la misma tabla `users` que ya se carga al

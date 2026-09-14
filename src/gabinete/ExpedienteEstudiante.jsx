@@ -5,13 +5,13 @@ import { fmtDate, contar } from "../lib/format.js";
 import { can } from "../permissions.js";
 import { useDataStore } from "../store/dataStore.js";
 import { useAuthStore } from "../store/authStore.js";
-import { Avatar, Btn, Card, Eyebrow } from "../ui/index.js";
+import { Avatar, Btn, Card, Eyebrow, VisorPdf } from "../ui/index.js";
 import { FORMATOS_TUTOR } from "./formatosTutor.js";
 import { RESULTADOS, RUTAS, faltaExpediente, tonoDe } from "./preescolar.js";
 import TamizajeModal from "./TamizajeModal.jsx";
 import { AlertTriangle, Stethoscope } from "lucide-react";
 import FormatoTutorModal from "./FormatoTutorModal.jsx";
-import { abrirPdf, tienePdf, nombreDelPdf } from "../lib/adjuntos.js";
+import { tienePdf, nombreDelPdf } from "../lib/adjuntos.js";
 import { avisar } from "../store/avisosStore.js";
 
 // Expediente de un estudiante dentro del gabinete externo.
@@ -34,6 +34,7 @@ export default function ExpedienteEstudiante({ estudiante, onVolver, programa = 
   const [creando, setCreando] = useState(null);
   const [tamizando, setTamizando] = useState(false);
   const [abriendo, setAbriendo] = useState(false);
+  const [pdfAbierto, setPdfAbierto] = useState(null);
   const tamizajes = useDataStore((s) => s.tamizajes);
   const abrirExpediente = useDataStore((s) => s.abrirExpedienteDeEstudiante);
   const esPreescolar = programa === "preescolar";
@@ -267,7 +268,7 @@ export default function ExpedienteEstudiante({ estudiante, onVolver, programa = 
                       <span style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
                         {conPdf && (
                           <button
-                            onClick={() => abrirPdf(d.fields, { alFallar: (m) => avisar.error("No se pudo abrir el PDF", m) })}
+                            onClick={() => setPdfAbierto(d)}
                             style={{
                               background: "none", border: "none", cursor: "pointer", padding: 0,
                               fontFamily: T.font, fontSize: 12, fontWeight: 600, color: T.brand,
@@ -298,6 +299,14 @@ export default function ExpedienteEstudiante({ estudiante, onVolver, programa = 
           tutor={tutor}
           onClose={() => setCreando(null)}
           onGuardar={(doc) => agregarDocumento(estudiante.id, doc)}
+        />
+      )}
+
+      {pdfAbierto && (
+        <VisorPdf
+          fields={pdfAbierto.fields}
+          titulo={pdfAbierto.title || nombreDelPdf(pdfAbierto.fields)}
+          onClose={() => setPdfAbierto(null)}
         />
       )}
     </div>

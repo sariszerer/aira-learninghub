@@ -48,7 +48,12 @@ describe('editar una minuta ya registrada', () => {
     const areas = [...c.querySelectorAll('textarea')].map((t) => t.value)
     expect(areas[0]).toContain('María López, Terapeuta Ocupacional')
     expect(areas[0]).toContain('Madre')
-    expect(areas[1]).toBe('Se habló del apoyo en el aula.')
+    // Resumen y acuerdos ya no son <textarea>: llevan negrita, cursiva y
+    // subrayado, así que son campos editables con su barra de formato.
+    const editables = [...c.querySelectorAll('[contenteditable="true"]')]
+    expect(editables).toHaveLength(2)
+    expect(editables[0].textContent).toBe('Se habló del apoyo en el aula.')
+    expect(editables[1].textContent).toContain('Sentarlo adelante')
     expect(c.querySelector('input[type="date"]').value).toBe('2026-09-10')
     expect(c.textContent).toContain('Editar minuta')
     expect(c.textContent).toContain('Guardar cambios')
@@ -71,6 +76,26 @@ describe('editar una minuta ya registrada', () => {
     expect(c.textContent).toContain('Registrar minuta')
     expect(c.textContent).not.toContain('Guardar cambios')
     expect([...c.querySelectorAll('textarea')][0].value).toBe('')
+    expect([...c.querySelectorAll('[contenteditable="true"]')][0].textContent).toBe('')
+  })
+
+  it('el resumen y los acuerdos traen negrita, cursiva y subrayado', () => {
+    const c = pintar(<AddMeetingModal onClose={() => {}} onSave={() => {}} />)
+    for (const titulo of ['Negrita (Ctrl+B)', 'Cursiva (Ctrl+I)', 'Subrayado (Ctrl+U)']) {
+      expect(c.querySelectorAll(`button[title="${titulo}"]`)).toHaveLength(2)
+    }
+  })
+
+  it('el formato que se guarda va limpio', () => {
+    // Lo que sale del campo editable es HTML escrito por una persona. Si no
+    // se limpia, queda guardado en el expediente de un menor y se pinta en la
+    // pantalla de quien lo abra.
+    const guardado = vi.fn()
+    const sucia = { ...MINUTA, summary: '<b>Bien</b><script>robar()</script>' }
+    const c = pintar(<AddMeetingModal minuta={sucia} onClose={() => {}} onSave={guardado} />)
+    const boton = [...c.querySelectorAll('button')].find((b) => b.textContent.includes('Guardar cambios'))
+    act(() => { boton.dispatchEvent(new MouseEvent('click', { bubbles: true })) })
+    expect(guardado.mock.calls[0][0].summary).toBe('<b>Bien</b>')
   })
 })
 
@@ -82,6 +107,22 @@ describe('la ficha de la minuta', () => {
 
     const sinPermiso = pintar(<MeetingCard meeting={MINUTA} users={USUARIOS} onEditar={null} />)
     expect(sinPermiso.textContent).not.toContain('Editar')
+  })
+
+  it('muestra el formato en vez de las etiquetas', () => {
+    const conFormato = { ...MINUTA, summary: 'Se acordó <b>revisar</b> en octubre.' }
+    const c = pintar(<MeetingCard meeting={conFormato} users={USUARIOS} />)
+    expect(c.querySelector('b')?.textContent).toBe('revisar')
+    expect(c.textContent).not.toContain('<b>')
+  })
+
+  it('una minuta vieja en texto plano conserva sus saltos de línea', () => {
+    const vieja = { ...MINUTA, summary: 'Primera línea\nSegunda línea', agreements: 'Uno\nDos' }
+    const c = pintar(<MeetingCard meeting={vieja} users={USUARIOS} />)
+    expect(c.textContent).toContain('Primera línea')
+    expect(c.textContent).toContain('Segunda línea')
+    // Los acuerdos de antes del editor siguen saliendo en viñetas.
+    expect([...c.querySelectorAll('ul li')].map((l) => l.textContent)).toContain('Uno')
   })
 
   it('los dos tipos y los participantes salen en la ficha', () => {

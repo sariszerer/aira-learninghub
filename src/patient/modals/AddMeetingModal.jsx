@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { T, inputStyle, TODAY } from "../../theme.js";
 import { MEETING_TYPES } from "../../constants.js";
-import { Btn, Chip, Modal, ModalHeader, FieldLabel } from "../../ui/index.js";
+import { Btn, Chip, EditorTexto, Modal, ModalHeader, FieldLabel } from "../../ui/index.js";
 import { avisar } from "../../store/avisosStore.js";
 import { queFalta } from "../../lib/validacion.js";
 import { participantesDe, participantesATexto, faltaEnMinuta } from "../../lib/minuta.js";
+import { limpiarHtml, htmlATexto } from "../../lib/textoRico.js";
 
 // Registro y correccion de una minuta interdisciplinaria.
 //
@@ -33,7 +34,11 @@ function AddMeetingModal({ onClose, onSave, minuta = null }) {
   const cuantos = participantesDe(participants).length;
 
   const guardar = () => {
-    const falta = queFalta(faltaEnMinuta({ participants, summary }).map((q) => [false, q]));
+    // Se valida el texto, no el HTML: un campo donde solo se pulso Enter vale
+    // "<div><br></div>", que no esta vacio como cadena y no dice nada.
+    const falta = queFalta(
+      faltaEnMinuta({ participants, summary: htmlATexto(summary) }).map((q) => [false, q])
+    );
     if (falta) { avisar.error(falta); return; }
     onSave({
       // Al corregir se conserva la minuta entera y se pisan los campos: id,
@@ -43,8 +48,8 @@ function AddMeetingModal({ onClose, onSave, minuta = null }) {
       date,
       type: tipos,
       participants: participantesDe(participants).join("\n"),
-      summary: summary.trim(),
-      agreements: agreements.trim(),
+      summary: limpiarHtml(summary),
+      agreements: limpiarHtml(agreements),
     });
   };
 
@@ -86,18 +91,18 @@ function AddMeetingModal({ onClose, onSave, minuta = null }) {
           />
         </div>
 
+        {/* Con formato: la minuta sale del centro y poder resaltar el
+            acuerdo que importa cambia si alguien la lee o no. */}
         <div>
           <FieldLabel>Resumen</FieldLabel>
-          <textarea value={summary} onChange={(e) => setSummary(e.target.value)} rows={4}
-            placeholder="¿De qué se habló?"
-            style={{ ...inputStyle, width: "100%", boxSizing: "border-box", resize: "vertical", lineHeight: 1.6 }} />
+          <EditorTexto valor={summary} onChange={setSummary} filas={5}
+            placeholder="¿De qué se habló?" />
         </div>
 
         <div>
           <FieldLabel>Acuerdos</FieldLabel>
-          <textarea value={agreements} onChange={(e) => setAgreements(e.target.value)} rows={3}
-            placeholder="¿Qué se acordó? Uno por línea si son varios."
-            style={{ ...inputStyle, width: "100%", boxSizing: "border-box", resize: "vertical", lineHeight: 1.6 }} />
+          <EditorTexto valor={agreements} onChange={setAgreements} filas={3}
+            placeholder={"¿Qué se acordó? Uno por línea si son varios."} />
         </div>
       </div>
 
