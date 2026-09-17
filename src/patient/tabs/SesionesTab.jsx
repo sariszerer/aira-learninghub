@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { textoDeModalidad } from "../../lib/modalidad.js";
+import ReporteSesion from "../../reports/ReporteSesion.jsx";
+import { FileText } from "lucide-react";
 import { T, SPECIALIST_COLORS } from "../../theme.js";
 import { fmtDateShort } from "../../lib/format.js";
 import { can } from "../../permissions.js";
@@ -7,6 +9,8 @@ import { Card, Chip, Btn } from "../../ui/index.js";
 import EditSessionModal from "../modals/EditSessionModal.jsx";
 
 function SesionesTab({ child, sessions, objectives, users, currentUser, onUpdateSession }) {
+  // El acta de UNA sesion, para imprimir y entregar.
+  const [reporteAbierto, setReporteAbierto] = useState(null);
   const AREA_COLORS = {"Terapia Ocupacional":"#175FAF","Fonoaudiologia":"#7A9E7E","Funciones Ejecutivas":"#C79A6B","Psicologia":"#A6779A","Psicologia Clinica":"#A6779A","Pautas de Crianza":"#C79A6B","Desarrollo (DVLP)":"#B8860B","Kids Club":"#82A166"};
   const [editingSession, setEditingSession] = useState(null);
   const [filterSpec, setFilterSpec] = useState(null);
@@ -19,6 +23,12 @@ function SesionesTab({ child, sessions, objectives, users, currentUser, onUpdate
 
   return (
     <div>
+      {reporteAbierto && (
+        <ReporteSesion
+          sesion={reporteAbierto} child={child} objectives={objectives} users={users}
+          onClose={() => setReporteAbierto(null)}
+        />
+      )}
       {editingSession && (
         <EditSessionModal
           session={editingSession} child={child} objectives={objectives} users={users}
@@ -74,9 +84,17 @@ function SesionesTab({ child, sessions, objectives, users, currentUser, onUpdate
                   {s.observation && <div style={{ fontSize: 13, color: T.ink, lineHeight: 1.5, marginTop: 5, whiteSpace: "pre-wrap" }}>{s.observation}</div>}
                   {s.nextSteps && <div style={{ fontSize: 12.5, color: T.inkSoft, marginTop: 4, }}>→ {s.nextSteps}</div>}
                 </div>
-                {canEdit(s) && (
-                  <Btn variant="secondary" size="sm" onClick={() => setEditingSession(s)}>Editar</Btn>
-                )}
+                <div style={{ display: "flex", gap: 6, flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                  {/* El documento de ESTA sesion. Los reportes que habia
+                      cubren un periodo; el que la familia pide al salir y el
+                      que la escuela quiere ver se armaba a mano cada vez. */}
+                  <Btn variant="secondary" size="sm" icon={FileText} onClick={() => setReporteAbierto(s)}>
+                    Reporte
+                  </Btn>
+                  {canEdit(s) && (
+                    <Btn variant="secondary" size="sm" onClick={() => setEditingSession(s)}>Editar</Btn>
+                  )}
+                </div>
               </div>
             </Card>
           );
