@@ -14,6 +14,16 @@ export const DOC_TYPES = {
   anamnesis: { label: "Anamnesis", plural: "Anamnesis" },
   plan_trabajo: { label: "Plan de trabajo", plural: "Planes de trabajo" },
   pautas_crianza: { label: "Pautas de Crianza", plural: "Pautas de Crianza" },
+  // Los formatos del centro que llegan llenos en papel y se escanean: fichas
+  // de ingreso, autorizaciones de salida, permisos de fotografia. No tenian
+  // sitio y acababan de "Informe", que es otra cosa.
+  formulario: { label: "Formulario", plural: "Formularios" },
+  // El consentimiento informado es un tipo propio y no un apartado de la
+  // anamnesis. Colgaba de ella, asi que solo existia si la anamnesis se habia
+  // llenado EN la plataforma: de 45 expedientes hay 4 con consentimiento
+  // firmado, y los demas no tenian ni donde pedirlo. Como tipo propio se ve de
+  // un vistazo quien lo tiene y quien no.
+  consentimiento: { label: "Consentimiento informado", plural: "Consentimientos" },
 };
 
 // Documentos de gabinete externo. Van aparte de DOC_TYPES porque cuelgan de un
