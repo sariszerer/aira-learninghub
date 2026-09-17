@@ -1,10 +1,14 @@
 import React, { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Upload } from "lucide-react";
 import { T, TODAY } from "../../theme.js";
 import { fmtDateShort } from "../../lib/format.js";
 import { can } from "../../permissions.js";
 import { Btn, Card } from "../../ui/index.js";
 import { esAcudiente, ANAMNESIS_ACUDIENTE, resumenAnamnesisAcudiente, textoConsentimiento, partesConsentimiento, sinFirmaDelAcudiente } from "../../lib/expediente.js";
+import BloqueConsentimiento from "../BloqueConsentimiento.jsx";
+import AddDocumentModal from "../modals/AddDocumentModal.jsx";
+import { tienePdf } from "../../lib/adjuntos.js";
+import { VisorPdf } from "../../ui/index.js";
 
 function AnamnesisTab({ child, documents, users, currentUser, onAddDocument, onUpdateDocument }) {
   const [showForm, setShowForm] = useState(false);
@@ -47,6 +51,11 @@ function AnamnesisTab({ child, documents, users, currentUser, onAddDocument, onU
   const [signLink, setSignLink] = useState(null);
   const [linkCopied, setLinkCopied] = useState(false);
   const [quitandoFirma, setQuitandoFirma] = useState(false);
+  // La anamnesis tambien puede llegar escaneada: la mayoria se recoge en papel
+  // y obligar a transcribir veinte campos para dejarla en el expediente es
+  // pedir que no se deje.
+  const [subiendoPdf, setSubiendoPdf] = useState(false);
+  const [pdfAbierto, setPdfAbierto] = useState(null);
 
   const hayFirma = !!(anamnesisDoc?.fields?.firmaAcudienteImg || anamnesisDoc?.fields?.firmaAcudiente);
 
@@ -122,22 +131,74 @@ function AnamnesisTab({ child, documents, users, currentUser, onAddDocument, onU
     setShowForm(false);
   };
 
-  // If form data exists, show it filled; else show empty form or existing docs
-  const existingDocs = documents.filter(d => d.childId === child.id && d.type === "anamnesis");
+  const existingDocs = documents.filter((d) => d.childId === child.id && d.type === "anamnesis");
+  const anamnesisEnPdf = existingDocs.filter((d) => tienePdf(d.fields));
 
   return (
     <div>
-      {!showForm && (
-        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 16 }}>
-          {canEdit && (
-            <Btn icon={Plus} onClick={() => {
-              if (anamnesisDoc?.fields) setForm(f => ({...f, ...anamnesisDoc.fields}));
-              setShowForm(true);
-            }}>
-              {anamnesisDoc ? "Editar anamnesis" : "Completar anamnesis"}
-            </Btn>
-          )}
+      {/* El consentimiento, arriba y siempre.
+          Estaba dentro del formulario, asi que solo se podia pedir si la
+          anamnesis se llenaba EN la plataforma. La mayoria llega en papel, y
+          esos expedientes no tenian ni donde pedirlo: de 45, hay 4 firmados. */}
+      <BloqueConsentimiento
+        child={child} documents={documents} currentUser={currentUser}
+        puedeEditar={canEdit}
+        onAddDocument={onAddDocument} onUpdateDocument={onUpdateDocument}
+      />
+
+      {!showForm && canEdit && (
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+          {/* Dos caminos para lo mismo. Transcribir veinte campos de un papel
+              que ya esta firmado es trabajo que nadie hace, y por eso ocho de
+              las doce anamnesis del centro son notas sueltas. */}
+          <Btn variant="secondary" icon={Upload} onClick={() => setSubiendoPdf(true)}>
+            Subir en PDF
+          </Btn>
+          <Btn icon={Plus} onClick={() => {
+            if (anamnesisDoc?.fields) setForm(f => ({...f, ...anamnesisDoc.fields}));
+            setShowForm(true);
+          }}>
+            {anamnesisDoc ? "Editar anamnesis" : "Llenar en la plataforma"}
+          </Btn>
         </div>
+      )}
+
+      {!showForm && anamnesisEnPdf.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 18 }}>
+          {anamnesisEnPdf.map((d) => (
+            <Card key={d.id} style={{ padding: "12px 16px", display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+              <span style={{
+                fontSize: 11, background: "#FFEBEE", color: "#C62828",
+                padding: "2px 6px", borderRadius: 4, fontWeight: 600,
+              }}>PDF</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: T.ink }}>{d.title}</div>
+                <div style={{ fontSize: 12, color: T.inkSoft, marginTop: 2 }}>
+                  {users.find((u) => u.id === d.authorId)?.name || "—"} · {fmtDateShort(d.date)}
+                </div>
+              </div>
+              <Btn variant="secondary" size="sm" onClick={() => setPdfAbierto(d)}>Ver PDF</Btn>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {subiendoPdf && (
+        <AddDocumentModal
+          type="anamnesis"
+          onClose={() => setSubiendoPdf(false)}
+          onSave={(doc) => {
+            onAddDocument?.({ ...doc, childId: child.id, authorId: currentUser.id });
+            setSubiendoPdf(false);
+          }}
+        />
+      )}
+
+      {pdfAbierto && (
+        <VisorPdf
+          fields={pdfAbierto.fields} titulo={pdfAbierto.title}
+          onClose={() => setPdfAbierto(null)}
+        />
       )}
 
       {showForm ? (
