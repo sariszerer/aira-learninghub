@@ -34,6 +34,9 @@ export default function EditProfileModal({ child, onClose }) {
   // aunque esta pantalla mienta; aquí solo se evita ofrecer un control que va a
   // ser rechazado.
   const puedeAsignar = can(currentUser, "patient:assign");
+  // Declarar que terapias recibe un paciente es editar su ficha, no decidir
+  // quien entra a su expediente: va con patient:edit y no con patient:assign.
+  const puedeEditar = can(currentUser, "patient:edit");
 
   // Solo quien atiende. Los roles clinicos los declara la matriz de permisos,
   // no una lista de nombres de rol repetida aqui.
@@ -43,6 +46,18 @@ export default function EditProfileModal({ child, onClose }) {
       .sort((a, b) => a.name.localeCompare(b.name)),
     [users]
   );
+  // Las disciplinas que conoce el centro, para no escribirlas a mano cada vez
+  // ni inventar variantes: "Fonoaudiologia" y "Fonoaudiología" ya conviven en
+  // la base de tanto teclearlas.
+  const disciplinas = useMemo(() => {
+    const set = new Set();
+    for (const u of users) if (u.specialty) set.add(u.specialty);
+    for (const e of child.specialties || []) if (e) set.add(e);
+    return [...set].sort((a, b) => a.localeCompare(b));
+  }, [users, child.specialties]);
+
+  const [otraTerapia, setOtraTerapia] = useState("");
+
   const [f, setF] = useState({
     name: child.name || "",
     lastName: child.lastName || "",
@@ -58,8 +73,19 @@ export default function EditProfileModal({ child, onClose }) {
     parentPhone: child.parentContact?.phone || "",
     parentEmail: child.parentContact?.email || "",
     assignedSpecialists: child.assignedSpecialists || [],
+    specialties: child.specialties || [],
   });
   const set = (k, v) => setF((x) => ({ ...x, [k]: v }));
+
+  const anadirOtra = () => {
+    const nombre = otraTerapia.trim();
+    if (!nombre) return;
+    // Sin distinguir mayusculas: "Fonoaudiologia" y "fonoaudiologia" en la
+    // misma ficha son dos terapias distintas para los filtros y los reportes.
+    const yaEsta = f.specialties.some((x) => x.toLowerCase() === nombre.toLowerCase());
+    if (!yaEsta) set("specialties", [...f.specialties, nombre]);
+    setOtraTerapia("");
+  };
 
   const guardar = () => {
     const falta = queFalta([
@@ -85,18 +111,16 @@ export default function EditProfileModal({ child, onClose }) {
       // Sin permiso, el campo NO viaja. Mandarlo igual — aunque fuera el mismo
       // valor — deja el guardado a merced de que los arrays coincidan hasta en
       // el orden, y un cambio ajeno entre medias haría fallar todo el formulario.
-      ...(puedeAsignar ? {
-        assignedSpecialists: f.assignedSpecialists,
-        // Las especialidades del paciente se derivan de quien lo atiende, igual
-        // que en el alta. Mantenerlas a mano las dejaba desfasadas: habia fichas
-        // con una disciplina declarada y sesiones de tres.
-        specialties: [...new Set(
-          f.assignedSpecialists
-            .map((id) => users.find((u) => u.id === id)?.specialty)
-            .filter(Boolean)
-            .concat(child.specialties || [])
-        )],
-      } : {}),
+      // Las terapias se editan a mano. Se derivaban de quien atendia al
+      // paciente y la lista solo CRECIA — concat sobre las que ya habia — asi
+      // que no habia forma de anadir una disciplina sin asignar antes a una
+      // especialista de ella, ni de quitar una puesta por error: "Kids Club"
+      // se quedo en la ficha de Isaac y de Samson, que no la reciben.
+      //
+      // Asignar a alguien sigue proponiendo su disciplina; lo que cambia es
+      // que ahora se puede desmarcar.
+      ...(puedeEditar ? { specialties: f.specialties } : {}),
+      ...(puedeAsignar ? { assignedSpecialists: f.assignedSpecialists } : {}),
     });
     onClose();
   };
@@ -181,6 +205,41 @@ export default function EditProfileModal({ child, onClose }) {
           </>
         )}
 
+        {puedeEditar && (
+          <Campo
+            etiqueta="Terapias que recibe"
+            ayuda="Lo que aparece bajo el nombre del paciente. Se marca aunque todavía no haya especialista asignada."
+          >
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+              {disciplinas.map((d) => (
+                <Chip
+                  key={d} label={d}
+                  selected={f.specialties.includes(d)}
+                  onClick={() => set(
+                    "specialties",
+                    f.specialties.includes(d)
+                      ? f.specialties.filter((x) => x !== d)
+                      : [...f.specialties, d]
+                  )}
+                />
+              ))}
+            </div>
+            {/* Una disciplina que el centro aun no tiene en ningun perfil.
+                Sin esto habria que crear antes a la especialista para poder
+                declarar la terapia, que es al reves de como se trabaja. */}
+            <div style={{ display: "flex", gap: 8, marginTop: 9, flexWrap: "wrap" }}>
+              <input
+                value={otraTerapia}
+                onChange={(e) => setOtraTerapia(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); anadirOtra(); } }}
+                placeholder="Otra terapia"
+                style={{ ...inputStyle, flex: 1, minWidth: 180 }}
+              />
+              <Btn variant="subtle" size="sm" onClick={anadirOtra}>Añadir</Btn>
+            </div>
+          </Campo>
+        )}
+
         {puedeAsignar ? (
         <Campo
           etiqueta="Especialistas asignados"
@@ -197,12 +256,22 @@ export default function EditProfileModal({ child, onClose }) {
                   key={u.id}
                   label={u.specialty ? `${u.name} · ${u.specialty}` : u.name}
                   selected={f.assignedSpecialists.includes(u.id)}
-                  onClick={() => set(
-                    "assignedSpecialists",
-                    f.assignedSpecialists.includes(u.id)
-                      ? f.assignedSpecialists.filter((x) => x !== u.id)
-                      : [...f.assignedSpecialists, u.id]
-                  )}
+                  // Asignar a alguien PROPONE su disciplina; quitarlo no la
+                  // retira. Un paciente puede seguir en terapia ocupacional
+                  // mientras se le cambia de terapeuta, y borrarle la terapia
+                  // al soltar la asignacion le vaciaria la ficha.
+                  onClick={() => setF((x) => {
+                    const estaba = x.assignedSpecialists.includes(u.id);
+                    return {
+                      ...x,
+                      assignedSpecialists: estaba
+                        ? x.assignedSpecialists.filter((y) => y !== u.id)
+                        : [...x.assignedSpecialists, u.id],
+                      specialties: !estaba && u.specialty && !x.specialties.includes(u.specialty)
+                        ? [...x.specialties, u.specialty]
+                        : x.specialties,
+                    };
+                  })}
                 />
               ))}
             </div>
