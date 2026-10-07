@@ -48,6 +48,9 @@ export function dbUserToApp(u) {
     specialty: u.specialty, title: u.title, avatarBg: u.avatar_bg,
     school: u.school, assignedChildId: u.assigned_child_id, authId: u.auth_id,
     licenseNo: u.license_no, firma: u.firma || null,
+    telefono: u.telefono || "",
+    whatsappOptIn: u.whatsapp_opt_in === true,
+    whatsappOptInAt: u.whatsapp_opt_in_at || null,
     debeCambiarClave: u.debe_cambiar_clave === true,
     activo: u.activo !== false,
   }
@@ -180,6 +183,14 @@ export const db = {
     if ('title' in updates) m.title = updates.title
     if ('avatarBg' in updates) m.avatar_bg = updates.avatarBg
     if ('school' in updates) m.school = updates.school
+    if ('telefono' in updates) m.telefono = updates.telefono
+    // La fecha la pone el servidor cuando el si cambia a verdadero, no la
+    // pantalla: lo que hace falta probar es CUANDO lo acepto, y una fecha que
+    // manda el cliente no prueba nada.
+    if ('whatsappOptIn' in updates) {
+      m.whatsapp_opt_in = updates.whatsappOptIn
+      m.whatsapp_opt_in_at = updates.whatsappOptIn ? new Date().toISOString() : null
+    }
     if ('assignedChildId' in updates) m.assigned_child_id = updates.assignedChildId
     if ('activo' in updates) m.activo = updates.activo
     if ('licenseNo' in updates) m.license_no = updates.licenseNo

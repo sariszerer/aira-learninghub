@@ -52,6 +52,8 @@ export default function SpecialistModal({ usuario, onClose }) {
     specialty: usuario?.specialty || "",
     title: usuario?.title || "",
     licenseNo: usuario?.licenseNo || "",
+    telefono: usuario?.telefono || "",
+    whatsappOptIn: usuario?.whatsappOptIn === true,
     firma: usuario?.firma || null,
     avatarBg: usuario?.avatarBg || PALETA[0],
   });
@@ -81,6 +83,8 @@ export default function SpecialistModal({ usuario, onClose }) {
           specialty: form.specialty.trim() || null,
           title: form.title.trim() || null,
           licenseNo: form.licenseNo.trim() || null,
+          telefono: form.telefono.trim() || null,
+          whatsappOptIn: form.whatsappOptIn,
           avatarBg: form.avatarBg,
         });
         if (res?.aviso) { setAviso(res.aviso); setGuardando(false); return; }
@@ -90,6 +94,8 @@ export default function SpecialistModal({ usuario, onClose }) {
           specialty: form.specialty.trim() || null,
           title: form.title.trim() || null,
           licenseNo: form.licenseNo.trim() || null,
+          telefono: form.telefono.trim() || null,
+          whatsappOptIn: form.whatsappOptIn,
           avatarBg: form.avatarBg,
           firma: form.firma,
         };
@@ -184,6 +190,37 @@ export default function SpecialistModal({ usuario, onClose }) {
         {/* Firma del Reporte de Evolución: el documento pide "N° de
             licencia/idoneidad" junto al nombre y la especialidad. */}
         {campo("N° de idoneidad", "licenseNo", { placeholder: "Aparece en la firma de los reportes" })}
+
+        {campo("Teléfono", "telefono", {
+          placeholder: "+507 6000-0000",
+          nota: "En formato internacional. Hace falta para los avisos por WhatsApp.",
+        })}
+
+        {/* El sí tiene que ser suyo y tiene que constar.
+            No es un trámite de la API: WhatsApp exige consentimiento previo
+            para escribirle a alguien, y hacerlo sin él expone la cuenta del
+            centro a que Meta la bloquee. Y es su teléfono personal, con su
+            empleadora al otro lado. */}
+        <label style={{
+          display: "flex", alignItems: "flex-start", gap: 9, cursor: "pointer",
+          padding: "11px 13px", borderRadius: 10, background: T.surfaceSunk,
+        }}>
+          <input
+            type="checkbox"
+            checked={form.whatsappOptIn}
+            onChange={(e) => set("whatsappOptIn", e.target.checked)}
+            style={{ marginTop: 2, flexShrink: 0 }}
+          />
+          <span style={{ fontSize: 13, color: T.ink, lineHeight: 1.55 }}>
+            Aceptó recibir avisos del centro por WhatsApp
+            <span style={{ display: "block", fontSize: 11.5, color: T.inkFaint, marginTop: 2 }}>
+              Márcalo solo si te lo dijo. Sin esto no se le escribe.
+              {usuario?.whatsappOptInAt && (
+                <> Lo aceptó el {new Date(usuario.whatsappOptInAt).toLocaleDateString("es-PA")}.</>
+              )}
+            </span>
+          </span>
+        </label>
 
         {/* La rúbrica solo la sube su dueña. Es lo mismo que impide firmar un
             reporte ajeno: si la administración pudiera cargar la firma de otra
