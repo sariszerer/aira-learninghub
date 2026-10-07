@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { T } from "../../theme.js";
 import { fmtDate } from "../../lib/format.js";
 import { Btn, Card, EmptyNote, Field, StatusIcon } from "../../ui/index.js";
+import { can } from "../../permissions.js";
+import { RefreshCw } from "lucide-react";
 
 function ResumenTab({ child, objectives, sessions, users, onRenewPackage, onCloseProcess, currentUser }) {
   const PAQUETE = 8;
@@ -18,11 +20,11 @@ function ResumenTab({ child, objectives, sessions, users, onRenewPackage, onClos
   const sessionsInPackage = packageStart
     ? childSessions.filter((s) => s.date >= packageStart).length
     : totalSessions;
-  const enPaquete = sessionsInPackage % PAQUETE || (sessionsInPackage > 0 && sessionsInPackage % PAQUETE === 0 ? PAQUETE : sessionsInPackage % PAQUETE);
   const currentInPackage = sessionsInPackage > 0 ? ((sessionsInPackage - 1) % PAQUETE) + 1 : 0;
   const pct = (currentInPackage / PAQUETE) * 100;
   const barColor = currentInPackage >= 7 ? "#E53935" : currentInPackage >= 5 ? T.amberDeep : currentInPackage >= 3 ? T.amber : "#81C784";
   const [showCloseProcess, setShowCloseProcess] = useState(false);
+  const [renovando, setRenovando] = useState(false);
   const [closeNote, setCloseNote] = useState("");
 
   return (
@@ -66,6 +68,64 @@ function ResumenTab({ child, objectives, sessions, users, onRenewPackage, onClos
           </Card>
         );
       })()}
+
+      {/* El paquete de sesiones.
+          Todo esto —pct, barColor, packageNum— se calculaba desde el principio
+          y no se pintaba en ninguna parte: la barra solo existia en el panel de
+          direccion clinica, no en la ficha del paciente. Y renovar tenia su
+          accion en el store, su permiso en la matriz y ni un boton que lo
+          llamara: onRenewPackage llegaba hasta aqui y moria. */}
+      <Card style={{ marginBottom: 22, padding: "16px 20px" }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+          <div style={{ flex: 1, minWidth: 220 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: T.inkSoft, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 10 }}>
+              Paquete {packageNum}
+            </div>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 8 }}>
+              <span style={{ fontFamily: T.font, fontSize: 26, fontWeight: 500, color: barColor }}>
+                {currentInPackage}
+              </span>
+              <span style={{ fontSize: 13, color: T.inkSoft }}>de {PAQUETE} sesiones</span>
+              {packageStart && (
+                <span style={{ fontSize: 12, color: T.inkFaint }}>· desde el {fmtDate(packageStart)}</span>
+              )}
+            </div>
+            <div style={{ height: 6, background: T.borderSoft, borderRadius: 3, overflow: "hidden" }}>
+              <div style={{ height: "100%", width: `${pct}%`, background: barColor, borderRadius: 3, transition: "width .3s" }} />
+            </div>
+            {currentInPackage >= PAQUETE && (
+              <div style={{ fontSize: 12.5, color: T.amberDeep, marginTop: 8, fontWeight: 600 }}>
+                El paquete está completo.
+              </div>
+            )}
+          </div>
+
+          {onRenewPackage && can(currentUser, "patient:renew_package") && !renovando && (
+            <Btn variant="secondary" icon={RefreshCw} onClick={() => setRenovando(true)}>
+              Renovar paquete
+            </Btn>
+          )}
+        </div>
+
+        {/* Con confirmacion: renovar sube el numero de paquete y mueve la fecha
+            de inicio, asi que el conteo vuelve a cero y no hay forma de
+            deshacerlo desde la pantalla. */}
+        {renovando && (
+          <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${T.border}` }}>
+            <div style={{ fontSize: 13, color: T.inkSoft, lineHeight: 1.6, marginBottom: 10 }}>
+              Empieza el <b>paquete {packageNum + 1}</b> hoy. El conteo vuelve a
+              cero y las {currentInPackage} sesiones de este paquete quedan en el
+              historial. No se puede deshacer desde aquí.
+            </div>
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              <Btn variant="ghost" size="sm" onClick={() => setRenovando(false)}>Cancelar</Btn>
+              <Btn variant="primary" size="sm" onClick={() => { onRenewPackage(child.id); setRenovando(false); }}>
+                Renovar
+              </Btn>
+            </div>
+          </div>
+        )}
+      </Card>
 
       {/* Cerrar proceso modal */}
       {showCloseProcess && (

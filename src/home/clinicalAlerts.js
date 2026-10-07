@@ -4,7 +4,6 @@
 
 import { TODAY } from "../theme.js";
 import { atiendePacientes } from "../permissions.js";
-import { sessionsSinceLastParentReport } from "../lib/reports.js";
 
 export function computeClinicalAlerts({ children, users, sessions, objectives, tutors, tutorReports, parentReports }) {
   const allSpecialistsAndDir = users.filter((u) => atiendePacientes(u));

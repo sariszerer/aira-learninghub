@@ -5,7 +5,6 @@ import { fmtDate } from "../lib/format.js";
 import { Avatar, Card } from "../ui/index.js";
 
 function ChildCard({ child, users, sessions, onOpen }) {
-  const specialists = child.assignedSpecialists.map((id) => users.find((u) => u.id === id)).filter(Boolean);
   return (
     <Card onClick={onOpen} style={{ padding: 0, overflow: "hidden" }}>
       <div style={{

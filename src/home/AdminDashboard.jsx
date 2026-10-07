@@ -1,28 +1,25 @@
 import React, { useState } from "react";
-import { ChevronRight, Plus, Clock, AlertTriangle, TrendingUp, Users, User, Calendar } from "lucide-react";
+import { Clock, AlertTriangle, TrendingUp, Users, User, Calendar } from "lucide-react";
 import { T, TODAY } from "../theme.js";
 import { sessionsSinceLastParentReport } from "../lib/reports.js";
 import { atiendePacientes } from "../permissions.js";
-import { Avatar, Btn, Card, Eyebrow, List, ListRow, StatStrip } from "../ui/index.js";
+import { Avatar, Card, Eyebrow, List, ListRow, StatStrip } from "../ui/index.js";
 import CalendarAgenda from "./CalendarAgenda.jsx";
 import { useDataStore } from "../store/dataStore.js";
-import { useAuthStore } from "../store/authStore.js";
 import { useEsMovil, paddingPagina } from "../lib/pantalla.js";
+import ActivityFeed from "./ActivityFeed.jsx";
 
 function AdminDashboard({ onOpenChild }) {
   const esMovil = useEsMovil();
   const children = useDataStore((s) => s.children);
   const users = useDataStore((s) => s.users);
   const sessions = useDataStore((s) => s.sessions);
-  const objectives = useDataStore((s) => s.objectives);
   const parentReports = useDataStore((s) => s.parentReports);
   const activityLog = useDataStore((s) => s.activityLog);
   const onMarkSeen = useDataStore((s) => s.markActivitySeen);
-  const currentUser = useAuthStore((s) => s.currentUser);
   const [alertsOpen, setAlertsOpen] = useState(true);
   const specialists = users.filter((u) => atiendePacientes(u));
   const today = TODAY;
-  const sessionsToday = sessions.filter((s) => s.date === today).length;
   const childrenNoRecentSession = children.filter((c) => {
     const last = sessions.filter((s) => s.childId === c.id).sort((a, b) => b.date.localeCompare(a.date))[0];
     if (!last) return true;
@@ -164,6 +161,10 @@ function AdminDashboard({ onOpenChild }) {
           se queda con lo que solo tiene sentido de un vistazo: cifras, agenda y
           lo que requiere atencion. */}
 
+      {/* Estaba cableado y no se pintaba: el panel leia activityLog y
+          onMarkSeen y nunca montaba el componente, asi que direccion
+          clinica veia las novedades y administracion no. */}
+      <ActivityFeed activityLog={activityLog} users={users} onMarkSeen={onMarkSeen} />
     </div>
   );
 }

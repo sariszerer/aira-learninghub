@@ -6,7 +6,6 @@ import { fmtDateShort } from "../lib/format.js";
 import { can } from "../permissions.js";
 import { Btn, Card, EmptyNote, Eyebrow, VisorPdf } from "../ui/index.js";
 import { tienePdf } from "../lib/adjuntos.js";
-import { avisar } from "../store/avisosStore.js";
 
 // `canAdd` llega desde quien la usa y no se decide aqui: cada tab tiene su
 // propio permiso (workplan:create para el plan, document:create para reportes).

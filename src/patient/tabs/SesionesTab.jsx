@@ -11,7 +11,6 @@ import EditSessionModal from "../modals/EditSessionModal.jsx";
 function SesionesTab({ child, sessions, objectives, users, currentUser, onUpdateSession }) {
   // El acta de UNA sesion, para imprimir y entregar.
   const [reporteAbierto, setReporteAbierto] = useState(null);
-  const AREA_COLORS = {"Terapia Ocupacional":"#175FAF","Fonoaudiologia":"#7A9E7E","Funciones Ejecutivas":"#C79A6B","Psicologia":"#A6779A","Psicologia Clinica":"#A6779A","Pautas de Crianza":"#C79A6B","Desarrollo (DVLP)":"#B8860B","Kids Club":"#82A166"};
   const [editingSession, setEditingSession] = useState(null);
   const [filterSpec, setFilterSpec] = useState(null);
 
@@ -39,9 +38,6 @@ function SesionesTab({ child, sessions, objectives, users, currentUser, onUpdate
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
         <Chip label={`Todas (${childSessions.length})`} selected={filterSpec === null} onClick={() => setFilterSpec(null)} />
         {specs.map(sp => {
-          // Get the specialist for this specialty to use their color
-          const specForColor = childSessions.find(s => s.specialty === sp);
-          const color = SPECIALIST_COLORS[specForColor?.specialistId] || AREA_COLORS[sp] || T.inkSoft;
           const count = childSessions.filter(s => s.specialty === sp).length;
           const active = filterSpec === sp;
           return (

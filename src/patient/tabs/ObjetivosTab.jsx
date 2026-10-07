@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { T, TODAY } from "../../theme.js";
-import { Card, EmptyNote, Modal, ModalHeader, StatusIcon, StatusPill, StatusRing } from "../../ui/index.js";
+import { EmptyNote, Modal, ModalHeader, StatusIcon, StatusPill, StatusRing } from "../../ui/index.js";
 import { useDataStore } from "../../store/dataStore.js";
 import { useAuthStore } from "../../store/authStore.js";
 import { can } from "../../permissions.js";
 import { Btn } from "../../ui/index.js";
-import { ChevronDown, ListPlus, Pencil, Plus, Trash2 } from "lucide-react";
+import { ListPlus, Pencil, Plus, Trash2 } from "lucide-react";
 import ObjetivoModal from "../modals/ObjetivoModal.jsx";
 import { EscalaGas } from "../../reports/piezas.jsx";
 import ObjetivosEnLoteModal from "../modals/ObjetivosEnLoteModal.jsx";
@@ -179,16 +179,6 @@ function ObjetivosTab({ child }) {
         "Kids Club": "#82A166",
         "General": T.inkSoft,
       };
-      const AREA_BG = {
-        "Terapia Ocupacional": "#E6F1FB",
-        "Fonoaudiologia": "#F0F5F0",
-        "Funciones Ejecutivas": "#FAF0E6",
-        "Psicologia": "#F5EEF8",
-        "Psicologia Clinica": "#F5EEF8",
-        "Desarrollo (DVLP)": "#FEFDE7",
-        "Kids Club": "#EEF5EE",
-        "General": T.surfaceSunk,
-      };
 
       const specsWithNoObjs = especialistasSinObjetivos({ child, sessions, grupos: groups });
 
@@ -204,7 +194,6 @@ function ObjetivosTab({ child }) {
               const canEditThis = canEdit(specId);
               const logrados = objs.filter(o => o.status === "logrado").length;
               const color = AREA_COLORS[area] || T.inkSoft;
-              const bg = AREA_BG[area] || T.surfaceSunk;
               const pct = objs.length > 0 ? (logrados / objs.length) * 100 : 0;
               return (
                 <div key={`${specId}__${area}`} style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: "0 0 12px 12px" }}>
@@ -286,7 +275,6 @@ function ObjetivosTab({ child }) {
               const spec = users.find(u => u.id === sid);
               if (!spec) return null;
               const area = spec.specialty || "General";
-              const color = AREA_COLORS[area] || T.inkSoft;
               const canEditThis = canEdit(sid);
               return (
                 <div key={`empty-${sid}`} style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: "0 0 12px 12px" }}>

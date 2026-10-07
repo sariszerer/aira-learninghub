@@ -1,5 +1,5 @@
 import React, { useEffect, useCallback, useState } from "react";
-import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { auth, getAppUser } from "./supabase.js";
 import { can } from "./permissions.js";
 import Login from "./Login.jsx";
@@ -43,7 +43,6 @@ export default function App() {
 
   // La navegacion vive en la URL: / · /gabinete · /paciente/:childId?tab=slug
   const navigate = useNavigate();
-  const location = useLocation();
   const goHome = useCallback(() => navigate("/"), [navigate]);
   const openChild = useCallback((id) => navigate(`/paciente/${encodeURIComponent(id)}`), [navigate]);
 

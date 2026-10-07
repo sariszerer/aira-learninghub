@@ -6,7 +6,7 @@ import { useDataStore } from "../store/dataStore.js";
 import { useAuthStore } from "../store/authStore.js";
 import PageHeader from "../shell/PageHeader.jsx";
 import SpecialistModal from "./SpecialistModal.jsx";
-import { Avatar, Btn, Card, IconBtn, List, ListRow, Modal, ModalHeader, Table } from "../ui/index.js";
+import { Avatar, Btn, IconBtn, List, ListRow, Modal, ModalHeader, Table } from "../ui/index.js";
 import { useNavigate } from "react-router-dom";
 import { generarClaveTemporal, mensajeDeAcceso } from "../lib/claveTemporal.js";
 import { useEsMovil, paddingPagina } from "../lib/pantalla.js";

@@ -12,7 +12,6 @@ import { useEsMovil, paddingPagina } from "../lib/pantalla.js";
 function TutorAiraHome({ user, onOpenChild }) {
   const esMovil = useEsMovil();
   const children = useDataStore((s) => s.children);
-  const users = useDataStore((s) => s.users);
   const objectives = useDataStore((s) => s.objectives);
   const tutorReports = useDataStore((s) => s.tutorReports);
   const onAddTutorReport = useDataStore((s) => s.addTutorReport);

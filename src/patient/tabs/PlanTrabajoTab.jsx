@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { nuevoId } from "../../lib/identificador.js";
-import { T } from "../../theme.js";
 import { can } from "../../permissions.js";
 import DocumentsSection from "../DocumentsSection.jsx";
 import AddDocumentModal from "../modals/AddDocumentModal.jsx";

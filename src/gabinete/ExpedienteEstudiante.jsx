@@ -12,7 +12,6 @@ import TamizajeModal from "./TamizajeModal.jsx";
 import { AlertTriangle, Stethoscope } from "lucide-react";
 import FormatoTutorModal from "./FormatoTutorModal.jsx";
 import { tienePdf, nombreDelPdf } from "../lib/adjuntos.js";
-import { avisar } from "../store/avisosStore.js";
 
 // Expediente de un estudiante dentro del gabinete externo.
 //

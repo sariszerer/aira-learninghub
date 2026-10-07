@@ -1,5 +1,6 @@
 import globals from "globals";
 import reactHooks from "eslint-plugin-react-hooks";
+import react from "eslint-plugin-react";
 
 // Solo una regla, y con motivo.
 //
@@ -27,7 +28,7 @@ export default [
       globals: { ...globals.browser, ...globals.node },
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
-    plugins: { "react-hooks": reactHooks },
+    plugins: { "react-hooks": reactHooks, react },
     rules: {
       "no-undef": "error",
       // Un hook dentro de un ayudante que se llama al cargar el modulo da
@@ -38,6 +39,23 @@ export default [
       // exhaustive-deps queda en aviso: tiene falsos positivos y este codigo
       // se escribio sin el. Como error seria ruido que taparia lo de arriba.
       "react-hooks/exhaustive-deps": "warn",
+      // Sin estas dos, no-unused-vars no sabe que JSX usa los componentes y
+      // marca como muerto cada import del fichero.
+      "react/jsx-uses-react": "error",
+      "react/jsx-uses-vars": "error",
+      // Codigo que se calcula y no se pinta.
+      //
+      // La barra del paquete de sesiones llevaba desde el principio calculada
+      // en la ficha del paciente —pct, barColor, packageNum— y no se dibujaba
+      // en ninguna parte. Compila, no molesta, y lo que esconde es que una
+      // funcionalidad entera quedo a medias.
+      "no-unused-vars": ["error", {
+        args: "none",
+        varsIgnorePattern: "^_",
+        // Lo que se desestructura para dejarlo FUERA del resto es intencional:
+        // sinFirma() se lleva asi los rastros de una firma.
+        ignoreRestSiblings: true,
+      }],
     },
   },
   {

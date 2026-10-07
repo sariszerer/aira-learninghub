@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import { Check, CheckCircle2, Search, X } from "lucide-react";
+import { CheckCircle2, Search } from "lucide-react";
 import { T, TODAY } from "../theme.js";
-import { ROLES } from "../permissions.js";
 import { Eyebrow, Card } from "../ui/index.js";
 import CalendarAgenda from "./CalendarAgenda.jsx";
 import ChildCard from "./ChildCard.jsx";
@@ -38,7 +37,7 @@ function ClinicalDirectorHome({ user, onOpenChild }) {
   const myToday = misPacientesAsignados.filter((c) => c.nextSession === TODAY)
     .sort((a, b) => (a.nextSessionTime || "").localeCompare(b.nextSessionTime || ""));
 
-  const { allSpecialistsAndDir, inactivosPorEsp, proximosPaquete, todosConPaquete, sinReportePadres, sinObjetivos, objetivosEstancados, tutorsVencidos, totalAlertas, ALERT_TABS, conPaquete, PAQUETE_SIZE } =
+  const { allSpecialistsAndDir, inactivosPorEsp, proximosPaquete, todosConPaquete, sinReportePadres, sinObjetivos, objetivosEstancados, tutorsVencidos, totalAlertas, ALERT_TABS, PAQUETE_SIZE } =
     computeClinicalAlerts({ children, users, sessions, objectives, tutors, tutorReports, parentReports });
 
   // ── Shared mini row ────────────────────────────────────────────────────────

@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Plus, Pencil, Trash2 } from "lucide-react";
-import { T, SPECIALIST_COLORS, TODAY } from "../theme.js";
+import { T, SPECIALIST_COLORS } from "../theme.js";
 import { fmtDate } from "../lib/format.js";
 import { can } from "../permissions.js";
 import { Avatar, Btn, Card, Tabs } from "../ui/index.js";
 import ResumenTab from "./tabs/ResumenTab.jsx";
 import SesionesTab from "./tabs/SesionesTab.jsx";
-import ObjetivosTab, { ObjectivesList } from "./tabs/ObjetivosTab.jsx";
+import ObjetivosTab from "./tabs/ObjetivosTab.jsx";
 import EditProfileModal from "./EditProfileModal.jsx";
 import BorrarPacienteModal from "./BorrarPacienteModal.jsx";
 import PlanTrabajoTab from "./tabs/PlanTrabajoTab.jsx";
@@ -42,12 +42,8 @@ function ChildProfile({ child, onOpenSessionForm, onViewReport, onGenerateFull, 
   const parentReports = useDataStore((s) => s.parentReports);
   const evolutionReports = useDataStore((s) => s.evolutionReports);
   const currentUser = useAuthStore((s) => s.currentUser);
-  const onUpdateObjective = useDataStore((s) => s.updateObjective);
-  const onAddObjective = useDataStore((s) => s.addObjective);
-  const onDeleteObjective = useDataStore((s) => s.deleteObjective);
   const onRenewPackage = useDataStore((s) => s.renewPackage);
   const children = useDataStore((s) => s.children);
-  const onUpdateChild = useDataStore((s) => s.updateChild);
   const onCloseProcess = useDataStore((s) => s.closeProcess);
   const onUpdateSession = useDataStore((s) => s.updateSession);
   const onUpdateDocument = useDataStore((s) => s.updateDocument);

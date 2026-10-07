@@ -28,7 +28,7 @@ export default function VisorPdf({ fields, titulo, onClose }) {
     try {
       const blob = pdfComoBlob(datos);
       return blob ? URL.createObjectURL(blob) : null;
-    } catch (e) {
+    } catch {
       setFallo("El archivo adjunto está dañado y no se puede mostrar.");
       return null;
     }
